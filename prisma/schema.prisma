@@ -1,0 +1,292 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SourceType {
+  RSS
+  WEBSITE
+  NEWSLETTER
+  MANUAL_URL
+  SOCIAL_LINK
+  DISCLOSURE
+  BLOG
+}
+
+enum SignalStatus {
+  NEW
+  REVIEWED
+  CANDIDATE
+  DEFERRED
+  IGNORED
+  ARCHIVED
+}
+
+enum ReviewStatus {
+  PENDING
+  KEPT
+  REJECTED
+  DEFERRED
+}
+
+enum ReasoningAcceptance {
+  ACCEPTED
+  PARTIAL
+  REJECTED
+}
+
+enum ClusterStatus {
+  ACTIVE
+  MERGED
+  ARCHIVED
+}
+
+enum ResearchCardStatus {
+  DRAFT
+  READY
+  ARCHIVED
+}
+
+enum DraftPlatform {
+  WECHAT_ARTICLE
+  WECHAT_VIDEO
+  SHORT_POST
+}
+
+enum DraftStatus {
+  DRAFT
+  READY
+  PUBLISHED
+  ARCHIVED
+}
+
+enum PriorityRecommendation {
+  PRIORITIZE
+  WATCH
+  DEPRIORITIZE
+}
+
+enum ObservationCluster {
+  ai_infrastructure_power
+  platform_entry_shift
+  strategic_supply_control
+  compute_capex_cycle
+  policy_capital_allocation
+  risk_repricing_cycle
+  profit_pool_shift
+  distribution_model_break
+  ai_revenue_rebuild
+  org_efficiency_reorg
+  individual_capability_shift
+  sme_positioning_shift
+}
+
+enum TagType {
+  TOPIC
+  COMPANY
+  PERSON
+  COUNTRY
+  INDUSTRY
+  MOTHER_THEME
+}
+
+model Source {
+  id           String   @id @default(cuid())
+  name         String
+  type         SourceType
+  baseUrl      String?
+  feedUrl      String?
+  isActive     Boolean  @default(true)
+  qualityScore Float?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  signals      Signal[]
+}
+
+model Signal {
+  id           String       @id @default(cuid())
+  sourceId     String
+  title        String
+  url          String       @unique
+  author       String?
+  language     String?
+  publishedAt  DateTime?
+  ingestedAt   DateTime     @default(now())
+  rawContent   String?
+  summary      String?
+  status       SignalStatus @default(NEW)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  source       Source       @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  tags         SignalTag[]
+  clusterItems SignalClusterItem[]
+  scores       SignalScore[]
+  reviews      HumanReview[]
+
+  @@index([sourceId, publishedAt])
+  @@index([status])
+}
+
+model SignalTag {
+  id       String  @id @default(cuid())
+  signalId String
+  tag      String
+  tagType  TagType
+
+  signal   Signal  @relation(fields: [signalId], references: [id], onDelete: Cascade)
+
+  @@index([signalId])
+  @@index([tag])
+  @@index([tagType])
+}
+
+model SignalCluster {
+  id             String              @id @default(cuid())
+  clusterTitle   String
+  clusterSummary String?
+  heatScore      Float?
+  status         ClusterStatus       @default(ACTIVE)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  items          SignalClusterItem[]
+  scores         SignalScore[]
+  reviews        HumanReview[]
+  researchCards  ResearchCard[]
+
+  @@index([status])
+}
+
+model SignalClusterItem {
+  id              String        @id @default(cuid())
+  clusterId       String
+  signalId        String
+  similarityScore Float?
+
+  cluster         SignalCluster @relation(fields: [clusterId], references: [id], onDelete: Cascade)
+  signal          Signal        @relation(fields: [signalId], references: [id], onDelete: Cascade)
+
+  @@unique([clusterId, signalId])
+  @@index([signalId])
+}
+
+model SignalScore {
+  id                  String         @id @default(cuid())
+  signalId            String?
+  clusterId           String?
+  importanceScore     Float
+  viewpointScore      Float
+  primaryObservationCluster ObservationCluster?
+  secondaryObservationCluster ObservationCluster?
+  consensusStrength   Float?
+  companyRoutineScore Float?
+  structuralScore     Float?
+  impactScore         Float?
+  redistributionScore Float?
+  durabilityScore     Float?
+  confidenceScore     Float?
+  priorityRecommendation PriorityRecommendation @default(WATCH)
+  reasoningSummary    String
+  reasoningDetail     String?
+  modelName           String
+  createdAt           DateTime       @default(now())
+
+  signal              Signal?        @relation(fields: [signalId], references: [id], onDelete: Cascade)
+  cluster             SignalCluster? @relation(fields: [clusterId], references: [id], onDelete: Cascade)
+
+  @@index([signalId, createdAt])
+  @@index([clusterId, createdAt])
+  @@index([priorityRecommendation, createdAt])
+  @@index([primaryObservationCluster, createdAt])
+}
+
+model HumanReview {
+  id                      String               @id @default(cuid())
+  signalId                String?
+  clusterId               String?
+  reviewStatus            ReviewStatus         @default(PENDING)
+  adjustedImportanceScore Float?
+  adjustedViewpointScore  Float?
+  adjustedConsensusStrength Float?
+  adjustedCompanyRoutineScore Float?
+  adjustedPriorityRecommendation PriorityRecommendation?
+  reasoningAcceptance     ReasoningAcceptance?
+  reviewNote              String?
+  myAngle                 String?
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
+
+  signal                  Signal?              @relation(fields: [signalId], references: [id], onDelete: Cascade)
+  cluster                 SignalCluster?       @relation(fields: [clusterId], references: [id], onDelete: Cascade)
+
+  @@index([signalId, createdAt])
+  @@index([clusterId, createdAt])
+  @@index([reviewStatus])
+}
+
+model ResearchCard {
+  id                   String             @id @default(cuid())
+  clusterId            String
+  title                String
+  eventDefinition      String?
+  mainstreamNarrative  String?
+  ignoredVariables     String?
+  historicalAnalogy    String?
+  threeMonthProjection String?
+  oneYearProjection    String?
+  winnersLosers        String?
+  positioningJudgment  String?
+  status               ResearchCardStatus @default(DRAFT)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  cluster              SignalCluster      @relation(fields: [clusterId], references: [id], onDelete: Cascade)
+  drafts               ContentDraft[]
+
+  @@index([clusterId])
+  @@index([status])
+}
+
+model ContentDraft {
+  id             String        @id @default(cuid())
+  researchCardId String
+  platform       DraftPlatform
+  title          String?
+  content        String
+  toneVersion    String?
+  status         DraftStatus   @default(DRAFT)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  researchCard   ResearchCard  @relation(fields: [researchCardId], references: [id], onDelete: Cascade)
+  feedbackItems  ContentFeedback[]
+
+  @@index([researchCardId])
+  @@index([platform, status])
+  @@unique([researchCardId, platform])
+}
+
+model ContentFeedback {
+  id             String        @id @default(cuid())
+  contentDraftId String
+  platform       DraftPlatform
+  publishedAt    DateTime?
+  views          Int?
+  saves          Int?
+  shares         Int?
+  comments       Int?
+  qualityNotes   String?
+  createdAt      DateTime      @default(now())
+
+  contentDraft   ContentDraft  @relation(fields: [contentDraftId], references: [id], onDelete: Cascade)
+
+  @@index([contentDraftId])
+  @@index([platform, publishedAt])
+}
