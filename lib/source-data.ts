@@ -13,7 +13,7 @@ export type SourceRow = {
 const mockSources: SourceRow[] = [
   {
     id: "source-ft",
-    name: "Financial Times",
+    name: "金融时报",
     type: "WEBSITE",
     baseUrl: "https://www.ft.com",
     feedUrl: null,
@@ -31,7 +31,7 @@ const mockSources: SourceRow[] = [
   },
   {
     id: "source-reuters",
-    name: "Reuters",
+    name: "路透",
     type: "RSS",
     baseUrl: "https://www.reuters.com",
     feedUrl: "https://www.reutersagency.com/feed/",

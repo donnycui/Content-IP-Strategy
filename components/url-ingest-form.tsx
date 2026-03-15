@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { getSourceNameLabel } from "@/lib/display";
 import type { SourceRow } from "@/lib/source-data";
 
 export function UrlIngestForm({ sources }: { sources: SourceRow[] }) {
@@ -78,7 +79,7 @@ export function UrlIngestForm({ sources }: { sources: SourceRow[] }) {
           >
             {sources.map((source) => (
               <option key={source.id} value={source.id}>
-                {source.name}
+                {getSourceNameLabel(source.name)}
               </option>
             ))}
           </select>

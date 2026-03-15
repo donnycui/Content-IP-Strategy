@@ -1,13 +1,7 @@
 import { prisma } from "@/lib/prisma";
+import { getMotherThemeLabel, getSourceNameLabel, getTopicTagLabel } from "@/lib/display";
 import { mockResearchCard, mockSignals, type SignalRow } from "@/lib/mock-data";
 import { observationClusterLabels } from "@/lib/observation-clusters";
-
-const motherThemeLabels: Record<string, string> = {
-  "Technological revolutions rewrite power structures": "技术革命如何改写权力结构",
-  "Capital flows reveal era choices": "资本流向如何预示时代选择",
-  "Business models are re-evaluated in a new cycle": "商业模式如何在新周期里重估",
-  "Individuals and organizations should reposition": "个体与组织如何重新定位自己",
-};
 
 type SignalRecord = SignalRow & {
   clusterId?: string;
@@ -74,11 +68,10 @@ export async function getSignals(): Promise<SignalRecord[]> {
       return {
         id: signal.id,
         title: signal.title,
-        source: signal.source.name,
+        source: getSourceNameLabel(signal.source.name),
         publishedAt: signal.publishedAt?.toISOString() ?? signal.ingestedAt.toISOString(),
-        topicTags: signal.tags.map((tag) => tag.tag),
-        motherTheme: motherThemeLabels[signal.tags.find((tag) => tag.tagType === "MOTHER_THEME")?.tag ?? ""]
-          ?? signal.tags.find((tag) => tag.tagType === "MOTHER_THEME")?.tag
+        topicTags: signal.tags.filter((tag) => tag.tagType === "TOPIC").map((tag) => getTopicTagLabel(tag.tag)),
+        motherTheme: getMotherThemeLabel(signal.tags.find((tag) => tag.tagType === "MOTHER_THEME")?.tag)
           ?? firstCluster?.clusterTitle
           ?? "未映射",
         primaryObservationCluster: latestScore?.primaryObservationCluster

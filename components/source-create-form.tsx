@@ -88,7 +88,7 @@ export function SourceCreateForm() {
           <input
             className="w-full rounded-2xl border border-white/10 bg-black/10 px-4 py-3 text-sm text-white outline-none transition focus:border-sky-300"
             onChange={(event) => updateField("name", event.target.value)}
-            placeholder="Financial Times"
+            placeholder="例如：金融时报"
             required
             value={form.name}
           />

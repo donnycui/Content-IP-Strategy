@@ -1,4 +1,5 @@
 import type { SourceRow } from "@/lib/source-data";
+import { getSourceNameLabel } from "@/lib/display";
 
 const sourceTypeLabels: Record<string, string> = {
   RSS: "RSS",
@@ -26,7 +27,7 @@ export function SourceTable({ sources }: { sources: SourceRow[] }) {
             className="grid grid-cols-[1.5fr,0.8fr,1.4fr,1fr,0.8fr] gap-3 border-b border-white/5 px-5 py-4"
             key={source.id}
           >
-            <div className="text-sm font-medium">{source.name}</div>
+            <div className="text-sm font-medium">{getSourceNameLabel(source.name)}</div>
             <div className="text-sm text-slate-300">{sourceTypeLabels[source.type] ?? source.type}</div>
             <div className="muted text-sm">{source.feedUrl ?? source.baseUrl ?? "暂未配置 URL"}</div>
             <div className="text-sm text-slate-200">
