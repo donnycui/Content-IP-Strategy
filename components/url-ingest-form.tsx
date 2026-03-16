@@ -56,7 +56,7 @@ export function UrlIngestForm({ sources }: { sources: SourceRow[] }) {
 
   return (
     <section className="panel px-6 py-5">
-      <p className="text-xs uppercase tracking-[0.25em] text-sky-200">抓取 URL</p>
+      <p className="text-xs uppercase tracking-[0.25em] text-slate-600">抓取 URL</p>
       <form className="mt-4 grid gap-4 lg:grid-cols-[2fr,1fr,auto]" onSubmit={handleSubmit}>
         <label className="space-y-2">
           <span className="text-sm">文章 URL</span>
@@ -94,7 +94,7 @@ export function UrlIngestForm({ sources }: { sources: SourceRow[] }) {
           </button>
         </div>
       </form>
-      {feedback ? <p className="mt-3 text-sm text-emerald-300">{feedback}</p> : null}
+      {feedback ? <p className="mt-3 text-sm text-emerald-700">{feedback}</p> : null}
     </section>
   );
 }

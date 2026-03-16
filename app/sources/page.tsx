@@ -3,6 +3,8 @@ import { SourceCreateForm } from "@/components/source-create-form";
 import { SourceTable } from "@/components/source-table";
 import { getSources } from "@/lib/source-data";
 
+export const dynamic = "force-dynamic";
+
 const sourceTypes = [
   {
     label: "主流新闻与商业媒体",

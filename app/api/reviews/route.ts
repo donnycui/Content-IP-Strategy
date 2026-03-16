@@ -53,6 +53,21 @@ export async function POST(request: Request) {
 
   try {
     const result = await prisma.$transaction(async (tx) => {
+      if (payload.signalId) {
+        const signal = await tx.signal.findUnique({
+          where: {
+            id: payload.signalId,
+          },
+          select: {
+            id: true,
+          },
+        });
+
+        if (!signal) {
+          throw new Error("这条信号不存在或已失效，请刷新页面后重试。");
+        }
+      }
+
       const review = await tx.humanReview.create({
         data: {
           signalId: payload.signalId,
@@ -94,7 +109,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         ok: false,
-        error: error instanceof Error ? error.message : "Failed to create review.",
+        error: error instanceof Error ? error.message : "保存复核失败。",
       },
       { status: 500 },
     );

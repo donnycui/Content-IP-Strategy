@@ -51,10 +51,6 @@ export async function getSources(): Promise<SourceRow[]> {
       take: 100,
     });
 
-    if (!sources.length) {
-      return mockSources;
-    }
-
     return sources.map((source) => ({
       id: source.id,
       name: source.name,
@@ -65,6 +61,6 @@ export async function getSources(): Promise<SourceRow[]> {
       qualityScore: source.qualityScore,
     }));
   } catch {
-    return mockSources;
+    return [];
   }
 }

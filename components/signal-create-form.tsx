@@ -85,7 +85,7 @@ export function SignalCreateForm({ sources }: { sources: SourceRow[] }) {
 
   return (
     <section className="panel px-6 py-5">
-      <p className="text-xs uppercase tracking-[0.25em] text-sky-200">新增信号</p>
+      <p className="text-xs uppercase tracking-[0.25em] text-slate-600">新增信号</p>
       <form className="mt-4 grid gap-4 lg:grid-cols-6" onSubmit={handleSubmit}>
         <label className="space-y-2 lg:col-span-2">
           <span className="text-sm">标题</span>
@@ -165,7 +165,7 @@ export function SignalCreateForm({ sources }: { sources: SourceRow[] }) {
         </div>
       </form>
       {feedback.kind !== "idle" ? (
-        <p className={`mt-3 text-sm ${feedback.kind === "error" ? "text-rose-300" : "text-emerald-300"}`}>
+        <p className={`mt-3 text-sm ${feedback.kind === "error" ? "text-rose-600" : "text-emerald-700"}`}>
           {feedback.message}
         </p>
       ) : null}

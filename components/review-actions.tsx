@@ -73,8 +73,8 @@ export function ReviewActions({ signalId, clusterId, compact = false }: ReviewAc
         setFeedback({
           kind: "success",
           message: result.signal
-            ? `已保存复核，信号已移动到 ${result.signal.status.toLowerCase()} 状态。`
-            : `已保存复核：${reviewStatus.toLowerCase()}。`,
+            ? `已保存复核，信号已移动到 ${result.signal.status} 状态。`
+            : "已保存复核。",
         });
         router.refresh();
       } catch (error) {
@@ -102,7 +102,7 @@ export function ReviewActions({ signalId, clusterId, compact = false }: ReviewAc
           保留
         </button>
         <button
-          className={`${buttonClass} border-white/10 bg-white/5 hover:border-white/20`}
+          className={`${buttonClass} border-slate-300/70 bg-white/70 hover:border-slate-400`}
           disabled={isPending}
           onClick={() => handleAction("DEFERRED", "PARTIAL")}
           type="button"
@@ -110,7 +110,7 @@ export function ReviewActions({ signalId, clusterId, compact = false }: ReviewAc
           延后
         </button>
         <button
-          className={`${buttonClass} border-white/10 bg-white/5 hover:border-white/20`}
+          className={`${buttonClass} border-slate-300/70 bg-white/70 hover:border-slate-400`}
           disabled={isPending}
           onClick={() => handleAction("REJECTED", "REJECTED")}
           type="button"
@@ -119,7 +119,7 @@ export function ReviewActions({ signalId, clusterId, compact = false }: ReviewAc
         </button>
       </div>
       {feedback.kind !== "idle" ? (
-        <p className={feedback.kind === "error" ? "text-sm text-rose-300" : "text-sm text-emerald-300"}>
+        <p className={feedback.kind === "error" ? "text-sm text-rose-600" : "text-sm text-emerald-700"}>
           {feedback.message}
         </p>
       ) : null}

@@ -105,6 +105,12 @@ export function SignalTable({ signals }: { signals: SignalRow[] }) {
 
   const allVisibleSelected =
     visibleSignals.length > 0 && visibleSignals.every((signal) => selectedIds.includes(signal.id));
+  const activeFilterLabel = filterLabels[filter];
+  const filterHints = [
+    filter !== "ALL" ? `队列：${activeFilterLabel}` : null,
+    sourceFilter !== "ALL" ? `来源：${sourceFilter}` : null,
+    highScoreOnly ? "已启用高分过滤" : null,
+  ].filter(Boolean);
 
   function toggleSelected(signalId: string) {
     setSelectedIds((current) =>
@@ -231,7 +237,7 @@ export function SignalTable({ signals }: { signals: SignalRow[] }) {
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
           <span className="muted">
-            当前显示 {visibleSignals.length} / {signals.length} 条信号
+            当前显示 {visibleSignals.length} / {signals.length} 条信号{filterHints.length ? `（${filterHints.join("，")}）` : ""}
           </span>
           {bulkFeedback ? <span className="text-emerald-700">{bulkFeedback}</span> : null}
         </div>
@@ -273,18 +279,18 @@ export function SignalTable({ signals }: { signals: SignalRow[] }) {
                 {signal.secondaryObservationCluster ? <span className="pill">{signal.secondaryObservationCluster}</span> : null}
               </div>
             </Link>
-            <div className="space-y-2 text-sm text-slate-300">
+            <div className="space-y-2 text-sm text-slate-600">
               <p className="text-slate-700">{signal.source}</p>
               <p>{signal.publishedAt}</p>
               <p>{signal.motherTheme}</p>
             </div>
-            <div className="space-y-2 text-sm text-slate-300">
+            <div className="space-y-2 text-sm text-slate-600">
               <span
                 className={`pill ${
                   signal.priorityRecommendation === "PRIORITIZE"
-                    ? "border-emerald-300/50 text-emerald-200"
+                    ? "border-emerald-400/60 text-emerald-700"
                     : signal.priorityRecommendation === "DEPRIORITIZE"
-                      ? "border-amber-300/40 text-amber-200"
+                      ? "border-amber-400/50 text-amber-700"
                       : ""
                 }`}
               >

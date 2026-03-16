@@ -4,6 +4,8 @@ import { UrlIngestForm } from "@/components/url-ingest-form";
 import { getSignals } from "@/lib/data";
 import { getSources } from "@/lib/source-data";
 
+export const dynamic = "force-dynamic";
+
 const filters = [
   "全量信号",
   "AI 初筛高分",

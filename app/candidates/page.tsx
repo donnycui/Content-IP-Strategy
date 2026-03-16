@@ -4,6 +4,8 @@ import { ResearchCardCreateButton } from "@/components/research-card-create-butt
 import { buildCandidateClusterBrief } from "@/lib/candidate-briefs";
 import { getSignals } from "@/lib/data";
 
+export const dynamic = "force-dynamic";
+
 export default async function CandidatesPage() {
   const signals = await getSignals();
   const candidates = signals.filter((signal) => signal.status === "CANDIDATE");

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { getFalseNegativeCalibration, getReviewCalibrationRows, getReviewCalibrationSummary } from "@/lib/data";
 
+export const dynamic = "force-dynamic";
+
 const priorityLabels: Record<string, string> = {
   PRIORITIZE: "优先推进",
   WATCH: "持续观察",

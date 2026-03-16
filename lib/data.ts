@@ -56,10 +56,6 @@ export async function getSignals(): Promise<SignalRecord[]> {
       take: 50,
     });
 
-    if (!signals.length) {
-      return mockSignals;
-    }
-
     return signals.map((signal) => {
       const latestScore = signal.scores[0];
       const latestReview = signal.reviews[0];
@@ -107,7 +103,7 @@ export async function getSignals(): Promise<SignalRecord[]> {
       };
     });
   } catch {
-    return mockSignals;
+    return [];
   }
 }
 

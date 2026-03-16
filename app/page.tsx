@@ -2,6 +2,8 @@ import Link from "next/link";
 import { buildCandidateClusterBrief } from "@/lib/candidate-briefs";
 import { getDraftsByResearchCardId, getFalseNegativeCalibration, getResearchCardPreview, getSignals } from "@/lib/data";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const [signals, falseNegatives, latestResearchCard] = await Promise.all([
     getSignals(),

@@ -33,6 +33,24 @@ export async function POST(request: Request) {
 
   try {
     const result = await prisma.$transaction(async (tx) => {
+      const existingSignals = await tx.signal.findMany({
+        where: {
+          id: {
+            in: payload.signalIds,
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      const existingSignalIds = new Set(existingSignals.map((signal) => signal.id));
+      const missingSignalIds = payload.signalIds!.filter((signalId) => !existingSignalIds.has(signalId));
+
+      if (missingSignalIds.length > 0) {
+        throw new Error("有部分信号已经失效或不是线上真实数据，请刷新页面后重试。");
+      }
+
       const reviews = await Promise.all(
         payload.signalIds!.map((signalId) =>
           tx.humanReview.create({
@@ -62,9 +80,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, ...result, status: mapReviewStatusToSignalStatus(payload.reviewStatus) });
   } catch (error) {
     return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "Failed to process bulk review." },
+      { ok: false, error: error instanceof Error ? error.message : "批量复核失败。" },
       { status: 500 },
     );
   }
 }
-

@@ -96,7 +96,7 @@ export function ReviewEditor({ signalId, initialReview }: ReviewEditorProps) {
     <section className="space-y-4 rounded-2xl border border-white/10 bg-black/10 p-4">
       <div className="grid gap-3 md:grid-cols-2">
         <label className="grid gap-2 text-sm">
-          <span className="text-slate-300">复核状态</span>
+          <span className="text-slate-700">复核状态</span>
           <select
             className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2 text-sm"
             onChange={(event) => updateField("reviewStatus", event.target.value as typeof form.reviewStatus)}
@@ -109,7 +109,7 @@ export function ReviewEditor({ signalId, initialReview }: ReviewEditorProps) {
           </select>
         </label>
         <label className="grid gap-2 text-sm">
-          <span className="text-slate-300">优先级建议</span>
+          <span className="text-slate-700">优先级建议</span>
           <select
             className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2 text-sm"
             onChange={(event) =>
@@ -123,7 +123,7 @@ export function ReviewEditor({ signalId, initialReview }: ReviewEditorProps) {
           </select>
         </label>
         <label className="grid gap-2 text-sm">
-          <span className="text-slate-300">人工调整后的重要性</span>
+          <span className="text-slate-700">人工调整后的重要性</span>
           <input
             className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2 text-sm"
             onChange={(event) => updateField("adjustedImportanceScore", event.target.value)}
@@ -132,7 +132,7 @@ export function ReviewEditor({ signalId, initialReview }: ReviewEditorProps) {
           />
         </label>
         <label className="grid gap-2 text-sm">
-          <span className="text-slate-300">人工调整后的观点潜力</span>
+          <span className="text-slate-700">人工调整后的观点潜力</span>
           <input
             className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2 text-sm"
             onChange={(event) => updateField("adjustedViewpointScore", event.target.value)}
@@ -141,7 +141,7 @@ export function ReviewEditor({ signalId, initialReview }: ReviewEditorProps) {
           />
         </label>
         <label className="grid gap-2 text-sm">
-          <span className="text-slate-300">人工调整后的共识强度</span>
+          <span className="text-slate-700">人工调整后的共识强度</span>
           <input
             className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2 text-sm"
             onChange={(event) => updateField("adjustedConsensusStrength", event.target.value)}
@@ -150,7 +150,7 @@ export function ReviewEditor({ signalId, initialReview }: ReviewEditorProps) {
           />
         </label>
         <label className="grid gap-2 text-sm">
-          <span className="text-slate-300">人工调整后的公司日常噪音</span>
+          <span className="text-slate-700">人工调整后的公司日常噪音</span>
           <input
             className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2 text-sm"
             onChange={(event) => updateField("adjustedCompanyRoutineScore", event.target.value)}
@@ -159,7 +159,7 @@ export function ReviewEditor({ signalId, initialReview }: ReviewEditorProps) {
           />
         </label>
         <label className="grid gap-2 text-sm md:col-span-2">
-          <span className="text-slate-300">理由接受度</span>
+          <span className="text-slate-700">理由接受度</span>
           <select
             className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2 text-sm"
             onChange={(event) => updateField("reasoningAcceptance", event.target.value as typeof form.reasoningAcceptance)}
@@ -171,7 +171,7 @@ export function ReviewEditor({ signalId, initialReview }: ReviewEditorProps) {
           </select>
         </label>
         <label className="grid gap-2 text-sm md:col-span-2">
-          <span className="text-slate-300">复核备注</span>
+          <span className="text-slate-700">复核备注</span>
           <textarea
             className="min-h-24 rounded-2xl border border-white/10 bg-black/20 px-3 py-2 text-sm"
             onChange={(event) => updateField("reviewNote", event.target.value)}
@@ -180,7 +180,7 @@ export function ReviewEditor({ signalId, initialReview }: ReviewEditorProps) {
           />
         </label>
         <label className="grid gap-2 text-sm md:col-span-2">
-          <span className="text-slate-300">我的切入角度</span>
+          <span className="text-slate-700">我的切入角度</span>
           <textarea
             className="min-h-24 rounded-2xl border border-white/10 bg-black/20 px-3 py-2 text-sm"
             onChange={(event) => updateField("myAngle", event.target.value)}
@@ -198,8 +198,8 @@ export function ReviewEditor({ signalId, initialReview }: ReviewEditorProps) {
         >
           保存人工复核
         </button>
-        {feedback ? <span className="text-sm text-emerald-300">{feedback}</span> : null}
-        {error ? <span className="text-sm text-rose-300">{error}</span> : null}
+        {feedback ? <span className="text-sm text-emerald-700">{feedback}</span> : null}
+        {error ? <span className="text-sm text-rose-600">{error}</span> : null}
       </div>
     </section>
   );

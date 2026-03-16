@@ -1615,6 +1615,13 @@ If implementation speed becomes the priority, the first simplifications should b
 - shifted the operator UI away from the original dark palette into a lighter warm-paper theme to reduce visual fatigue during long review sessions
 - softened the global background, card surfaces, pills, and input controls while preserving the existing workflow structure
 - updated the Today workbench, candidate pool, research page, draft page, and signal feed controls to use darker text on lighter surfaces for clearer hierarchy
+- added the first real source-expansion batch into Supabase instead of relying on the original three-source seed
+- expanded the source set with Reuters RSS, TechCrunch RSS, SEC Press RSS, BIS feeds, ECB feeds, and manual high-value websites including FT and The Information
+- established a first-pass split between auto-ingest RSS sources and high-value manual URL sources for deeper reporting
+- fixed a production-facing data-boundary issue where statically built pages could fall back to mock signals while runtime review APIs were writing against the real Supabase database
+- forced the main operator pages to render dynamically and stopped returning mock signals or sources when a real database is configured but temporarily unreachable
+- added pre-write signal existence checks to single and bulk review APIs so stale or invalid signal ids now fail with explicit Chinese errors instead of raw Prisma foreign-key failures
+- tightened several overly light secondary text surfaces in the signal feed and editor forms to improve scan readability
 
 ## MVP Status
 
