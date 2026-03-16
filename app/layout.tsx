@@ -37,7 +37,7 @@ export default function RootLayout({
               </div>
               <nav className="flex flex-wrap gap-2">
                 {navItems.map((item) => (
-                  <Link className="pill transition hover:border-sky-300 hover:text-white" href={item.href} key={item.href}>
+                  <Link className="pill transition hover:border-sky-400 hover:text-slate-800" href={item.href} key={item.href}>
                     {item.label}
                   </Link>
                 ))}

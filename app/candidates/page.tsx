@@ -45,10 +45,10 @@ export default async function CandidatesPage() {
               </div>
               <div className="subpanel px-5 py-4">
                 <p className="text-xs uppercase tracking-[0.22em] text-slate-400">选题摘要</p>
-                <div className="mt-3 space-y-2 text-sm leading-6 text-slate-200">
+                <div className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
                   <p>{brief.topicLine}</p>
                   <p>{brief.timingLine}</p>
-                  <p className="text-sky-100">{brief.actionLine}</p>
+                  <p className="text-sky-800">{brief.actionLine}</p>
                 </div>
               </div>
               <div className="grid gap-5 lg:grid-cols-2">
@@ -67,7 +67,7 @@ export default async function CandidatesPage() {
                       <p className="muted mt-2 text-sm leading-6">{signal.reasoningSummary}</p>
                     </div>
                     <div className="mt-4 flex flex-wrap gap-3">
-                      <Link className="pill hover:border-sky-300 hover:text-white" href={`/signals/${signal.id}`}>
+                      <Link className="pill hover:border-sky-400 hover:text-slate-800" href={`/signals/${signal.id}`}>
                         复核信号
                       </Link>
                       <ResearchCardCreateButton signalId={signal.id} />
@@ -89,7 +89,7 @@ export default async function CandidatesPage() {
             先去信号流保留最强的条目，再把它们推进到今天的工作集。
           </p>
           <div className="mt-4">
-            <Link className="pill hover:border-sky-300 hover:text-white" href="/signals">
+            <Link className="pill hover:border-sky-400 hover:text-slate-800" href="/signals">
               打开信号流
             </Link>
           </div>

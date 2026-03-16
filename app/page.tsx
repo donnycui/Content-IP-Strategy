@@ -67,7 +67,7 @@ export default async function HomePage() {
           <div className="mt-4 grid gap-3">
             {newSignals.length ? (
               newSignals.map((signal) => (
-                <Link className="subpanel px-4 py-4 transition hover:border-white/20" href={`/signals/${signal.id}`} key={signal.id}>
+                <Link className="subpanel px-4 py-4 transition hover:border-slate-300/80" href={`/signals/${signal.id}`} key={signal.id}>
                   <div className="flex items-start justify-between gap-3">
                     <p className="text-sm font-medium leading-6">{signal.title}</p>
                     <span className="pill shrink-0">{signal.primaryObservationCluster}</span>
@@ -125,10 +125,10 @@ export default async function HomePage() {
                     <p className="text-lg font-semibold">{cluster}</p>
                     <span className="pill">{clusterSignals.length}</span>
                   </div>
-                  <div className="mt-3 space-y-2 text-sm leading-6 text-slate-200">
+                  <div className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
                     <p>{brief.topicLine}</p>
                     <p>{brief.timingLine}</p>
-                    <p className="text-sky-100">{brief.actionLine}</p>
+                    <p className="text-sky-800">{brief.actionLine}</p>
                   </div>
                 </div>
               );

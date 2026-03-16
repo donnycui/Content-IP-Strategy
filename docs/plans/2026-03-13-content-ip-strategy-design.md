@@ -1612,6 +1612,9 @@ If implementation speed becomes the priority, the first simplifications should b
 - added a reverse mapping layer so APIs can accept either the internal observation-cluster key or the Chinese display label
 - added a dedicated display-label layer to translate remaining English-facing source names, mother-theme labels, and topic tags without changing stored canonical values
 - cleaned the remaining mixed-language UI surfaces in signals, sources, and mock fallback data
+- shifted the operator UI away from the original dark palette into a lighter warm-paper theme to reduce visual fatigue during long review sessions
+- softened the global background, card surfaces, pills, and input controls while preserving the existing workflow structure
+- updated the Today workbench, candidate pool, research page, draft page, and signal feed controls to use darker text on lighter surfaces for clearer hierarchy
 
 ## MVP Status
 

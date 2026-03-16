@@ -161,12 +161,12 @@ export function SignalTable({ signals }: { signals: SignalRow[] }) {
 
   return (
     <section className="panel overflow-hidden">
-      <div className="border-b border-white/10 px-5 py-4">
+      <div className="border-b border-slate-200 px-5 py-4">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap gap-2">
             {(["ALL", "NEW", "REVIEWED", "CANDIDATE", "DEFERRED"] as const).map((key) => (
               <button
-                className={`pill transition ${filter === key ? "border-sky-300 text-white" : "hover:border-white/30 hover:text-white"}`}
+                className={`pill transition ${filter === key ? "border-sky-400 text-slate-800" : "hover:border-slate-300 hover:text-slate-800"}`}
                 key={key}
                 onClick={() => setFilter(key)}
                 type="button"
@@ -197,14 +197,14 @@ export function SignalTable({ signals }: { signals: SignalRow[] }) {
               <option value="RECENT">排序：最近时间</option>
             </select>
             <button
-              className={`pill transition ${highScoreOnly ? "border-sky-300 text-white" : "hover:border-white/30 hover:text-white"}`}
+              className={`pill transition ${highScoreOnly ? "border-sky-400 text-slate-800" : "hover:border-slate-300 hover:text-slate-800"}`}
               onClick={() => setHighScoreOnly((current) => !current)}
               type="button"
             >
               {highScoreOnly ? "仅看高分" : "显示全部"}
             </button>
             <button
-              className="pill transition hover:border-sky-300 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="pill transition hover:border-sky-400 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={isPending || !selectedIds.length}
               onClick={() => runBulkAction("KEPT", "ACCEPTED")}
               type="button"
@@ -212,7 +212,7 @@ export function SignalTable({ signals }: { signals: SignalRow[] }) {
               批量保留
             </button>
             <button
-              className="pill transition hover:border-white/30 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="pill transition hover:border-slate-300 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={isPending || !selectedIds.length}
               onClick={() => runBulkAction("DEFERRED", "PARTIAL")}
               type="button"
@@ -220,7 +220,7 @@ export function SignalTable({ signals }: { signals: SignalRow[] }) {
               批量延后
             </button>
             <button
-              className="pill transition hover:border-white/30 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="pill transition hover:border-slate-300 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={isPending || !selectedIds.length}
               onClick={() => runBulkAction("REJECTED", "REJECTED")}
               type="button"
@@ -233,10 +233,10 @@ export function SignalTable({ signals }: { signals: SignalRow[] }) {
           <span className="muted">
             当前显示 {visibleSignals.length} / {signals.length} 条信号
           </span>
-          {bulkFeedback ? <span className="text-emerald-300">{bulkFeedback}</span> : null}
+          {bulkFeedback ? <span className="text-emerald-700">{bulkFeedback}</span> : null}
         </div>
       </div>
-      <div className="grid grid-cols-[0.4fr,2.6fr,1.25fr,1.1fr,1fr,1.1fr] gap-4 border-b border-white/10 px-5 py-3 text-xs uppercase tracking-[0.22em] text-slate-400">
+      <div className="grid grid-cols-[0.4fr,2.6fr,1.25fr,1.1fr,1fr,1.1fr] gap-4 border-b border-slate-200 px-5 py-3 text-xs uppercase tracking-[0.22em] text-slate-500">
         <button className="text-left" onClick={toggleAllVisible} type="button">
           {allVisibleSelected ? "清空" : "全选"}
         </button>
@@ -249,13 +249,13 @@ export function SignalTable({ signals }: { signals: SignalRow[] }) {
       <div>
         {visibleSignals.map((signal) => (
           <div
-            className="grid grid-cols-[0.4fr,2.6fr,1.25fr,1.1fr,1fr,1.1fr] gap-4 border-b border-white/5 px-5 py-4 transition hover:bg-white/5"
+            className="grid grid-cols-[0.4fr,2.6fr,1.25fr,1.1fr,1fr,1.1fr] gap-4 border-b border-slate-200/70 px-5 py-4 transition hover:bg-stone-50"
             key={signal.id}
           >
             <label className="flex items-start pt-1">
               <input
                 checked={selectedIds.includes(signal.id)}
-                className="h-4 w-4 rounded border-white/20 bg-black/20"
+                className="h-4 w-4 rounded border-slate-300 bg-stone-50"
                 onChange={() => toggleSelected(signal.id)}
                 type="checkbox"
               />
@@ -274,7 +274,7 @@ export function SignalTable({ signals }: { signals: SignalRow[] }) {
               </div>
             </Link>
             <div className="space-y-2 text-sm text-slate-300">
-              <p className="text-slate-200">{signal.source}</p>
+              <p className="text-slate-700">{signal.source}</p>
               <p>{signal.publishedAt}</p>
               <p>{signal.motherTheme}</p>
             </div>

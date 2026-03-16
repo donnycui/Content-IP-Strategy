@@ -33,26 +33,26 @@ export default async function ResearchCardPage({ params }: ResearchCardPageProps
   return (
     <main className="space-y-5">
       <section className="panel px-6 py-5">
-        <p className="text-xs uppercase tracking-[0.25em] text-sky-200">研究卡</p>
+        <p className="text-xs uppercase tracking-[0.25em] text-sky-700">研究卡</p>
         <h2 className="mt-2 text-3xl font-semibold">{mockResearchCard.title}</h2>
         <p className="muted mt-2 max-w-3xl text-sm">
           这里是信号簇从“新闻”转成“结构化判断资产”的地方，并最终沉淀出明确的站位结论。
         </p>
         {"clusterTitle" in mockResearchCard ? (
-          <div className="mt-5 space-y-4 rounded-3xl border border-white/10 bg-black/10 px-5 py-5">
+          <div className="mt-5 space-y-4 rounded-3xl border border-slate-300/60 bg-stone-50/80 px-5 py-5">
             <div className="flex flex-wrap items-center gap-3">
               <span className="pill">{mockResearchCard.clusterTitle}</span>
               <span className="pill">{relatedSignals.length} 条支撑信号</span>
             </div>
             <div className="space-y-2">
-              <p className="text-xs uppercase tracking-[0.22em] text-slate-400">观察簇上下文</p>
-              <p className="text-sm leading-6 text-slate-200">
+              <p className="text-xs uppercase tracking-[0.22em] text-slate-500">观察簇上下文</p>
+              <p className="text-sm leading-6 text-slate-700">
                 {mockResearchCard.clusterSummary ?? "这张研究卡不是围绕单条新闻展开，而是锚定在一个观察簇之上。"}
               </p>
             </div>
             <div className="grid gap-3 lg:grid-cols-2">
               {relatedSignals.map((signal) => (
-                <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-4" key={signal.id}>
+                <div className="rounded-2xl border border-slate-300/60 bg-white/70 px-4 py-4" key={signal.id}>
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-medium">{signal.title}</p>
                     <span className="pill">重要性 {signal.importanceScore.toFixed(1)}</span>
@@ -83,12 +83,12 @@ export default async function ResearchCardPage({ params }: ResearchCardPageProps
         />
         <aside className="space-y-5">
           <div className="panel space-y-4 px-6 py-5">
-            <p className="text-xs uppercase tracking-[0.25em] text-sky-200">下一步动作</p>
+            <p className="text-xs uppercase tracking-[0.25em] text-sky-700">下一步动作</p>
             <p className="muted text-sm leading-6">
               当你确认这张研究卡的站位判断后，就应该把它转成文章、视频和短帖草稿。
             </p>
             <DraftGenerateButton researchCardId={mockResearchCard.id} />
-            <Link className="pill hover:border-sky-300 hover:text-white" href={`/drafts/${mockResearchCard.id}`}>
+            <Link className="pill hover:border-sky-400 hover:text-slate-800" href={`/drafts/${mockResearchCard.id}`}>
               打开草稿工作区
             </Link>
           </div>
