@@ -1639,6 +1639,11 @@ If implementation speed becomes the priority, the first simplifications should b
 - added recommendation generation that turns active topics into concrete topic suggestions with `why now`, `why you`, priority, and format recommendation
 - introduced explicit topic-decision actions (`保留 / 延后 / 忽略`) so the platform now records recommendation-level feedback instead of only signal-level review feedback
 - renamed the main navigation language from `候选池` toward `选题台` while preserving the existing route so the product can evolve without breaking links
+- added the first working `进化建议` page and corresponding profile-update suggestion APIs
+- started generating explicit creator-profile evolution suggestions from review calibration, topic recommendation decisions, directions, and topic accumulation
+- implemented a confirm/reject workflow where AI suggestions remain explicit until the creator accepts them
+- wired accepted suggestions back into `CreatorProfile` for the first three mapped fields: core themes, content boundaries, and current stage
+- completed the first full Phase 1 identity loop: `画像 -> 方向 -> 主题 -> 选题 -> 进化建议`
 
 ## MVP Status
 

@@ -11,6 +11,7 @@ const navItems = [
   { href: "/", label: "今日工作台" },
   { href: "/profile/extract", label: "IP 提炼" },
   { href: "/profile", label: "创作者画像" },
+  { href: "/evolution", label: "进化建议" },
   { href: "/directions", label: "方向台" },
   { href: "/topics", label: "主题台" },
   { href: "/signals", label: "信号流" },
