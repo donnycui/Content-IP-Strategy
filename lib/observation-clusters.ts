@@ -15,6 +15,21 @@ export const observationClusterLabels = {
 
 export type ObservationClusterKey = keyof typeof observationClusterLabels;
 
+export const observationClusterThemeLabels: Record<ObservationClusterKey, string> = {
+  ai_infrastructure_power: "技术革命如何改写权力结构",
+  platform_entry_shift: "技术革命如何改写权力结构",
+  strategic_supply_control: "技术革命如何改写权力结构",
+  compute_capex_cycle: "资本流向如何预示时代选择",
+  policy_capital_allocation: "资本流向如何预示时代选择",
+  risk_repricing_cycle: "资本流向如何预示时代选择",
+  profit_pool_shift: "商业模式如何在新周期里重估",
+  distribution_model_break: "商业模式如何在新周期里重估",
+  ai_revenue_rebuild: "商业模式如何在新周期里重估",
+  org_efficiency_reorg: "个体与组织如何重新定位自己",
+  individual_capability_shift: "个体与组织如何重新定位自己",
+  sme_positioning_shift: "个体与组织如何重新定位自己",
+};
+
 export const observationClusterLabelToKey = Object.fromEntries(
   Object.entries(observationClusterLabels).map(([key, label]) => [label, key]),
 ) as Record<(typeof observationClusterLabels)[ObservationClusterKey], ObservationClusterKey>;
@@ -34,4 +49,9 @@ export function resolveObservationClusterKey(input?: string | null): Observation
 export function getObservationClusterLabel(input?: string | null): string | null {
   const key = resolveObservationClusterKey(input);
   return key ? observationClusterLabels[key] : null;
+}
+
+export function getObservationClusterThemeLabel(input?: string | null): string | null {
+  const key = resolveObservationClusterKey(input);
+  return key ? observationClusterThemeLabels[key] : null;
 }

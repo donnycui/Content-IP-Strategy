@@ -1,14 +1,16 @@
 import Link from "next/link";
 import { buildCandidateClusterBrief } from "@/lib/candidate-briefs";
 import { getDraftsByResearchCardId, getFalseNegativeCalibration, getResearchCardPreview, getSignals } from "@/lib/data";
+import { getTopics } from "@/lib/topic-data";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [signals, falseNegatives, latestResearchCard] = await Promise.all([
+  const [signals, falseNegatives, latestResearchCard, topics] = await Promise.all([
     getSignals(),
     getFalseNegativeCalibration(),
     getResearchCardPreview(),
+    getTopics(),
   ]);
 
   const newSignals = signals.filter((signal) => signal.status === "NEW").slice(0, 5);
@@ -18,9 +20,20 @@ export default async function HomePage() {
     accumulator[key] = accumulator[key] ? [...accumulator[key], signal] : [signal];
     return accumulator;
   }, {});
-  const todayThemes = Object.entries(groupedCandidates)
+  const fallbackThemes = Object.entries(groupedCandidates)
     .sort((left, right) => right[1].length - left[1].length)
-    .slice(0, 3);
+    .slice(0, 3)
+    .map(([cluster, clusterSignals]) => ({
+      id: cluster,
+      title: cluster,
+      summary: [
+        buildCandidateClusterBrief(cluster, clusterSignals).topicLine,
+        buildCandidateClusterBrief(cluster, clusterSignals).timingLine,
+      ].join(" "),
+      signalCount: clusterSignals.length,
+      primaryObservationCluster: cluster,
+    }));
+  const todayThemes = (topics.length ? topics.slice(0, 3) : fallbackThemes);
 
   const latestResearchCardId = "id" in latestResearchCard ? latestResearchCard.id : null;
   const latestDrafts = latestResearchCardId ? await getDraftsByResearchCardId(latestResearchCardId) : [];
@@ -108,35 +121,35 @@ export default async function HomePage() {
 
       <section className="panel px-6 py-5">
         <div className="flex items-start justify-between gap-3">
-          <div className="space-y-1">
-            <p className="metric-label">今日主题</p>
-            <h3 className="text-2xl font-semibold">正在升温的观察簇</h3>
-          </div>
-          <Link className="action-link" href="/candidates">
-            进入候选池
+            <div className="space-y-1">
+              <p className="metric-label">今日主题</p>
+              <h3 className="text-2xl font-semibold">正在升温的主题线</h3>
+            </div>
+          <Link className="action-link" href="/topics">
+            进入主题台
           </Link>
         </div>
         <div className="mt-4 grid gap-4 xl:grid-cols-3">
           {todayThemes.length ? (
-            todayThemes.map(([cluster, clusterSignals]) => {
-              const brief = buildCandidateClusterBrief(cluster, clusterSignals);
-
+            todayThemes.map((topic) => {
               return (
-                <div className="subpanel px-5 py-5" key={cluster}>
+                <div className="subpanel px-5 py-5" key={topic.id}>
                   <div className="flex items-center justify-between gap-3">
-                    <p className="text-lg font-semibold">{cluster}</p>
-                    <span className="pill">{clusterSignals.length}</span>
+                    <p className="text-lg font-semibold">{topic.title}</p>
+                    <span className="pill">{topic.signalCount}</span>
                   </div>
                   <div className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
-                    <p>{brief.topicLine}</p>
-                    <p>{brief.timingLine}</p>
-                    <p className="text-sky-800">{brief.actionLine}</p>
+                    <p>{topic.summary}</p>
+                    <p className="text-sky-800">先围绕这条主题线组织选题，再决定是否推进成研究卡。</p>
+                  </div>
+                  <div className="mt-3">
+                    <span className="pill">{topic.primaryObservationCluster}</span>
                   </div>
                 </div>
               );
             })
           ) : (
-            <p className="muted text-sm">当前还没有候选观察簇。</p>
+            <p className="muted text-sm">当前还没有候选主题线。</p>
           )}
         </div>
       </section>

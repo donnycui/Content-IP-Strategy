@@ -1629,6 +1629,11 @@ If implementation speed becomes the priority, the first simplifications should b
 - added the first working `方向台` page together with direction-generation APIs and data helpers
 - introduced a minimal direction-generation loop that derives 2-to-4-week strategic directions from the active creator profile plus current signals
 - added a creator-profile-aware navigation path so the system now has visible entry points for `IP 提炼`, `创作者画像`, and `方向台`
+- added the first working `主题台` page and a persistent `Topic` generation loop on top of the new Phase 1 models
+- started mapping signal-level observation clusters into product-facing topics instead of leaving them as scoring metadata only
+- attached generated topics to the current directions layer and grouped the Topic Desk by direction so topics become durable strategic lines rather than loose clusters
+- introduced topic-generation APIs and a refresh action that archives older active topics and rebuilds current ones from the active creator profile, directions, and live signals
+- updated the Today workbench to surface rising topics as `主题线` and link operators into the new Topic Desk instead of treating observation clusters as the only organizational frame
 
 ## MVP Status
 
