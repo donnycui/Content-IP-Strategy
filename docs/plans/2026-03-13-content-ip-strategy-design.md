@@ -1622,6 +1622,10 @@ If implementation speed becomes the priority, the first simplifications should b
 - forced the main operator pages to render dynamically and stopped returning mock signals or sources when a real database is configured but temporarily unreachable
 - added pre-write signal existence checks to single and bulk review APIs so stale or invalid signal ids now fail with explicit Chinese errors instead of raw Prisma foreign-key failures
 - tightened several overly light secondary text surfaces in the signal feed and editor forms to improve scan readability
+- added the first Creator OS foundation schema wave: `CreatorProfile`, `Direction`, `Topic`, `TopicCandidate`, and `ProfileUpdateSuggestion`
+- generated and stored the corresponding Phase 1 migration SQL and synced the active database schema to the new models
+- introduced a working `IP 提炼` page and `创作者画像` page with live API handlers for extracting and editing a creator profile
+- added a minimal creator-profile extraction service with LLM-first and fallback behavior so Phase 1 can start from identity before directions and topics
 
 ## MVP Status
 

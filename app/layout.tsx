@@ -9,6 +9,8 @@ export const metadata: Metadata = {
 
 const navItems = [
   { href: "/", label: "今日工作台" },
+  { href: "/profile/extract", label: "IP 提炼" },
+  { href: "/profile", label: "创作者画像" },
   { href: "/signals", label: "信号流" },
   { href: "/candidates", label: "候选池" },
   { href: "/reviews", label: "校准台" },

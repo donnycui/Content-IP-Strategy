@@ -95,6 +95,162 @@ enum TagType {
   MOTHER_THEME
 }
 
+enum CreatorStage {
+  EXPLORING
+  EMERGING
+  SCALING
+  ESTABLISHED
+}
+
+enum DirectionPriority {
+  PRIMARY
+  SECONDARY
+  WATCH
+}
+
+enum DirectionStatus {
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum TopicStatus {
+  ACTIVE
+  WATCHING
+  ARCHIVED
+}
+
+enum TopicCandidateStatus {
+  NEW
+  KEPT
+  DEFERRED
+  REJECTED
+}
+
+enum TopicFormatRecommendation {
+  SINGLE_POST
+  RECURRING_TRACK
+  SERIES_ENTRY
+}
+
+enum ProfileUpdateSuggestionType {
+  POSITIONING
+  PERSONA
+  AUDIENCE
+  CORE_THEME
+  VOICE_STYLE
+  GROWTH_GOAL
+  CONTENT_BOUNDARY
+  CURRENT_STAGE
+  DIRECTION_WEIGHT
+}
+
+enum SuggestionStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model CreatorProfile {
+  id                String                    @id @default(cuid())
+  name              String
+  positioning       String?
+  persona           String?
+  audience          String?
+  coreThemes        String?
+  voiceStyle        String?
+  growthGoal        String?
+  contentBoundaries String?
+  currentStage      CreatorStage             @default(EXPLORING)
+  isActive          Boolean                  @default(true)
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+
+  directions        Direction[]
+  topics            Topic[]
+  profileUpdates    ProfileUpdateSuggestion[]
+
+  @@index([isActive, updatedAt])
+}
+
+model Direction {
+  id               String            @id @default(cuid())
+  creatorProfileId String
+  title            String
+  whyNow           String?
+  fitReason        String?
+  priority         DirectionPriority @default(SECONDARY)
+  status           DirectionStatus   @default(ACTIVE)
+  timeHorizon      String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  creatorProfile   CreatorProfile    @relation(fields: [creatorProfileId], references: [id], onDelete: Cascade)
+  topics           Topic[]
+
+  @@index([creatorProfileId, status, priority])
+}
+
+model Topic {
+  id                          String                     @id @default(cuid())
+  creatorProfileId            String
+  directionId                 String?
+  title                       String
+  summary                     String?
+  status                      TopicStatus                @default(ACTIVE)
+  heatScore                   Float?
+  signalCount                 Int                        @default(0)
+  primaryObservationCluster   ObservationCluster?
+  secondaryObservationCluster ObservationCluster?
+  createdAt                   DateTime                   @default(now())
+  updatedAt                   DateTime                   @updatedAt
+
+  creatorProfile              CreatorProfile             @relation(fields: [creatorProfileId], references: [id], onDelete: Cascade)
+  direction                   Direction?                 @relation(fields: [directionId], references: [id], onDelete: SetNull)
+  candidates                  TopicCandidate[]
+
+  @@index([creatorProfileId, status, updatedAt])
+  @@index([directionId, heatScore])
+}
+
+model TopicCandidate {
+  id                   String                    @id @default(cuid())
+  topicId              String
+  anchorSignalId       String?
+  title                String
+  whyNow               String?
+  fitReason            String?
+  formatRecommendation TopicFormatRecommendation @default(SINGLE_POST)
+  priority             DirectionPriority         @default(SECONDARY)
+  status               TopicCandidateStatus      @default(NEW)
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
+
+  topic                Topic                      @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  anchorSignal         Signal?                    @relation(fields: [anchorSignalId], references: [id], onDelete: SetNull)
+
+  @@index([topicId, status, updatedAt])
+  @@index([anchorSignalId])
+}
+
+model ProfileUpdateSuggestion {
+  id               String                      @id @default(cuid())
+  creatorProfileId String
+  type             ProfileUpdateSuggestionType
+  beforeValue      String?
+  suggestedValue   String
+  reason           String
+  confidence       Float?
+  status           SuggestionStatus            @default(PENDING)
+  createdAt        DateTime                    @default(now())
+  updatedAt        DateTime                    @updatedAt
+
+  creatorProfile   CreatorProfile              @relation(fields: [creatorProfileId], references: [id], onDelete: Cascade)
+
+  @@index([creatorProfileId, status, createdAt])
+  @@index([type, status])
+}
+
 model Source {
   id           String   @id @default(cuid())
   name         String
@@ -130,6 +286,7 @@ model Signal {
   clusterItems SignalClusterItem[]
   scores       SignalScore[]
   reviews      HumanReview[]
+  topicCandidates TopicCandidate[]
 
   @@index([sourceId, publishedAt])
   @@index([status])
