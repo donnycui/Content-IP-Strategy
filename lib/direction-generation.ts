@@ -1,0 +1,60 @@
+import { getSignals } from "@/lib/data";
+import type { CreatorProfileRow } from "@/lib/profile-data";
+
+type DraftDirection = {
+  title: string;
+  whyNow: string;
+  fitReason: string;
+  priority: "PRIMARY" | "SECONDARY" | "WATCH";
+  timeHorizon: string;
+};
+
+function summarizeClusterSignals(cluster: string, count: number) {
+  return `${cluster} 这条主题线最近已累计 ${count} 条高相关信号，说明它已经具备持续产出条件。`;
+}
+
+export async function generateDirectionsForProfile(profile: CreatorProfileRow): Promise<DraftDirection[]> {
+  const signals = await getSignals();
+  const relevantSignals = signals.filter((signal) => signal.status === "NEW" || signal.status === "CANDIDATE" || signal.status === "REVIEWED");
+
+  const grouped = relevantSignals.reduce<Record<string, number>>((accumulator, signal) => {
+    const key = signal.primaryObservationCluster;
+    accumulator[key] = (accumulator[key] ?? 0) + 1;
+    return accumulator;
+  }, {});
+
+  const rankedClusters = Object.entries(grouped)
+    .sort((left, right) => right[1] - left[1])
+    .slice(0, 3);
+
+  if (!rankedClusters.length) {
+    return [
+      {
+        title: "先围绕当前定位建立第一条主方向",
+        whyNow: "当前系统里的信号积累还不够密，但你已经完成画像定义，适合先把主线定下来。",
+        fitReason: `你的定位是“${profile.positioning}”，因此第一步应先确立最核心的长期方向。`,
+        priority: "PRIMARY",
+        timeHorizon: "未来 2-4 周",
+      },
+    ];
+  }
+
+  return rankedClusters.map(([cluster, count], index) => ({
+    title:
+      index === 0
+        ? `把“${cluster}”升级成主方向`
+        : index === 1
+          ? `让“${cluster}”成为第二方向`
+          : `把“${cluster}”保留为观察方向`,
+    whyNow: summarizeClusterSignals(cluster, count),
+    fitReason:
+      index === 0
+        ? `这条方向和你的定位“${profile.positioning}”最贴合，也最容易形成清晰的人设与方法论。`
+        : index === 1
+          ? `它能补足你当前内容系统的第二解释维度，让选题不只围绕一个母命题旋转。`
+          : "保留观察方向有助于平台判断你未来的画像变化，并为后续主题台预留增长空间。",
+    priority: index === 0 ? "PRIMARY" : index === 1 ? "SECONDARY" : "WATCH",
+    timeHorizon: "未来 2-4 周",
+  }));
+}
+

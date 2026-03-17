@@ -1626,6 +1626,9 @@ If implementation speed becomes the priority, the first simplifications should b
 - generated and stored the corresponding Phase 1 migration SQL and synced the active database schema to the new models
 - introduced a working `IP 提炼` page and `创作者画像` page with live API handlers for extracting and editing a creator profile
 - added a minimal creator-profile extraction service with LLM-first and fallback behavior so Phase 1 can start from identity before directions and topics
+- added the first working `方向台` page together with direction-generation APIs and data helpers
+- introduced a minimal direction-generation loop that derives 2-to-4-week strategic directions from the active creator profile plus current signals
+- added a creator-profile-aware navigation path so the system now has visible entry points for `IP 提炼`, `创作者画像`, and `方向台`
 
 ## MVP Status
 
