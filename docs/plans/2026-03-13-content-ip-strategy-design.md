@@ -1644,6 +1644,10 @@ If implementation speed becomes the priority, the first simplifications should b
 - implemented a confirm/reject workflow where AI suggestions remain explicit until the creator accepts them
 - wired accepted suggestions back into `CreatorProfile` for the first three mapped fields: core themes, content boundaries, and current stage
 - completed the first full Phase 1 identity loop: `画像 -> 方向 -> 主题 -> 选题 -> 进化建议`
+- refactored `/` into a true `Profile-aware Today` dashboard instead of a generic editorial summary page
+- made Today lead with creator identity, active directions, rising topics, best topic recommendations, and pending evolution suggestions before dropping into signal-level execution
+- introduced a dedicated Today composition layer so the home workspace now aggregates `CreatorProfile`, `Direction`, `Topic`, `TopicCandidate`, `ProfileUpdateSuggestion`, signals, and downstream draft state in one place
+- repositioned signals and output as execution-layer modules under the strategy layer, completing the first full creator-operating-system homepage flow
 
 ## MVP Status
 
