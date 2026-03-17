@@ -14,7 +14,7 @@ const navItems = [
   { href: "/directions", label: "方向台" },
   { href: "/topics", label: "主题台" },
   { href: "/signals", label: "信号流" },
-  { href: "/candidates", label: "候选池" },
+  { href: "/candidates", label: "选题台" },
   { href: "/reviews", label: "校准台" },
   { href: "/sources", label: "信号源" },
 ];

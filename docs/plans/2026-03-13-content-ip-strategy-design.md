@@ -1634,6 +1634,11 @@ If implementation speed becomes the priority, the first simplifications should b
 - attached generated topics to the current directions layer and grouped the Topic Desk by direction so topics become durable strategic lines rather than loose clusters
 - introduced topic-generation APIs and a refresh action that archives older active topics and rebuilds current ones from the active creator profile, directions, and live signals
 - updated the Today workbench to surface rising topics as `主题线` and link operators into the new Topic Desk instead of treating observation clusters as the only organizational frame
+- upgraded `/candidates` from a raw candidate bucket into the first working `选题台`
+- activated the existing `TopicCandidate` model with real generation logic, persistence, and API routes
+- added recommendation generation that turns active topics into concrete topic suggestions with `why now`, `why you`, priority, and format recommendation
+- introduced explicit topic-decision actions (`保留 / 延后 / 忽略`) so the platform now records recommendation-level feedback instead of only signal-level review feedback
+- renamed the main navigation language from `候选池` toward `选题台` while preserving the existing route so the product can evolve without breaking links
 
 ## MVP Status
 
