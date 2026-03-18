@@ -1657,6 +1657,10 @@ If implementation speed becomes the priority, the first simplifications should b
 - normalized profile, direction, topic, topic-candidate, and profile-update API payloads around a consistent `ok / data / error` contract shape
 - updated the current web client buttons and editors to consume the typed response contracts instead of route-specific ad hoc fields
 - verified that the contract normalization still builds cleanly on top of the new service-layer extraction
+- defined the first mini-program channel boundary as a light-action adapter instead of a second full workspace
+- added a mini-program action catalog for today summary, directions, topic recommendations, profile-update responses, and quick-note capture
+- mapped the first mini-program action set directly onto existing service-layer capabilities to avoid creating mobile-specific business logic
+- documented the mini-program scope as `Web-primary, mobile-lightweight`, with heavy research and editing still reserved for the main web workbench
 
 ## MVP Status
 
