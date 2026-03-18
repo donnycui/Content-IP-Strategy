@@ -17,7 +17,7 @@
 - Modify: `docs/plans/2026-03-13-content-ip-strategy-design.md`
 - Modify: `docs/plans/2026-03-17-creator-os-phase1-implementation-plan.md`
 
-- [ ] **Step 1: Document the platform-layer rule**
+- [x] **Step 1: Document the platform-layer rule**
 
 Write the rule in the design docs:
 
@@ -25,11 +25,11 @@ Write the rule in the design docs:
 - services own business logic
 - channels adapt services
 
-- [ ] **Step 2: Add a short codebase note to the running design log**
+- [x] **Step 2: Add a short codebase note to the running design log**
 
 Append a short note that all new Phase 2 work should prefer service-layer placement over page-local logic.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add docs/plans/2026-03-18-core-platform-architecture-design.md docs/plans/2026-03-13-content-ip-strategy-design.md docs/plans/2026-03-17-creator-os-phase1-implementation-plan.md
@@ -55,7 +55,7 @@ git commit -m "Document core platform architecture"
 - Modify: `app/api/profile-updates/route.ts`
 - Modify: `app/api/profile-updates/generate/route.ts`
 
-- [ ] **Step 1: Create thin service wrappers**
+- [x] **Step 1: Create thin service wrappers**
 
 Each service should export stable capability-style functions such as:
 
@@ -65,7 +65,7 @@ Each service should export stable capability-style functions such as:
 - `regenerateTopicCandidates`
 - `regenerateProfileEvolutionSuggestions`
 
-- [ ] **Step 2: Move orchestration out of routes**
+- [x] **Step 2: Move orchestration out of routes**
 
 Keep route files thin:
 
@@ -73,7 +73,7 @@ Keep route files thin:
 - call service
 - return response
 
-- [ ] **Step 3: Verify locally**
+- [x] **Step 3: Verify locally**
 
 Run:
 
@@ -86,7 +86,7 @@ Expected:
 - build passes
 - no route should contain large workflow logic blocks
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add lib/services app/api
@@ -99,7 +99,7 @@ git commit -m "Extract creator OS services"
 - Create: `lib/domain/contracts.ts`
 - Modify: existing `app/api/**/route.ts` files for creator-os endpoints
 
-- [ ] **Step 1: Define shared request/response types**
+- [x] **Step 1: Define shared request/response types**
 
 Add explicit TypeScript types for:
 
@@ -109,11 +109,11 @@ Add explicit TypeScript types for:
 - topic-candidate generation output
 - profile-update mutation output
 
-- [ ] **Step 2: Update API handlers to use contract types**
+- [x] **Step 2: Update API handlers to use contract types**
 
 Return structured `ok / error / data` style payloads consistently.
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 Run:
 
@@ -125,7 +125,7 @@ Expected:
 
 - all creator-os API routes compile with explicit typed contracts
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add lib/domain/contracts.ts app/api
@@ -139,7 +139,7 @@ git commit -m "Normalize creator OS API contracts"
 - Create: `lib/channels/miniprogram/actions.ts`
 - Create: `docs/plans/2026-03-18-mini-program-entry-scope.md`
 
-- [ ] **Step 1: Define first mini-program actions**
+- [x] **Step 1: Define first mini-program actions**
 
 Document a minimal supported action set:
 
@@ -149,11 +149,11 @@ Document a minimal supported action set:
 - confirm/reject profile update suggestion
 - capture quick note
 
-- [ ] **Step 2: Create adapter placeholders**
+- [x] **Step 2: Create adapter placeholders**
 
 The adapter file should not build the mini program itself. It should expose which core service calls will back mini-program actions.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/channels/miniprogram docs/plans/2026-03-18-mini-program-entry-scope.md
@@ -167,7 +167,7 @@ git commit -m "Define mini program channel boundary"
 - Create: `lib/channels/openclaw/tools.ts`
 - Create: `docs/plans/2026-03-18-openclaw-integration-scope.md`
 
-- [ ] **Step 1: Define the initial OpenClaw tool set**
+- [x] **Step 1: Define the initial OpenClaw tool set**
 
 Document capability candidates:
 
@@ -180,7 +180,7 @@ Document capability candidates:
   - `draft_content`
   - `run_review`
 
-- [ ] **Step 2: Describe the main-agent/sub-agent split**
+- [x] **Step 2: Describe the main-agent/sub-agent split**
 
 Clarify:
 
@@ -188,7 +188,7 @@ Clarify:
 - OpenClaw becomes an agentic channel
 - sub-agents are temporary task-specific workflows
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/channels/openclaw docs/plans/2026-03-18-openclaw-integration-scope.md
@@ -202,15 +202,15 @@ git commit -m "Define OpenClaw integration boundary"
 - Modify: `app/page.tsx`
 - Modify: any newly created service files as needed
 
-- [ ] **Step 1: Replace direct library fan-out with service-backed composition**
+- [x] **Step 1: Replace direct library fan-out with service-backed composition**
 
 Today should call a smaller number of service-layer entry functions instead of directly aggregating every helper.
 
-- [ ] **Step 2: Keep Today a web client, not a workflow owner**
+- [x] **Step 2: Keep Today a web client, not a workflow owner**
 
 Move orchestration decisions into services if they begin to grow.
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 Run:
 
@@ -223,7 +223,7 @@ Expected:
 - Today still works
 - page code is thinner
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add app/page.tsx lib/today-data.ts lib/services
@@ -235,11 +235,11 @@ git commit -m "Refactor Today onto platform services"
 **Files:**
 - Modify: `docs/plans/2026-03-13-content-ip-strategy-design.md`
 
-- [ ] **Step 1: Update running design log**
+- [x] **Step 1: Update running design log**
 
 Append the completed architecture-extraction milestones.
 
-- [ ] **Step 2: Verify**
+- [x] **Step 2: Verify**
 
 Run:
 
@@ -253,7 +253,7 @@ Expected:
 - build passes
 - worktree is clean except intentional doc changes
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add docs/plans/2026-03-13-content-ip-strategy-design.md
