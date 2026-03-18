@@ -1661,6 +1661,10 @@ If implementation speed becomes the priority, the first simplifications should b
 - added a mini-program action catalog for today summary, directions, topic recommendations, profile-update responses, and quick-note capture
 - mapped the first mini-program action set directly onto existing service-layer capabilities to avoid creating mobile-specific business logic
 - documented the mini-program scope as `Web-primary, mobile-lightweight`, with heavy research and editing still reserved for the main web workbench
+- defined the first OpenClaw integration boundary as an agentic channel rather than a replacement runtime
+- added an OpenClaw tool catalog for `extract_ip_profile`, `generate_directions`, `generate_topics`, `generate_topic_candidates`, and `generate_profile_updates`
+- documented the intended `main agent -> temporary sub-agent -> core platform state` flow so future OpenClaw work can plug into Creator OS without reshaping the core data model
+- kept Web as the primary runtime while reserving OpenClaw for deeper conversational workflows, orchestration, reminders, and future skill-aware execution
 
 ## MVP Status
 
