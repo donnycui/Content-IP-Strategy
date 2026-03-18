@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import type { ProfileUpdatesGenerateResponse } from "@/lib/domain/contracts";
 
 export function ProfileUpdateGenerateButton() {
   const router = useRouter();
@@ -19,13 +20,13 @@ export function ProfileUpdateGenerateButton() {
           method: "POST",
         });
 
-        const result = (await response.json()) as { ok: boolean; error?: string; created?: number };
+        const result = (await response.json()) as ProfileUpdatesGenerateResponse;
 
         if (!response.ok || !result.ok) {
-          throw new Error(result.error ?? "生成画像进化建议失败。");
+          throw new Error(result.ok ? "生成画像进化建议失败。" : (result.error ?? "生成画像进化建议失败。"));
         }
 
-        setFeedback(`已刷新 ${result.created ?? 0} 条画像进化建议。`);
+        setFeedback(`已刷新 ${result.data.createdCount ?? 0} 条画像进化建议。`);
         router.refresh();
       } catch (submitError) {
         setError(submitError instanceof Error ? submitError.message : "生成画像进化建议失败。");

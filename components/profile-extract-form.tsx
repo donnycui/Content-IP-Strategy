@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import type { ProfileExtractResponse } from "@/lib/domain/contracts";
 
 export function ProfileExtractForm() {
   const router = useRouter();
@@ -28,15 +29,15 @@ export function ProfileExtractForm() {
           }),
         });
 
-        const result = (await response.json()) as { ok: boolean; error?: string; profileId?: string };
+        const result = (await response.json()) as ProfileExtractResponse;
 
-        if (!response.ok || !result.ok || !result.profileId) {
-          throw new Error(result.error ?? "IP 提炼失败。");
+        if (!response.ok || !result.ok || !result.data?.profileId) {
+          throw new Error(result.ok ? "IP 提炼失败。" : (result.error ?? "IP 提炼失败。"));
         }
 
         setFeedback("IP 提炼完成，已生成第一版创作者画像。");
         setSourceText("");
-        router.push(`/profile?id=${result.profileId}`);
+        router.push(`/profile?id=${result.data.profileId}`);
         router.refresh();
       } catch (submitError) {
         setError(submitError instanceof Error ? submitError.message : "IP 提炼失败。");
@@ -78,4 +79,3 @@ export function ProfileExtractForm() {
     </section>
   );
 }
-

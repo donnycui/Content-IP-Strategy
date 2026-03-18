@@ -1653,6 +1653,10 @@ If implementation speed becomes the priority, the first simplifications should b
 - thinned the main Creator OS API routes so they now focus on request parsing and HTTP response mapping instead of owning orchestration
 - added a shared `ServiceError` pattern so service-layer validation failures can surface as cleaner business-level HTTP responses
 - verified that the service-layer extraction builds successfully without breaking the current Phase 1 Web runtime
+- added a shared `lib/domain/contracts.ts` layer for the main Creator OS endpoints
+- normalized profile, direction, topic, topic-candidate, and profile-update API payloads around a consistent `ok / data / error` contract shape
+- updated the current web client buttons and editors to consume the typed response contracts instead of route-specific ad hoc fields
+- verified that the contract normalization still builds cleanly on top of the new service-layer extraction
 
 ## MVP Status
 

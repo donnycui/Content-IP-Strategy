@@ -1,16 +1,22 @@
 import { NextResponse } from "next/server";
+import type { ProfileExtractRequest, ProfileExtractResponse } from "@/lib/domain/contracts";
 import { extractCreatorProfileAndActivate } from "@/lib/services/profile-service";
 import { getServiceErrorStatus } from "@/lib/services/service-error";
 
 export async function POST(request: Request) {
-  const payload = (await request.json()) as { sourceText?: string };
+  const payload = (await request.json()) as ProfileExtractRequest;
 
   try {
     const result = await extractCreatorProfileAndActivate(payload.sourceText ?? "");
 
-    return NextResponse.json({ ok: true, profileId: result.profileId });
+    return NextResponse.json<ProfileExtractResponse>({
+      ok: true,
+      data: {
+        profileId: result.profileId,
+      },
+    });
   } catch (error) {
-    return NextResponse.json(
+    return NextResponse.json<ProfileExtractResponse>(
       {
         ok: false,
         error: error instanceof Error ? error.message : "IP 提炼失败。",

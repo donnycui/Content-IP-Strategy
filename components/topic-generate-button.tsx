@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import type { TopicsGenerateResponse } from "@/lib/domain/contracts";
 
 export function TopicGenerateButton() {
   const router = useRouter();
@@ -19,13 +20,13 @@ export function TopicGenerateButton() {
           method: "POST",
         });
 
-        const result = (await response.json()) as { ok: boolean; error?: string; created?: number };
+        const result = (await response.json()) as TopicsGenerateResponse;
 
         if (!response.ok || !result.ok) {
-          throw new Error(result.error ?? "生成主题线失败。");
+          throw new Error(result.ok ? "生成主题线失败。" : (result.error ?? "生成主题线失败。"));
         }
 
-        setFeedback(`已刷新 ${result.created ?? 0} 条主题线。`);
+        setFeedback(`已刷新 ${result.data.createdCount ?? 0} 条主题线。`);
         router.refresh();
       } catch (submitError) {
         setError(submitError instanceof Error ? submitError.message : "生成主题线失败。");

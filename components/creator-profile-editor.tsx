@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import type { ProfileUpdateResponse } from "@/lib/domain/contracts";
 import type { CreatorProfileRow } from "@/lib/profile-data";
 
 export function CreatorProfileEditor({ profile }: { profile: CreatorProfileRow }) {
@@ -47,10 +48,10 @@ export function CreatorProfileEditor({ profile }: { profile: CreatorProfileRow }
           }),
         });
 
-        const result = (await response.json()) as { ok: boolean; error?: string };
+        const result = (await response.json()) as ProfileUpdateResponse;
 
         if (!response.ok || !result.ok) {
-          throw new Error(result.error ?? "保存创作者画像失败。");
+          throw new Error(result.ok ? "保存创作者画像失败。" : (result.error ?? "保存创作者画像失败。"));
         }
 
         setFeedback("创作者画像已更新。");
@@ -128,4 +129,3 @@ export function CreatorProfileEditor({ profile }: { profile: CreatorProfileRow }
     </section>
   );
 }
-

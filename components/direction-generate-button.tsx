@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import type { DirectionsGenerateResponse } from "@/lib/domain/contracts";
 
 export function DirectionGenerateButton() {
   const router = useRouter();
@@ -19,13 +20,13 @@ export function DirectionGenerateButton() {
           method: "POST",
         });
 
-        const result = (await response.json()) as { ok: boolean; error?: string; created?: number };
+        const result = (await response.json()) as DirectionsGenerateResponse;
 
         if (!response.ok || !result.ok) {
-          throw new Error(result.error ?? "生成方向失败。");
+          throw new Error(result.ok ? "生成方向失败。" : (result.error ?? "生成方向失败。"));
         }
 
-        setFeedback(`已刷新 ${result.created ?? 0} 条方向建议。`);
+        setFeedback(`已刷新 ${result.data.createdCount ?? 0} 条方向建议。`);
         router.refresh();
       } catch (submitError) {
         setError(submitError instanceof Error ? submitError.message : "生成方向失败。");
@@ -48,4 +49,3 @@ export function DirectionGenerateButton() {
     </div>
   );
 }
-

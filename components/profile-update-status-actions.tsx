@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import type { ProfileUpdateStatusResponse } from "@/lib/domain/contracts";
 
 type Props = {
   suggestionId: string;
@@ -26,10 +27,10 @@ export function ProfileUpdateStatusActions({ suggestionId, currentStatus }: Prop
           body: JSON.stringify({ status }),
         });
 
-        const result = (await response.json()) as { ok: boolean; error?: string };
+        const result = (await response.json()) as ProfileUpdateStatusResponse;
 
         if (!response.ok || !result.ok) {
-          throw new Error(result.error ?? "更新画像进化建议失败。");
+          throw new Error(result.ok ? "更新画像进化建议失败。" : (result.error ?? "更新画像进化建议失败。"));
         }
 
         router.refresh();

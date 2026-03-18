@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import type { TopicCandidateStatusUpdateResponse } from "@/lib/domain/contracts";
 
 type Props = {
   candidateId: string;
@@ -32,10 +33,10 @@ export function TopicCandidateStatusActions({ candidateId, currentStatus }: Prop
           body: JSON.stringify({ status }),
         });
 
-        const result = (await response.json()) as { ok: boolean; error?: string };
+        const result = (await response.json()) as TopicCandidateStatusUpdateResponse;
 
         if (!response.ok || !result.ok) {
-          throw new Error(result.error ?? "更新选题状态失败。");
+          throw new Error(result.ok ? "更新选题状态失败。" : (result.error ?? "更新选题状态失败。"));
         }
 
         router.refresh();

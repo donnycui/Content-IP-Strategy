@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import type { TopicCandidatesGenerateResponse } from "@/lib/domain/contracts";
 
 export function TopicCandidateGenerateButton() {
   const router = useRouter();
@@ -19,13 +20,13 @@ export function TopicCandidateGenerateButton() {
           method: "POST",
         });
 
-        const result = (await response.json()) as { ok: boolean; error?: string; created?: number };
+        const result = (await response.json()) as TopicCandidatesGenerateResponse;
 
         if (!response.ok || !result.ok) {
-          throw new Error(result.error ?? "生成选题建议失败。");
+          throw new Error(result.ok ? "生成选题建议失败。" : (result.error ?? "生成选题建议失败。"));
         }
 
-        setFeedback(`已刷新 ${result.created ?? 0} 条选题建议。`);
+        setFeedback(`已刷新 ${result.data.createdCount ?? 0} 条选题建议。`);
         router.refresh();
       } catch (submitError) {
         setError(submitError instanceof Error ? submitError.message : "生成选题建议失败。");
