@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { getProfileUpdateSuggestions } from "@/lib/profile-update-suggestion-data";
+import { getProfileEvolutionSuggestionsService } from "@/lib/services/profile-evolution-service";
 
 export async function GET() {
-  const suggestions = await getProfileUpdateSuggestions();
+  const suggestions = await getProfileEvolutionSuggestionsService();
   return NextResponse.json({ suggestions });
 }

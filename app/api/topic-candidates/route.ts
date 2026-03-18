@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { getTopicCandidates } from "@/lib/topic-candidate-data";
+import { getTopicCandidatesService } from "@/lib/services/topic-candidate-service";
 
 export async function GET() {
-  const candidates = await getTopicCandidates();
+  const candidates = await getTopicCandidatesService();
   return NextResponse.json({ candidates });
 }

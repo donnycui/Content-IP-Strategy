@@ -1648,6 +1648,11 @@ If implementation speed becomes the priority, the first simplifications should b
 - made Today lead with creator identity, active directions, rising topics, best topic recommendations, and pending evolution suggestions before dropping into signal-level execution
 - introduced a dedicated Today composition layer so the home workspace now aggregates `CreatorProfile`, `Direction`, `Topic`, `TopicCandidate`, `ProfileUpdateSuggestion`, signals, and downstream draft state in one place
 - repositioned signals and output as execution-layer modules under the strategy layer, completing the first full creator-operating-system homepage flow
+- introduced a first explicit `lib/services` capability layer to start separating platform logic from route handlers
+- extracted creator-profile activation, profile updates, direction generation, topic generation, topic-candidate generation, and profile-evolution workflows into reusable service modules
+- thinned the main Creator OS API routes so they now focus on request parsing and HTTP response mapping instead of owning orchestration
+- added a shared `ServiceError` pattern so service-layer validation failures can surface as cleaner business-level HTTP responses
+- verified that the service-layer extraction builds successfully without breaking the current Phase 1 Web runtime
 
 ## MVP Status
 
