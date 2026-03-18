@@ -1665,6 +1665,9 @@ If implementation speed becomes the priority, the first simplifications should b
 - added an OpenClaw tool catalog for `extract_ip_profile`, `generate_directions`, `generate_topics`, `generate_topic_candidates`, and `generate_profile_updates`
 - documented the intended `main agent -> temporary sub-agent -> core platform state` flow so future OpenClaw work can plug into Creator OS without reshaping the core data model
 - kept Web as the primary runtime while reserving OpenClaw for deeper conversational workflows, orchestration, reminders, and future skill-aware execution
+- moved the Today workspace composition behind a dedicated `today-service` entry point instead of letting the home data helper fan out directly across lower-level libraries
+- kept `/` as a Web client while reducing its dependency on raw helper orchestration, which makes the same strategic-summary capability easier to reuse in future channels
+- completed the first architecture-extraction pass where Creator OS now has service-backed capabilities, normalized API contracts, and first-pass Mini Program / OpenClaw channel boundaries
 
 ## MVP Status
 
