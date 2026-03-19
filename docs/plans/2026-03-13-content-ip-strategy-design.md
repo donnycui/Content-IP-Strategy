@@ -1705,6 +1705,8 @@ If implementation speed becomes the priority, the first simplifications should b
 - wrote a real `GatewayConnection` record for `zhaocai-gateway` into Supabase and synchronized the returned models into `ManagedModel`
 - seeded the first default `CapabilityRoute` set so core Creator OS capabilities now have concrete mapped models (`glm-4.7` for balanced paths and `deepseek-r1` for deep reasoning paths)
 - verified a real `chat/completions` inference call through `zhaocai-gateway`, which returned a successful completion from `glm-4.7`
+- completed a first admin-surface data validation for `/admin/gateways`, `/admin/models`, and `/admin/routing` against live Supabase state
+- confirmed the admin layer can now see one healthy gateway, four synchronized managed models, and eight seeded capability routes backed by real data
 
 ## MVP Status
 
