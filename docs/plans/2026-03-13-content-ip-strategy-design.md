@@ -1709,6 +1709,12 @@ If implementation speed becomes the priority, the first simplifications should b
 - confirmed the admin layer can now see one healthy gateway, four synchronized managed models, and eight seeded capability routes backed by real data
 - added a first working staging access gate powered by `STAGING_ACCESS_PASSWORD`
 - introduced middleware-based protection plus `/access` and `/api/access/unlock`, so future staging deployments can block anonymous access to both the main workspace and `/admin/*`
+- verified the staging access gate live on Vercel: anonymous `/admin/*` requests redirect to `/access`, and protected admin APIs return `401` until a valid access cookie is set
+- completed the first live unlock flow with a valid staging password and confirmed the cookie-based session can enter `/admin/gateways`
+- completed the first live admin write-flow validation on Vercel:
+  - `POST /api/admin/gateways/:id/test` returned a healthy gateway check
+  - `POST /api/admin/gateways/:id/sync` returned `providersCount=3`, `modelsCount=4`, `upsertedCount=4`
+  - `POST /api/admin/routing` successfully upserted the `signal_scoring` route using the existing live model bindings
 
 ## MVP Status
 
