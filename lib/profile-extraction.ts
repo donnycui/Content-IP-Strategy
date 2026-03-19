@@ -4,6 +4,7 @@ import { resolveCapabilityRoute } from "@/lib/services/model-routing-service";
 
 type ExtractionInput = {
   sourceText: string;
+  requestedTier?: "FAST" | "BALANCED" | "DEEP";
 };
 
 function buildFallbackDraft(sourceText: string): CreatorProfileDraft {
@@ -75,11 +76,13 @@ function extractTextFromResponse(payload: unknown): string | null {
   return null;
 }
 
-export async function extractCreatorProfileDraft({ sourceText }: ExtractionInput): Promise<CreatorProfileDraft> {
+export async function extractCreatorProfileDraft({ sourceText, requestedTier }: ExtractionInput): Promise<CreatorProfileDraft> {
   const fallback = buildFallbackDraft(sourceText);
 
   try {
-    const route = await resolveCapabilityRoute("ip_extraction_interview");
+    const route = await resolveCapabilityRoute("ip_extraction_interview", {
+      requestedTier: requestedTier ?? null,
+    });
 
     if (!route.defaultModel.gatewayBaseUrl || !route.defaultModel.modelKey) {
       return fallback;

@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
-import type { ProfileUpdatesGenerateResponse } from "@/lib/domain/contracts";
+import type { ProfileUpdatesGenerateResponse, TieredGenerationRequest } from "@/lib/domain/contracts";
 import { getServiceErrorStatus } from "@/lib/services/service-error";
-import { regenerateProfileEvolutionSuggestions } from "@/lib/services/profile-evolution-service";
+import { regenerateProfileEvolutionSuggestionsWithTier } from "@/lib/services/profile-evolution-service";
 
-export async function POST() {
+export async function POST(request: Request) {
+  const payload = (await request.json().catch(() => ({}))) as TieredGenerationRequest;
+
   try {
-    const result = await regenerateProfileEvolutionSuggestions();
+    const result = await regenerateProfileEvolutionSuggestionsWithTier(undefined, payload.requestedTier);
 
     return NextResponse.json<ProfileUpdatesGenerateResponse>({
       ok: true,

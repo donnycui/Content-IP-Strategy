@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { generateResearchCardStrategyReport } from "@/lib/research-card-strategy-report";
+import type { TieredGenerationRequest } from "@/lib/domain/contracts";
+import { generateResearchCardStrategyReportWithTier } from "@/lib/research-card-strategy-report";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = {
@@ -8,11 +9,12 @@ type RouteContext = {
   }>;
 };
 
-export async function POST(_: Request, context: RouteContext) {
+export async function POST(request: Request, context: RouteContext) {
   if (!process.env.DATABASE_URL) {
     return NextResponse.json({ ok: false, error: "DATABASE_URL is not configured." }, { status: 503 });
   }
 
+  const payload = (await request.json().catch(() => ({}))) as TieredGenerationRequest;
   const { id } = await context.params;
 
   try {
@@ -48,7 +50,7 @@ export async function POST(_: Request, context: RouteContext) {
       return NextResponse.json({ ok: false, error: "Research card not found." }, { status: 404 });
     }
 
-    const generated = await generateResearchCardStrategyReport({
+    const generated = await generateResearchCardStrategyReportWithTier({
       title: card.title,
       eventDefinition: card.eventDefinition,
       mainstreamNarrative: card.mainstreamNarrative,
@@ -66,7 +68,7 @@ export async function POST(_: Request, context: RouteContext) {
         reasoningSummary: item.signal.scores[0]?.reasoningSummary ?? item.signal.summary ?? "",
         importanceScore: item.signal.scores[0]?.importanceScore ?? 0,
       })),
-    });
+    }, payload.requestedTier);
 
     if (!generated) {
       return NextResponse.json({ ok: false, error: "战略报告生成失败。" }, { status: 502 });

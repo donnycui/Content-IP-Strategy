@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getDirections } from "@/lib/direction-data";
-import { generateDirectionsForProfile } from "@/lib/direction-generation";
+import { generateDirectionsForProfileWithTier } from "@/lib/direction-generation";
 import { assertDatabaseConfigured, requireCreatorProfile } from "@/lib/services/profile-service";
 
 export async function getActiveDirectionsService(creatorProfileId?: string) {
@@ -8,10 +8,17 @@ export async function getActiveDirectionsService(creatorProfileId?: string) {
 }
 
 export async function regenerateDirections(creatorProfileId?: string) {
+  return regenerateDirectionsWithTier(creatorProfileId);
+}
+
+export async function regenerateDirectionsWithTier(
+  creatorProfileId?: string,
+  requestedTier?: "FAST" | "BALANCED" | "DEEP",
+) {
   assertDatabaseConfigured();
 
   const profile = await requireCreatorProfile(creatorProfileId);
-  const drafts = await generateDirectionsForProfile(profile);
+  const drafts = await generateDirectionsForProfileWithTier(profile, requestedTier);
 
   const createdCount = await prisma.$transaction(async (tx) => {
     await tx.direction.updateMany({

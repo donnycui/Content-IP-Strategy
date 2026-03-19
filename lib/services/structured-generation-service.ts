@@ -46,14 +46,18 @@ export async function executeStructuredGeneration<T>({
   systemInstruction,
   userPrompt,
   metadata,
+  requestedTier,
 }: {
   capabilityKey: ModelCapabilityKey;
   systemInstruction: string;
   userPrompt: string;
   metadata?: Record<string, string | number | boolean | null>;
+  requestedTier?: "FAST" | "BALANCED" | "DEEP";
 }): Promise<T | null> {
   try {
-    const route = await resolveCapabilityRoute(capabilityKey);
+    const route = await resolveCapabilityRoute(capabilityKey, {
+      requestedTier: requestedTier ?? null,
+    });
     const target = normalizeTarget(route.defaultModel);
 
     if (!target) {

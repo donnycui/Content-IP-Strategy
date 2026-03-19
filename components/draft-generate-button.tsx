@@ -2,11 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import type { ModelTierValue } from "@/lib/domain/contracts";
+import { ModelTierPicker } from "@/components/model-tier-picker";
 
 export function DraftGenerateButton({ researchCardId }: { researchCardId: string }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
+  const [requestedTier, setRequestedTier] = useState<ModelTierValue>("BALANCED");
 
   function generateDrafts() {
     startTransition(async () => {
@@ -17,7 +20,7 @@ export function DraftGenerateButton({ researchCardId }: { researchCardId: string
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ researchCardId }),
+          body: JSON.stringify({ researchCardId, requestedTier }),
         });
 
         const result = (await response.json()) as {
@@ -39,14 +42,17 @@ export function DraftGenerateButton({ researchCardId }: { researchCardId: string
 
   return (
     <div className="space-y-2">
-      <button
-        className="pill hover:border-sky-300 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-        disabled={isPending}
-        onClick={generateDrafts}
-        type="button"
-      >
-        {isPending ? "正在生成草稿..." : "生成草稿"}
-      </button>
+      <div className="flex flex-wrap items-center gap-3">
+        <ModelTierPicker compact onChange={setRequestedTier} value={requestedTier} />
+        <button
+          className="pill hover:border-sky-300 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={isPending}
+          onClick={generateDrafts}
+          type="button"
+        >
+          {isPending ? "正在生成草稿..." : "生成草稿"}
+        </button>
+      </div>
       {error ? <p className="text-sm text-rose-300">{error}</p> : null}
     </div>
   );

@@ -115,6 +115,10 @@ function normalizeDraft(draft: CreatorProfileDraft) {
 }
 
 export async function extractCreatorProfileAndActivate(sourceText: string) {
+  return extractCreatorProfileAndActivateWithTier(sourceText);
+}
+
+export async function extractCreatorProfileAndActivateWithTier(sourceText: string, requestedTier?: "FAST" | "BALANCED" | "DEEP") {
   assertDatabaseConfigured();
 
   if (!sourceText.trim()) {
@@ -123,6 +127,7 @@ export async function extractCreatorProfileAndActivate(sourceText: string) {
 
   const draft = await extractCreatorProfileDraft({
     sourceText,
+    requestedTier,
   });
 
   const profile = await prisma.$transaction(async (tx) => {

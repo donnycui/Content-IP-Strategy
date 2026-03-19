@@ -2,12 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import type { ProfileExtractResponse } from "@/lib/domain/contracts";
+import type { ModelTierValue, ProfileExtractResponse } from "@/lib/domain/contracts";
+import { ModelTierPicker } from "@/components/model-tier-picker";
 
 export function ProfileExtractForm() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [sourceText, setSourceText] = useState("");
+  const [requestedTier, setRequestedTier] = useState<ModelTierValue>("DEEP");
   const [feedback, setFeedback] = useState("");
   const [error, setError] = useState("");
 
@@ -26,6 +28,7 @@ export function ProfileExtractForm() {
           },
           body: JSON.stringify({
             sourceText,
+            requestedTier,
           }),
         });
 
@@ -64,7 +67,8 @@ export function ProfileExtractForm() {
             value={sourceText}
           />
         </label>
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-end gap-3">
+          <ModelTierPicker onChange={setRequestedTier} value={requestedTier} />
           <button
             className="rounded-2xl border border-sky-300/30 bg-sky-400/10 px-5 py-3 text-sm transition hover:border-sky-200 hover:bg-sky-400/20 disabled:cursor-not-allowed disabled:opacity-50"
             disabled={isPending}

@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
-import type { DirectionsGenerateResponse } from "@/lib/domain/contracts";
-import { regenerateDirections } from "@/lib/services/direction-service";
+import type { DirectionsGenerateResponse, TieredGenerationRequest } from "@/lib/domain/contracts";
+import { regenerateDirectionsWithTier } from "@/lib/services/direction-service";
 import { getServiceErrorStatus } from "@/lib/services/service-error";
 
-export async function POST() {
+export async function POST(request: Request) {
+  const payload = (await request.json().catch(() => ({}))) as TieredGenerationRequest;
+
   try {
-    const result = await regenerateDirections();
+    const result = await regenerateDirectionsWithTier(undefined, payload.requestedTier);
 
     return NextResponse.json<DirectionsGenerateResponse>({
       ok: true,

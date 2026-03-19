@@ -2,13 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import type { DirectionsGenerateResponse } from "@/lib/domain/contracts";
+import type { DirectionsGenerateResponse, ModelTierValue } from "@/lib/domain/contracts";
+import { ModelTierPicker } from "@/components/model-tier-picker";
 
 export function DirectionGenerateButton() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState("");
   const [error, setError] = useState("");
+  const [requestedTier, setRequestedTier] = useState<ModelTierValue>("BALANCED");
 
   function handleClick() {
     startTransition(async () => {
@@ -18,6 +20,12 @@ export function DirectionGenerateButton() {
 
         const response = await fetch("/api/directions/generate", {
           method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            requestedTier,
+          }),
         });
 
         const result = (await response.json()) as DirectionsGenerateResponse;
@@ -36,6 +44,7 @@ export function DirectionGenerateButton() {
 
   return (
     <div className="flex flex-wrap items-center gap-3">
+      <ModelTierPicker compact onChange={setRequestedTier} value={requestedTier} />
       <button
         className="rounded-2xl border border-sky-300/30 bg-sky-400/10 px-4 py-3 text-sm transition hover:border-sky-200 hover:bg-sky-400/20 disabled:cursor-not-allowed disabled:opacity-50"
         disabled={isPending}

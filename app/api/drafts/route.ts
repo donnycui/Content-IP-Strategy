@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 
 type DraftPayload = {
   researchCardId?: string;
+  requestedTier?: "FAST" | "BALANCED" | "DEEP";
 };
 
 function buildDrafts(card: {
@@ -88,7 +89,7 @@ async function generateDraftsWithModel(card: {
     title: string;
     reasoningSummary: string;
   }>;
-}) {
+}, requestedTier?: "FAST" | "BALANCED" | "DEEP") {
   const fallback = buildDrafts(card, supportContext);
 
   const payload = await executeStructuredGeneration<DraftGenerationPayload>({
@@ -108,6 +109,7 @@ async function generateDraftsWithModel(card: {
       channel: "web",
       flow: "creator-os",
     },
+    requestedTier,
   });
 
   return {
@@ -164,7 +166,7 @@ export async function POST(request: Request) {
         title: item.signal.title,
         reasoningSummary: item.signal.scores[0]?.reasoningSummary ?? item.signal.summary ?? "",
       })),
-    });
+    }, payload.requestedTier);
 
     const drafts = await prisma.$transaction(async (tx) => {
       const existingDrafts = await tx.contentDraft.findMany({

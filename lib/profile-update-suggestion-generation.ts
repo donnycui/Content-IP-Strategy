@@ -45,6 +45,13 @@ function suggestNextStage(
 export async function generateProfileUpdateSuggestionsForProfile(
   profile: CreatorProfileRow,
 ): Promise<DraftProfileUpdateSuggestion[]> {
+  return generateProfileUpdateSuggestionsForProfileWithTier(profile);
+}
+
+export async function generateProfileUpdateSuggestionsForProfileWithTier(
+  profile: CreatorProfileRow,
+  requestedTier?: "FAST" | "BALANCED" | "DEEP",
+): Promise<DraftProfileUpdateSuggestion[]> {
   const [reviewSummary, topicCandidates, directions, topics] = await Promise.all([
     getReviewCalibrationSummary(),
     getTopicCandidates(profile.id),
@@ -156,6 +163,7 @@ export async function generateProfileUpdateSuggestionsForProfile(
       channel: "web",
       flow: "creator-os",
     },
+    requestedTier,
   });
 
   const normalized = (payload?.suggestions ?? [])

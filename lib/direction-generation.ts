@@ -90,6 +90,13 @@ async function buildFallbackDirections(profile: CreatorProfileRow): Promise<Draf
 }
 
 export async function generateDirectionsForProfile(profile: CreatorProfileRow): Promise<DraftDirection[]> {
+  return generateDirectionsForProfileWithTier(profile);
+}
+
+export async function generateDirectionsForProfileWithTier(
+  profile: CreatorProfileRow,
+  requestedTier?: "FAST" | "BALANCED" | "DEEP",
+): Promise<DraftDirection[]> {
   const fallback = await buildFallbackDirections(profile);
   const signals = await getSignals();
   const signalContext = signals
@@ -125,6 +132,7 @@ export async function generateDirectionsForProfile(profile: CreatorProfileRow): 
       channel: "web",
       flow: "creator-os",
     },
+    requestedTier,
   });
 
   return normalizeDirections(payload, fallback);

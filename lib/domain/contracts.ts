@@ -19,6 +19,7 @@ export type ApiResponse<T> = ApiSuccess<T> | ApiFailure;
 
 export type ProfileExtractRequest = {
   sourceText?: string;
+  requestedTier?: ModelTierValue;
 };
 
 export type ProfileExtractResponse = ApiResponse<{
@@ -53,6 +54,10 @@ export type DirectionsListResponse = ApiResponse<{
 export type DirectionsGenerateResponse = ApiResponse<{
   createdCount: number;
 }>;
+
+export type TieredGenerationRequest = {
+  requestedTier?: ModelTierValue;
+};
 
 export type TopicsListResponse = ApiResponse<{
   topics: TopicRow[];

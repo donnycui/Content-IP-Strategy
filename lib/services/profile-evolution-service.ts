@@ -1,7 +1,7 @@
 import type { CreatorStage, SuggestionStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getProfileUpdateSuggestions } from "@/lib/profile-update-suggestion-data";
-import { generateProfileUpdateSuggestionsForProfile } from "@/lib/profile-update-suggestion-generation";
+import { generateProfileUpdateSuggestionsForProfileWithTier } from "@/lib/profile-update-suggestion-generation";
 import { assertDatabaseConfigured, requireCreatorProfile } from "@/lib/services/profile-service";
 import { ServiceError } from "@/lib/services/service-error";
 
@@ -10,10 +10,17 @@ export async function getProfileEvolutionSuggestionsService(creatorProfileId?: s
 }
 
 export async function regenerateProfileEvolutionSuggestions(creatorProfileId?: string) {
+  return regenerateProfileEvolutionSuggestionsWithTier(creatorProfileId);
+}
+
+export async function regenerateProfileEvolutionSuggestionsWithTier(
+  creatorProfileId?: string,
+  requestedTier?: "FAST" | "BALANCED" | "DEEP",
+) {
   assertDatabaseConfigured();
 
   const profile = await requireCreatorProfile(creatorProfileId);
-  const drafts = await generateProfileUpdateSuggestionsForProfile(profile);
+  const drafts = await generateProfileUpdateSuggestionsForProfileWithTier(profile, requestedTier);
 
   const createdCount = await prisma.$transaction(async (tx) => {
     await tx.profileUpdateSuggestion.deleteMany({

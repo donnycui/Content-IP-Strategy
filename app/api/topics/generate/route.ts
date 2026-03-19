@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
-import type { TopicsGenerateResponse } from "@/lib/domain/contracts";
+import type { TieredGenerationRequest, TopicsGenerateResponse } from "@/lib/domain/contracts";
 import { getServiceErrorStatus } from "@/lib/services/service-error";
-import { regenerateTopics } from "@/lib/services/topic-service";
+import { regenerateTopicsWithTier } from "@/lib/services/topic-service";
 
-export async function POST() {
+export async function POST(request: Request) {
+  const payload = (await request.json().catch(() => ({}))) as TieredGenerationRequest;
+
   try {
-    const result = await regenerateTopics();
+    const result = await regenerateTopicsWithTier(undefined, payload.requestedTier);
 
     return NextResponse.json<TopicsGenerateResponse>({
       ok: true,

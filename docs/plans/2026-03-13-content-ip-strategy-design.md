@@ -1741,6 +1741,20 @@ If implementation speed becomes the priority, the first simplifications should b
   - `全局默认` was renamed to `全局模式`
   - existing plan rules now render as read-only summary cards instead of nested editable forms
 - verified the `/admin/plans` interaction cleanup with another clean `npm run build` and `npx tsc --noEmit` pass
+- introduced the first user-facing model tier selection layer across all key generation actions:
+  - `IP 提炼`
+  - `方向生成`
+  - `主题生成`
+  - `选题推荐`
+  - `画像进化建议`
+  - `草稿生成`
+  - `战略报告`
+- added a shared `ModelTierPicker` component so users now choose `快速 / 平衡 / 深度` instead of raw model names
+- threaded `requestedTier` through service calls, API contracts, and UI actions, while keeping runtime enforcement inside `resolveCapabilityRoute(...)`
+- enforced plan-aware tier validation at runtime:
+  - disallowed tiers now fail fast with a clear API error
+  - capability routes still fall back to legacy environment defaults when no managed route exists
+- verified the new user-tier selection flow with a clean `npx tsc --noEmit` pass and a clean `npm run build` pass
 
 ## MVP Status
 

@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getDirections } from "@/lib/direction-data";
 import { getTopics } from "@/lib/topic-data";
-import { generateTopicsForProfile } from "@/lib/topic-generation";
+import { generateTopicsForProfileWithTier } from "@/lib/topic-generation";
 import { assertDatabaseConfigured, requireCreatorProfile } from "@/lib/services/profile-service";
 import { ServiceError } from "@/lib/services/service-error";
 
@@ -10,6 +10,13 @@ export async function getTopicsService(creatorProfileId?: string) {
 }
 
 export async function regenerateTopics(creatorProfileId?: string) {
+  return regenerateTopicsWithTier(creatorProfileId);
+}
+
+export async function regenerateTopicsWithTier(
+  creatorProfileId?: string,
+  requestedTier?: "FAST" | "BALANCED" | "DEEP",
+) {
   assertDatabaseConfigured();
 
   const profile = await requireCreatorProfile(creatorProfileId);
@@ -28,7 +35,7 @@ export async function regenerateTopics(creatorProfileId?: string) {
   const directionRows = (await getDirections(profile.id)).filter((direction) =>
     persistedDirections.some((item) => item.id === direction.id),
   );
-  const drafts = await generateTopicsForProfile(profile, directionRows);
+  const drafts = await generateTopicsForProfileWithTier(profile, directionRows, requestedTier);
 
   const createdCount = await prisma.$transaction(async (tx) => {
     await tx.topic.updateMany({

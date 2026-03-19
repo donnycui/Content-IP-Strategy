@@ -33,6 +33,13 @@ type ResearchCardInput = {
 };
 
 export async function generateResearchCardStrategyReport(input: ResearchCardInput) {
+  return generateResearchCardStrategyReportWithTier(input);
+}
+
+export async function generateResearchCardStrategyReportWithTier(
+  input: ResearchCardInput,
+  requestedTier?: "FAST" | "BALANCED" | "DEEP",
+) {
   const payload = await executeStructuredGeneration<StrategyReportPayload>({
     capabilityKey: "ip_strategy_report",
     systemInstruction:
@@ -48,6 +55,7 @@ export async function generateResearchCardStrategyReport(input: ResearchCardInpu
       channel: "web",
       flow: "creator-os",
     },
+    requestedTier,
   });
 
   if (!payload) {

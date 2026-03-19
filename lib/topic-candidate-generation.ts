@@ -50,6 +50,13 @@ function inferPriority(signalCount: number, heatScore: number) {
 }
 
 export async function generateTopicCandidatesForProfile(profile: CreatorProfileRow): Promise<DraftTopicCandidate[]> {
+  return generateTopicCandidatesForProfileWithTier(profile);
+}
+
+export async function generateTopicCandidatesForProfileWithTier(
+  profile: CreatorProfileRow,
+  requestedTier?: "FAST" | "BALANCED" | "DEEP",
+): Promise<DraftTopicCandidate[]> {
   const [topics, directions] = await Promise.all([getTopics(profile.id), getDirections(profile.id)]);
 
   const activeTopics = topics.filter((topic) => topic.status === "ACTIVE" || topic.status === "WATCHING").slice(0, 8);
@@ -110,6 +117,7 @@ export async function generateTopicCandidatesForProfile(profile: CreatorProfileR
       channel: "web",
       flow: "creator-os",
     },
+    requestedTier,
   });
 
   const normalized = (payload?.candidates ?? [])

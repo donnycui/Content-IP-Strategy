@@ -92,6 +92,14 @@ export async function generateTopicsForProfile(
   profile: CreatorProfileRow,
   directions: DirectionRow[],
 ): Promise<DraftTopic[]> {
+  return generateTopicsForProfileWithTier(profile, directions);
+}
+
+export async function generateTopicsForProfileWithTier(
+  profile: CreatorProfileRow,
+  directions: DirectionRow[],
+  requestedTier?: "FAST" | "BALANCED" | "DEEP",
+): Promise<DraftTopic[]> {
   const signals = await getSignals();
   const relevantSignals = signals.filter(
     (signal) => signal.status === "NEW" || signal.status === "REVIEWED" || signal.status === "CANDIDATE",
@@ -171,6 +179,7 @@ export async function generateTopicsForProfile(
         channel: "web",
         flow: "creator-os",
       },
+      requestedTier,
     });
 
     const normalized = (payload?.topics ?? [])

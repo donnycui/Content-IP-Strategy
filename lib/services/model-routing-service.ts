@@ -172,6 +172,7 @@ export async function resolveCapabilityRoute(
   options?: {
     planKey?: string | null;
     requestedModelId?: string | null;
+    requestedTier?: ModelTier | null;
   },
 ): Promise<ResolvedCapabilityRoute> {
   if (!process.env.DATABASE_URL) {
@@ -204,6 +205,21 @@ export async function resolveCapabilityRoute(
   let defaultModel = mapManagedModel(route.defaultModel);
   let fallbackModel = route.fallbackModel ? mapManagedModel(route.fallbackModel) : null;
   let effectiveModel: ResolvedCapabilityRoute["effectiveModel"] = "default";
+
+  if (options?.requestedTier) {
+    if (!isModelAllowed(options.requestedTier, planAccess)) {
+      throw new ServiceError("当前套餐不可使用该档位。", 403, "PLAN_TIER_DENIED");
+    }
+
+    if (defaultModel.tier === options.requestedTier) {
+      // keep default model
+    } else if (fallbackModel?.tier === options.requestedTier) {
+      defaultModel = fallbackModel;
+      effectiveModel = "override";
+    } else {
+      throw new ServiceError("当前能力尚未配置该档位模型。", 400, "CAPABILITY_TIER_NOT_CONFIGURED");
+    }
+  }
 
   if (options?.requestedModelId && route.allowUserOverride && planAccess?.canSelectModel) {
     const requestedModel = await prisma.managedModel.findUnique({
