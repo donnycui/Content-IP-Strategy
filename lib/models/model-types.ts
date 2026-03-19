@@ -54,6 +54,8 @@ export type ModelExecutionResult = {
 export type ModelGatewayTarget = {
   gatewayName: string;
   baseUrl: string;
+  gatewayConnectionId?: string;
+  managedModelId?: string;
   authType?: "none" | "bearer" | "api_key" | "passcode";
   authSecret?: string;
   protocol: ModelProtocol;

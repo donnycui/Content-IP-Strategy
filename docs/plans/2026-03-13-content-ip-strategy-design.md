@@ -1694,6 +1694,12 @@ If implementation speed becomes the priority, the first simplifications should b
 - moved the Today workspace composition behind a dedicated `today-service` entry point instead of letting the home data helper fan out directly across lower-level libraries
 - kept `/` as a Web client while reducing its dependency on raw helper orchestration, which makes the same strategic-summary capability easier to reuse in future channels
 - completed the first architecture-extraction pass where Creator OS now has service-backed capabilities, normalized API contracts, and first-pass Mini Program / OpenClaw channel boundaries
+- added the first model-management foundation for Creator OS with persistent gateway, managed-model, capability-route, plan-access, and model-usage entities
+- introduced a shared model adapter and gateway client so core AI capabilities no longer have to talk to provider protocols directly from business logic
+- routed the first two critical AI entry points (`signal scoring` and `IP extraction`) through `capability -> route -> adapter -> gateway`
+- added a gateway sync service that can pull `/v1/providers` and `/v1/models` from a configured gateway such as `zhaocai-gateway` and cache the results in `ManagedModel`
+- added lightweight admin surfaces for `/admin/gateways`, `/admin/models`, and `/admin/routing` so the first model-management workflows exist inside the main Web runtime
+- started recording `ModelUsageLog` entries for routed AI calls, including capability, managed model, gateway, latency, success, and error metadata
 
 ## MVP Status
 

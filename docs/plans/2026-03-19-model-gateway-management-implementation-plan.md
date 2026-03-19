@@ -48,7 +48,7 @@ Actual execution note:
 - Prisma Client regenerated successfully
 - because the current Supabase database had been bootstrapped outside Prisma migrate history, the migration was generated with `prisma migrate diff` and then applied with `prisma migrate deploy` after baselining prior migrations
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add prisma
@@ -268,7 +268,7 @@ Actual execution note:
 - `npx tsc --noEmit` passed
 - `next build` again started normally but did not return a clean terminal completion log in this environment
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/admin components
@@ -281,7 +281,7 @@ git commit -m "Add model management admin pages"
 - Modify: model adapter / gateway client
 - Modify: `docs/plans/2026-03-13-content-ip-strategy-design.md`
 
-- [ ] **Step 1: Record usage logs**
+- [x] **Step 1: Record usage logs**
 
 Capture:
 
@@ -292,7 +292,13 @@ Capture:
 - estimated cost
 - success/error
 
-- [ ] **Step 2: Update running design log**
+Actual execution note:
+
+- the shared model adapter now records `ModelUsageLog` entries when a resolved managed model and gateway connection are present
+- usage logging captures capability key, gateway/model identifiers, channel, latency, success, and adapter error code
+- `signal-scoring` and `profile-extraction` now pass resolved gateway/model identifiers into the adapter so the first critical Creator OS capabilities are covered by runtime logging
+
+- [x] **Step 2: Update running design log**
 
 Append the completed model-gateway milestones to the central log.
 
@@ -309,6 +315,12 @@ Expected:
 
 - build passes
 - worktree is clean except intentional changes
+
+Actual execution note:
+
+- `npx tsc --noEmit` passed after the Task 7 runtime logging changes
+- `npm run build` was started again, but the process still did not return a clean terminal completion log in this environment; this remains a known local verification limitation for this codebase
+- `git status --short` showed only the intended Task 7 code/doc changes plus a generated `tsconfig.tsbuildinfo`, which is now ignored via `.gitignore`
 
 - [ ] **Step 4: Commit**
 

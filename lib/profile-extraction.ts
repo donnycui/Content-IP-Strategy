@@ -89,6 +89,8 @@ export async function extractCreatorProfileDraft({ sourceText }: ExtractionInput
       {
         gatewayName: route.defaultModel.gatewayName ?? "default-environment",
         baseUrl: route.defaultModel.gatewayBaseUrl,
+        gatewayConnectionId: route.defaultModel.gatewayConnectionId,
+        managedModelId: route.defaultModel.id,
         authType:
           route.defaultModel.authType === "api_key" ||
           route.defaultModel.authType === "passcode" ||

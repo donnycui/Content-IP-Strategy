@@ -18,6 +18,7 @@ export type ResolvedCapabilityRoute = {
   source: "database" | "environment-fallback";
   defaultModel: {
     id?: string;
+    gatewayConnectionId?: string;
     modelKey: string;
     displayName: string;
     gatewayName?: string;
@@ -31,6 +32,7 @@ export type ResolvedCapabilityRoute = {
   };
   fallbackModel?: {
     id?: string;
+    gatewayConnectionId?: string;
     modelKey: string;
     displayName: string;
     gatewayName?: string;
@@ -67,6 +69,7 @@ function mapManagedModel(model: CapabilityRouteWithModels["defaultModel"]) {
 
   return {
     id: model.id,
+    gatewayConnectionId: model.gatewayConnectionId,
     modelKey: model.modelKey,
     displayName: model.displayName,
     gatewayName: model.gatewayConnection.name,
@@ -100,6 +103,7 @@ function buildEnvironmentFallback(capabilityKey: ModelCapabilityKey): ResolvedCa
       displayName: model,
       gatewayName: "default-environment",
       gatewayBaseUrl: baseUrl,
+      gatewayConnectionId: undefined,
       authType: process.env.OPENAI_API_KEY ? "bearer" : "none",
       authSecretRef: process.env.OPENAI_API_KEY ? "OPENAI_API_KEY" : null,
       authSecret: process.env.OPENAI_API_KEY,
