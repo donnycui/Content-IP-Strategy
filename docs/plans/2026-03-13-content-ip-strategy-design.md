@@ -1707,6 +1707,8 @@ If implementation speed becomes the priority, the first simplifications should b
 - verified a real `chat/completions` inference call through `zhaocai-gateway`, which returned a successful completion from `glm-4.7`
 - completed a first admin-surface data validation for `/admin/gateways`, `/admin/models`, and `/admin/routing` against live Supabase state
 - confirmed the admin layer can now see one healthy gateway, four synchronized managed models, and eight seeded capability routes backed by real data
+- added a first working staging access gate powered by `STAGING_ACCESS_PASSWORD`
+- introduced middleware-based protection plus `/access` and `/api/access/unlock`, so future staging deployments can block anonymous access to both the main workspace and `/admin/*`
 
 ## MVP Status
 
