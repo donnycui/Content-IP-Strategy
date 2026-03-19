@@ -229,7 +229,7 @@ git commit -m "Add gateway sync service"
 - Create: `app/admin/routing/page.tsx`
 - Add supporting components under `components/`
 
-- [ ] **Step 1: Build Gateway admin page**
+- [x] **Step 1: Build Gateway admin page**
 
 Allow:
 
@@ -237,7 +237,7 @@ Allow:
 - testing connection
 - triggering sync
 
-- [ ] **Step 2: Build Models admin page**
+- [x] **Step 2: Build Models admin page**
 
 Allow:
 
@@ -245,7 +245,7 @@ Allow:
 - enabling/disabling visibility
 - assigning tier labels
 
-- [ ] **Step 3: Build Routing admin page**
+- [x] **Step 3: Build Routing admin page**
 
 Allow:
 
@@ -253,13 +253,20 @@ Allow:
 - assigning fallback
 - toggling fallback/override flags
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 Run:
 
 ```bash
 npm run build
 ```
+
+Actual execution note:
+
+- added lightweight admin pages for gateway, model, and routing management
+- added admin API routes and supporting services for create/test/sync/update/upsert flows
+- `npx tsc --noEmit` passed
+- `next build` again started normally but did not return a clean terminal completion log in this environment
 
 - [ ] **Step 5: Commit**
 

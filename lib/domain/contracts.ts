@@ -1,4 +1,5 @@
 import type { DirectionRow } from "@/lib/direction-data";
+import type { CapabilityRouteRow, GatewayConnectionRow, ManagedModelRow } from "@/lib/model-management-data";
 import type { CreatorProfileRow } from "@/lib/profile-data";
 import type { ProfileUpdateSuggestionRow } from "@/lib/profile-update-suggestion-data";
 import type { TopicCandidateRow } from "@/lib/topic-candidate-data";
@@ -90,5 +91,76 @@ export type ProfileUpdateStatusRequest = {
 };
 
 export type ProfileUpdateStatusResponse = ApiResponse<{
+  updated: true;
+}>;
+
+export type GatewayAuthTypeValue = "NONE" | "BEARER" | "API_KEY" | "PASSCODE";
+export type ModelTierValue = "FAST" | "BALANCED" | "DEEP";
+export type CapabilityKeyValue =
+  | "signal_scoring"
+  | "ip_extraction_interview"
+  | "ip_strategy_report"
+  | "direction_generation"
+  | "topic_generation"
+  | "topic_candidate_generation"
+  | "profile_evolution"
+  | "draft_generation";
+
+export type GatewayConnectionsListResponse = ApiResponse<{
+  gateways: GatewayConnectionRow[];
+}>;
+
+export type GatewayCreateRequest = {
+  name?: string;
+  baseUrl?: string;
+  authType?: GatewayAuthTypeValue;
+  authSecretRef?: string;
+};
+
+export type GatewayCreateResponse = ApiResponse<{
+  gatewayId: string;
+}>;
+
+export type GatewayTestResponse = ApiResponse<{
+  healthy: boolean;
+  providersStatus: number;
+  modelsStatus: number;
+}>;
+
+export type GatewaySyncResponse = ApiResponse<{
+  providersCount: number;
+  modelsCount: number;
+  upsertedCount: number;
+}>;
+
+export type ManagedModelsListResponse = ApiResponse<{
+  models: ManagedModelRow[];
+}>;
+
+export type ManagedModelUpdateRequest = {
+  id?: string;
+  tier?: ModelTierValue;
+  enabled?: boolean;
+  visibleToUsers?: boolean;
+};
+
+export type ManagedModelUpdateResponse = ApiResponse<{
+  updated: true;
+}>;
+
+export type CapabilityRoutesListResponse = ApiResponse<{
+  routes: CapabilityRouteRow[];
+}>;
+
+export type CapabilityRouteUpsertRequest = {
+  capabilityKey?: CapabilityKeyValue;
+  defaultModelId?: string;
+  fallbackModelId?: string | null;
+  allowFallback?: boolean;
+  allowUserOverride?: boolean;
+  notes?: string;
+};
+
+export type CapabilityRouteUpsertResponse = ApiResponse<{
   updated: true;
 }>;

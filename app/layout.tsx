@@ -18,6 +18,7 @@ const navItems = [
   { href: "/candidates", label: "选题台" },
   { href: "/reviews", label: "校准台" },
   { href: "/sources", label: "信号源" },
+  { href: "/admin/gateways", label: "模型管理" },
 ];
 
 export default function RootLayout({
