@@ -194,7 +194,7 @@ git commit -m "Route core AI capabilities through model adapter"
 - Create: `lib/services/gateway-sync-service.ts`
 - Create: optional supporting files under `lib/models/`
 
-- [ ] **Step 1: Connect to zhaocai-gateway model endpoints**
+- [x] **Step 1: Connect to zhaocai-gateway model endpoints**
 
 Use:
 
@@ -203,9 +203,16 @@ Use:
 
 to pull provider/model metadata.
 
-- [ ] **Step 2: Persist managed-model cache**
+- [x] **Step 2: Persist managed-model cache**
 
 Store synchronized model records into `ManagedModel` and mark their gateway source.
+
+Actual execution note:
+
+- a first `gateway-sync-service` now calls configured gateway `/v1/models` and `/v1/providers` endpoints
+- synchronized model aliases are upserted into `ManagedModel`
+- `GatewayConnection.healthStatus` and `lastSyncedAt` are updated during sync attempts
+- this step has been type-verified locally, but not yet exercised against a live `zhaocai-gateway` connection in this session
 
 - [ ] **Step 3: Commit**
 
