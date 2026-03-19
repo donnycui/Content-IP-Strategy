@@ -1715,6 +1715,13 @@ If implementation speed becomes the priority, the first simplifications should b
   - `POST /api/admin/gateways/:id/test` returned a healthy gateway check
   - `POST /api/admin/gateways/:id/sync` returned `providersCount=3`, `modelsCount=4`, `upsertedCount=4`
   - `POST /api/admin/routing` successfully upserted the `signal_scoring` route using the existing live model bindings
+- extended the shared model-routing chain to additional Creator OS generation capabilities:
+  - `direction_generation`
+  - `topic_generation`
+  - `topic_candidate_generation`
+  - `profile_evolution`
+- added a shared structured-generation service so these flows can call `capability -> route -> adapter -> gateway -> model` while still preserving their rule-based outputs as fallbacks
+- verified the new generation-chain refactor with a full `next build` pass
 
 ## MVP Status
 

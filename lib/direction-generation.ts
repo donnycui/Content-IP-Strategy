@@ -1,5 +1,6 @@
 import { getSignals } from "@/lib/data";
 import type { CreatorProfileRow } from "@/lib/profile-data";
+import { executeStructuredGeneration } from "@/lib/services/structured-generation-service";
 
 type DraftDirection = {
   title: string;
@@ -13,7 +14,37 @@ function summarizeClusterSignals(cluster: string, count: number) {
   return `${cluster} 这条主题线最近已累计 ${count} 条高相关信号，说明它已经具备持续产出条件。`;
 }
 
-export async function generateDirectionsForProfile(profile: CreatorProfileRow): Promise<DraftDirection[]> {
+type DirectionGenerationPayload = {
+  directions?: Array<{
+    title?: string;
+    whyNow?: string;
+    fitReason?: string;
+    priority?: DraftDirection["priority"];
+    timeHorizon?: string;
+  }>;
+};
+
+function normalizeDirections(payload: DirectionGenerationPayload | null, fallback: DraftDirection[]) {
+  const items = payload?.directions ?? [];
+
+  const normalized = items
+    .map((item) => ({
+      title: item.title?.trim() ?? "",
+      whyNow: item.whyNow?.trim() ?? "",
+      fitReason: item.fitReason?.trim() ?? "",
+      priority:
+        item.priority === "PRIMARY" || item.priority === "SECONDARY" || item.priority === "WATCH"
+          ? item.priority
+          : "WATCH",
+      timeHorizon: item.timeHorizon?.trim() || "未来 2-4 周",
+    }))
+    .filter((item) => item.title && item.whyNow && item.fitReason)
+    .slice(0, 3);
+
+  return normalized.length ? normalized : fallback;
+}
+
+async function buildFallbackDirections(profile: CreatorProfileRow): Promise<DraftDirection[]> {
   const signals = await getSignals();
   const relevantSignals = signals.filter((signal) => signal.status === "NEW" || signal.status === "CANDIDATE" || signal.status === "REVIEWED");
 
@@ -58,3 +89,43 @@ export async function generateDirectionsForProfile(profile: CreatorProfileRow): 
   }));
 }
 
+export async function generateDirectionsForProfile(profile: CreatorProfileRow): Promise<DraftDirection[]> {
+  const fallback = await buildFallbackDirections(profile);
+  const signals = await getSignals();
+  const signalContext = signals
+    .filter((signal) => signal.status === "NEW" || signal.status === "CANDIDATE" || signal.status === "REVIEWED")
+    .slice(0, 8)
+    .map((signal) => ({
+      title: signal.title,
+      primaryObservationCluster: signal.primaryObservationCluster,
+      importanceScore: signal.importanceScore,
+      viewpointScore: signal.viewpointScore,
+    }));
+
+  const payload = await executeStructuredGeneration<DirectionGenerationPayload>({
+    capabilityKey: "direction_generation",
+    systemInstruction:
+      "你是知识型创作者平台里的方向生成助手。请根据创作者画像、近期信号和已有的方向草案，输出 1 到 3 条未来 2-4 周的内容方向。返回严格 JSON，格式为 {\"directions\":[{\"title\":\"...\",\"whyNow\":\"...\",\"fitReason\":\"...\",\"priority\":\"PRIMARY|SECONDARY|WATCH\",\"timeHorizon\":\"未来 2-4 周\"}]}。不要输出多余解释。",
+    userPrompt: JSON.stringify(
+      {
+        creatorProfile: {
+          positioning: profile.positioning,
+          audience: profile.audience,
+          coreThemes: profile.coreThemes,
+          growthGoal: profile.growthGoal,
+          currentStage: profile.currentStage,
+        },
+        recentSignals: signalContext,
+        fallbackDirections: fallback,
+      },
+      null,
+      2,
+    ),
+    metadata: {
+      channel: "web",
+      flow: "creator-os",
+    },
+  });
+
+  return normalizeDirections(payload, fallback);
+}

@@ -1,6 +1,7 @@
 import { getReviewCalibrationSummary } from "@/lib/data";
 import { getDirections } from "@/lib/direction-data";
 import type { CreatorProfileRow } from "@/lib/profile-data";
+import { executeStructuredGeneration } from "@/lib/services/structured-generation-service";
 import { getTopicCandidates } from "@/lib/topic-candidate-data";
 import { getTopics } from "@/lib/topic-data";
 
@@ -10,6 +11,16 @@ export type DraftProfileUpdateSuggestion = {
   suggestedValue: string;
   reason: string;
   confidence: number;
+};
+
+type ProfileEvolutionPayload = {
+  suggestions?: Array<{
+    type?: DraftProfileUpdateSuggestion["type"];
+    beforeValue?: string | null;
+    suggestedValue?: string;
+    reason?: string;
+    confidence?: number;
+  }>;
 };
 
 function suggestNextStage(
@@ -105,5 +116,72 @@ export async function generateProfileUpdateSuggestionsForProfile(
     }
   }
 
-  return suggestions;
+  const fallbackSuggestions = suggestions;
+
+  const payload = await executeStructuredGeneration<ProfileEvolutionPayload>({
+    capabilityKey: "profile_evolution",
+    systemInstruction:
+      "你是知识型创作者平台里的画像进化助手。请根据创作者当前画像、方向/主题/选题状态和人工校准摘要，输出 0 到 3 条需要用户确认的画像进化建议。返回严格 JSON，格式为 {\"suggestions\":[{\"type\":\"CORE_THEME|CONTENT_BOUNDARY|CURRENT_STAGE\",\"beforeValue\":\"...\",\"suggestedValue\":\"...\",\"reason\":\"...\",\"confidence\":0.78}]}。不要输出多余解释。",
+    userPrompt: JSON.stringify(
+      {
+        creatorProfile: {
+          positioning: profile.positioning,
+          coreThemes: profile.coreThemes,
+          contentBoundaries: profile.contentBoundaries,
+          currentStage: profile.currentStage,
+          growthGoal: profile.growthGoal,
+        },
+        reviewSummary,
+        directions: directions.map((direction) => ({
+          title: direction.title,
+          priority: direction.priority,
+        })),
+        topics: topics.map((topic) => ({
+          title: topic.title,
+          heatScore: topic.heatScore,
+          signalCount: topic.signalCount,
+          status: topic.status,
+        })),
+        keptTopicCandidates: keptCandidates.map((candidate) => ({
+          title: candidate.title,
+          directionTitle: candidate.directionTitle,
+          priority: candidate.priority,
+        })),
+        fallbackSuggestions,
+      },
+      null,
+      2,
+    ),
+    metadata: {
+      channel: "web",
+      flow: "creator-os",
+    },
+  });
+
+  const normalized = (payload?.suggestions ?? [])
+    .map((item) => ({
+      type:
+        item.type === "CORE_THEME" || item.type === "CONTENT_BOUNDARY" || item.type === "CURRENT_STAGE"
+          ? item.type
+          : null,
+      beforeValue: item.beforeValue ?? null,
+      suggestedValue: item.suggestedValue?.trim() ?? "",
+      reason: item.reason?.trim() ?? "",
+      confidence:
+        typeof item.confidence === "number" ? Math.max(0, Math.min(1, Number(item.confidence.toFixed(2)))) : 0.6,
+    }))
+    .filter((item) => Boolean(item.type && item.suggestedValue && item.reason))
+    .map(
+      (item) =>
+        ({
+          type: item.type as DraftProfileUpdateSuggestion["type"],
+          beforeValue: item.beforeValue,
+          suggestedValue: item.suggestedValue,
+          reason: item.reason,
+          confidence: item.confidence,
+        }) satisfies DraftProfileUpdateSuggestion,
+    )
+    .slice(0, 3);
+
+  return normalized.length ? normalized : fallbackSuggestions;
 }

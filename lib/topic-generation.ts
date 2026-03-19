@@ -8,6 +8,7 @@ import {
   type ObservationClusterKey,
 } from "@/lib/observation-clusters";
 import type { CreatorProfileRow } from "@/lib/profile-data";
+import { executeStructuredGeneration } from "@/lib/services/structured-generation-service";
 
 export type DraftTopic = {
   title: string;
@@ -18,6 +19,19 @@ export type DraftTopic = {
   primaryObservationCluster: ObservationClusterKey;
   secondaryObservationCluster?: ObservationClusterKey | null;
   directionId?: string | null;
+};
+
+type TopicGenerationPayload = {
+  topics?: Array<{
+    title?: string;
+    summary?: string;
+    status?: DraftTopic["status"];
+    heatScore?: number;
+    signalCount?: number;
+    primaryObservationCluster?: string;
+    secondaryObservationCluster?: string | null;
+    directionTitle?: string | null;
+  }>;
 };
 
 function rankDirectionPriority(priority: DirectionRow["priority"]) {
@@ -89,7 +103,7 @@ export async function generateTopicsForProfile(
     return accumulator;
   }, {});
 
-  const drafts = Object.entries(grouped)
+  const fallbackDrafts = Object.entries(grouped)
     .map(([clusterLabel, clusterSignals]) => {
       const clusterKey = resolveObservationClusterKey(clusterLabel);
 
@@ -129,8 +143,78 @@ export async function generateTopicsForProfile(
     .filter((draft) => draft !== null)
     .sort((left, right) => right.heatScore - left.heatScore);
 
-  if (drafts.length) {
-    return drafts;
+  if (fallbackDrafts.length) {
+    const payload = await executeStructuredGeneration<TopicGenerationPayload>({
+      capabilityKey: "topic_generation",
+      systemInstruction:
+        "你是知识型创作者平台里的主题线生成助手。请根据创作者画像、方向台和已有主题草案，输出 1 到 8 条主题线。返回严格 JSON，格式为 {\"topics\":[{\"title\":\"...\",\"summary\":\"...\",\"status\":\"ACTIVE|WATCHING\",\"heatScore\":4.2,\"signalCount\":3,\"primaryObservationCluster\":\"固定观察簇 key 或中文标签\",\"secondaryObservationCluster\":\"固定观察簇 key 或中文标签，可为空\",\"directionTitle\":\"关联方向标题，可为空\"}]}。不要输出多余解释。",
+      userPrompt: JSON.stringify(
+        {
+          creatorProfile: {
+            positioning: profile.positioning,
+            coreThemes: profile.coreThemes,
+            audience: profile.audience,
+            growthGoal: profile.growthGoal,
+          },
+          directions: directions.map((direction) => ({
+            id: direction.id,
+            title: direction.title,
+            priority: direction.priority,
+            whyNow: direction.whyNow,
+          })),
+          fallbackTopics: fallbackDrafts,
+        },
+        null,
+        2,
+      ),
+      metadata: {
+        channel: "web",
+        flow: "creator-os",
+      },
+    });
+
+    const normalized = (payload?.topics ?? [])
+      .map((item) => {
+        const primaryObservationCluster = resolveObservationClusterKey(item.primaryObservationCluster ?? "") ?? null;
+        if (!primaryObservationCluster) {
+          return null;
+        }
+
+        const secondaryObservationCluster = item.secondaryObservationCluster
+          ? resolveObservationClusterKey(item.secondaryObservationCluster)
+          : null;
+        const directionId =
+          directions.find((direction) => direction.title === item.directionTitle)?.id ??
+          pickDirectionId(item.title?.trim() || getObservationClusterLabel(primaryObservationCluster) || "", directions);
+
+        return {
+          title: item.title?.trim() || getObservationClusterLabel(primaryObservationCluster) || "未命名主题线",
+          summary: item.summary?.trim() || buildTopicSummary(item.title?.trim() || "", relevantSignals),
+          status: item.status === "ACTIVE" || item.status === "WATCHING" ? item.status : "WATCHING",
+          heatScore: typeof item.heatScore === "number" ? Number(item.heatScore.toFixed(2)) : 3,
+          signalCount: typeof item.signalCount === "number" ? Math.max(0, Math.round(item.signalCount)) : 0,
+          primaryObservationCluster,
+          secondaryObservationCluster,
+          directionId,
+        } satisfies DraftTopic;
+      })
+      .filter((item) => Boolean(item))
+      .map(
+        (item) =>
+          ({
+            title: item!.title,
+            summary: item!.summary,
+            status: item!.status,
+            heatScore: item!.heatScore,
+            signalCount: item!.signalCount,
+            primaryObservationCluster: item!.primaryObservationCluster,
+            secondaryObservationCluster: item!.secondaryObservationCluster ?? null,
+            directionId: item!.directionId ?? null,
+          }) satisfies DraftTopic,
+      )
+      .slice(0, 8);
+
+    return normalized.length ? normalized : fallbackDrafts;
   }
 
   const firstTheme = profile.coreThemes.split(/[；;。]/).map((item) => item.trim()).filter(Boolean)[0] ?? "技术革命如何改写权力结构";
