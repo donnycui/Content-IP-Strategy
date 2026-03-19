@@ -16,7 +16,7 @@
 - Modify: `prisma/schema.prisma`
 - Create migration under: `prisma/migrations/*_model_gateway_foundation/`
 
-- [ ] **Step 1: Add core entities**
+- [x] **Step 1: Add core entities**
 
 Add:
 
@@ -26,7 +26,7 @@ Add:
 - `PlanModelAccess`
 - `ModelUsageLog`
 
-- [ ] **Step 2: Keep relationships simple**
+- [x] **Step 2: Keep relationships simple**
 
 Use straightforward relations:
 
@@ -34,7 +34,7 @@ Use straightforward relations:
 - one managed model -> many capability routes
 - one managed model -> many usage logs
 
-- [ ] **Step 3: Generate and verify**
+- [x] **Step 3: Generate and verify**
 
 Run:
 
@@ -42,6 +42,11 @@ Run:
 npm run prisma:generate
 npx prisma migrate dev --name model_gateway_foundation
 ```
+
+Actual execution note:
+
+- Prisma Client regenerated successfully
+- because the current Supabase database had been bootstrapped outside Prisma migrate history, the migration was generated with `prisma migrate diff` and then applied with `prisma migrate deploy` after baselining prior migrations
 
 - [ ] **Step 4: Commit**
 

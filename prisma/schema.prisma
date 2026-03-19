@@ -151,6 +151,37 @@ enum SuggestionStatus {
   REJECTED
 }
 
+enum GatewayAuthType {
+  NONE
+  BEARER
+  API_KEY
+  PASSCODE
+}
+
+enum GatewayHealthStatus {
+  UNKNOWN
+  HEALTHY
+  DEGRADED
+  ERROR
+}
+
+enum ModelTier {
+  FAST
+  BALANCED
+  DEEP
+}
+
+enum ModelCapabilityKey {
+  signal_scoring
+  ip_extraction_interview
+  ip_strategy_report
+  direction_generation
+  topic_generation
+  topic_candidate_generation
+  profile_evolution
+  draft_generation
+}
+
 model CreatorProfile {
   id                String                    @id @default(cuid())
   name              String
@@ -169,6 +200,7 @@ model CreatorProfile {
   directions        Direction[]
   topics            Topic[]
   profileUpdates    ProfileUpdateSuggestion[]
+  modelUsageLogs    ModelUsageLog[]
 
   @@index([isActive, updatedAt])
 }
@@ -249,6 +281,104 @@ model ProfileUpdateSuggestion {
 
   @@index([creatorProfileId, status, createdAt])
   @@index([type, status])
+}
+
+model GatewayConnection {
+  id            String               @id @default(cuid())
+  name          String
+  baseUrl       String
+  authType      GatewayAuthType      @default(NONE)
+  authSecretRef String?
+  isActive      Boolean              @default(true)
+  healthStatus  GatewayHealthStatus  @default(UNKNOWN)
+  lastSyncedAt  DateTime?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  managedModels ManagedModel[]
+  usageLogs     ModelUsageLog[]
+
+  @@index([isActive, healthStatus])
+  @@unique([name])
+}
+
+model ManagedModel {
+  id                     String            @id @default(cuid())
+  gatewayConnectionId    String
+  providerKey            String
+  modelKey               String
+  displayName            String
+  capabilityTags         Json?
+  tier                   ModelTier        @default(BALANCED)
+  enabled                Boolean          @default(true)
+  visibleToUsers         Boolean          @default(false)
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+
+  gatewayConnection      GatewayConnection @relation(fields: [gatewayConnectionId], references: [id], onDelete: Cascade)
+  defaultCapabilityRoutes CapabilityRoute[] @relation("DefaultCapabilityRouteModel")
+  fallbackCapabilityRoutes CapabilityRoute[] @relation("FallbackCapabilityRouteModel")
+  usageLogs              ModelUsageLog[]
+
+  @@unique([gatewayConnectionId, providerKey, modelKey])
+  @@index([enabled, tier])
+  @@index([gatewayConnectionId, visibleToUsers])
+}
+
+model CapabilityRoute {
+  id                 String             @id @default(cuid())
+  capabilityKey      ModelCapabilityKey
+  defaultModelId     String
+  fallbackModelId    String?
+  allowFallback      Boolean            @default(false)
+  allowUserOverride  Boolean            @default(false)
+  notes              String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  defaultModel       ManagedModel       @relation("DefaultCapabilityRouteModel", fields: [defaultModelId], references: [id], onDelete: Cascade)
+  fallbackModel      ManagedModel?      @relation("FallbackCapabilityRouteModel", fields: [fallbackModelId], references: [id], onDelete: SetNull)
+
+  @@unique([capabilityKey])
+  @@index([defaultModelId])
+  @@index([fallbackModelId])
+}
+
+model PlanModelAccess {
+  id                    String              @id @default(cuid())
+  planKey               String
+  capabilityKey         ModelCapabilityKey?
+  allowedTier           ModelTier
+  canSelectModel        Boolean             @default(false)
+  canUsePremiumReasoning Boolean            @default(false)
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  @@index([planKey, capabilityKey])
+  @@unique([planKey, capabilityKey, allowedTier])
+}
+
+model ModelUsageLog {
+  id                   String              @id @default(cuid())
+  creatorProfileId     String?
+  gatewayConnectionId  String
+  modelId              String
+  capabilityKey        ModelCapabilityKey
+  channel              String?
+  latencyMs            Int?
+  estimatedCost        Decimal?            @db.Decimal(10, 4)
+  success              Boolean             @default(true)
+  errorCode            String?
+  createdAt            DateTime            @default(now())
+
+  creatorProfile       CreatorProfile?     @relation(fields: [creatorProfileId], references: [id], onDelete: SetNull)
+  gatewayConnection    GatewayConnection   @relation(fields: [gatewayConnectionId], references: [id], onDelete: Cascade)
+  model                ManagedModel        @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@index([creatorProfileId, createdAt])
+  @@index([gatewayConnectionId, createdAt])
+  @@index([modelId, createdAt])
+  @@index([capabilityKey, createdAt])
 }
 
 model Source {
