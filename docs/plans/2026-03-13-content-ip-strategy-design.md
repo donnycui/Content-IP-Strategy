@@ -8,6 +8,32 @@ Owner: cuijunpeng
 
 This document records the current design for a personal content/IP business focused on turning high-density macro judgments into income. It is the working handoff and update record for future iterations.
 
+## Progress Update - 2026-03-19
+
+The core-platform architecture extraction is now complete:
+
+- service-layer conventions documented
+- creator-os capabilities extracted into `lib/services`
+- creator-os API contracts normalized to `ok / data / error`
+- mini-program channel boundary documented
+- OpenClaw integration boundary documented
+- Today refactored onto service-backed composition
+- architecture progress recorded and closed out
+
+The next platform layer has been formally designed:
+
+- `Model Gateway / Model Management`
+
+This next phase introduces:
+
+- gateway connections
+- managed model registry
+- capability-level model routing
+- plan/tier access controls
+- usage logging
+
+`zhaocai-gateway` is now the preferred model-infrastructure target for this module.
+
 ## Current Goal
 
 Build a personal brand that:
