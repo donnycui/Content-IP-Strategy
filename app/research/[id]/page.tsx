@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DraftGenerateButton } from "@/components/draft-generate-button";
 import { ResearchCardEditor } from "@/components/research-card-editor";
+import { ResearchCardStrategyReportButton } from "@/components/research-card-strategy-report-button";
 import { getResearchCardById } from "@/lib/data";
 
 type ResearchCardPageProps = {
@@ -87,6 +88,7 @@ export default async function ResearchCardPage({ params }: ResearchCardPageProps
             <p className="muted text-sm leading-6">
               当你确认这张研究卡的站位判断后，就应该把它转成文章、视频和短帖草稿。
             </p>
+            <ResearchCardStrategyReportButton researchCardId={mockResearchCard.id} />
             <DraftGenerateButton researchCardId={mockResearchCard.id} />
             <Link className="pill hover:border-sky-400 hover:text-slate-800" href={`/drafts/${mockResearchCard.id}`}>
               打开草稿工作区

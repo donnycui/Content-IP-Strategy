@@ -1723,6 +1723,11 @@ If implementation speed becomes the priority, the first simplifications should b
 - added a shared structured-generation service so these flows can call `capability -> route -> adapter -> gateway -> model` while still preserving their rule-based outputs as fallbacks
 - verified the new generation-chain refactor with a full `next build` pass
 - routed `draft_generation` through the same model-routing chain, so draft creation now also supports `capability -> route -> adapter -> gateway -> model` with the previous template output retained as fallback
+- implemented `ip_strategy_report` as a real Creator OS capability instead of a placeholder route:
+  - added `/api/research-cards/[id]/strategy-report`
+  - added a strategy-report action in the research workspace
+  - reused the existing research-card fields as the first persistence surface for report output
+- verified the new strategic-report flow with a full `next build` pass
 
 ## MVP Status
 
