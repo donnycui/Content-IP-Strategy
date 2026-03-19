@@ -1,4 +1,6 @@
 import { observationClusterLabels, type ObservationClusterKey } from "@/lib/observation-clusters";
+import { executeModelRequest } from "@/lib/models/model-adapter";
+import { resolveCapabilityRoute } from "@/lib/services/model-routing-service";
 
 export type ScoringInput = {
   title: string;
@@ -322,19 +324,6 @@ const llmScoringProvider: SignalScoringProvider = {
   name: "llm-scorer-v0",
   async score(input) {
     const fallback = await heuristicScoringProvider.score(input);
-    const apiKey = process.env.OPENAI_API_KEY;
-
-    if (!apiKey) {
-      return {
-        ...fallback,
-        reasoningDetail: `${fallback.reasoningDetail} LLM scoring was requested, but OPENAI_API_KEY is missing. Fell back to heuristic scoring.`,
-        modelName: `${fallback.modelName}+fallback`,
-      };
-    }
-
-    const model = process.env.SIGNAL_SCORING_MODEL ?? "gpt-5-mini";
-    const baseUrl = process.env.SIGNAL_SCORING_BASE_URL ?? "https://api.openai.com/v1";
-
     const prompt = [
       "You are scoring a signal for a content research workbench.",
       "Return only JSON with these keys:",
@@ -369,79 +358,46 @@ const llmScoringProvider: SignalScoringProvider = {
     ].join("\n");
 
     try {
-      const response = await fetch(`${baseUrl}/responses`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model,
-          input: prompt,
-          text: {
-            format: {
-              type: "json_schema",
-              name: "signal_score",
-              schema: {
-                type: "object",
-                additionalProperties: false,
-                properties: {
-                  topicTags: {
-                    type: "array",
-                    items: { type: "string" },
-                  },
-                  motherTheme: { type: "string" },
-                  primaryObservationCluster: { type: "string" },
-                  secondaryObservationCluster: { type: ["string", "null"] },
-                  importanceScore: { type: "number" },
-                  viewpointScore: { type: "number" },
-                  consensusStrength: { type: "number" },
-                  companyRoutineScore: { type: "number" },
-                  structuralScore: { type: "number" },
-                  impactScore: { type: "number" },
-                  redistributionScore: { type: "number" },
-                  durabilityScore: { type: "number" },
-                  confidenceScore: { type: "number" },
-                  priorityRecommendation: { type: "string" },
-                  reasoningSummary: { type: "string" },
-                  reasoningDetail: { type: "string" },
-                },
-                required: [
-                  "topicTags",
-                  "motherTheme",
-                  "primaryObservationCluster",
-                  "secondaryObservationCluster",
-                  "importanceScore",
-                  "viewpointScore",
-                  "consensusStrength",
-                  "companyRoutineScore",
-                  "structuralScore",
-                  "impactScore",
-                  "redistributionScore",
-                  "durabilityScore",
-                  "confidenceScore",
-                  "priorityRecommendation",
-                  "reasoningSummary",
-                  "reasoningDetail",
-                ],
-              },
-            },
-          },
-        }),
-      });
+      const route = await resolveCapabilityRoute("signal_scoring");
 
-      if (!response.ok) {
-        const errorText = await response.text();
-
+      if (!route.defaultModel.gatewayBaseUrl || !route.defaultModel.modelKey) {
         return {
           ...fallback,
-          reasoningDetail: `${fallback.reasoningDetail} LLM scoring request failed: ${errorText.slice(0, 240)}.`,
+          reasoningDetail: `${fallback.reasoningDetail} 模型路由不可用，已回退到启发式评分。`,
           modelName: `${fallback.modelName}+fallback`,
         };
       }
 
-      const result = (await response.json()) as OpenAiResponsesApiResult;
-      const outputText = extractResponsesApiText(result);
+      const result = await executeModelRequest(
+        {
+          gatewayName: route.defaultModel.gatewayName ?? "default-environment",
+          baseUrl: route.defaultModel.gatewayBaseUrl,
+          authType:
+            route.defaultModel.authType === "api_key" ||
+            route.defaultModel.authType === "passcode" ||
+            route.defaultModel.authType === "none"
+              ? route.defaultModel.authType
+              : "bearer",
+          authSecret: route.defaultModel.authSecret,
+          protocol: route.defaultModel.protocol,
+          model: route.defaultModel.modelKey,
+          providerKey: route.defaultModel.providerKey,
+        },
+        {
+          capabilityKey: "signal_scoring",
+          messages: [
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+          responseFormat: {
+            type: "json_object",
+          },
+        },
+      );
+
+      const outputText = result.text;
 
       if (!outputText) {
         return {
@@ -452,7 +408,7 @@ const llmScoringProvider: SignalScoringProvider = {
       }
 
       const parsed = JSON.parse(outputText) as LlmScoringPayload;
-      return normalizeLlmPayload(parsed, fallback, model);
+      return normalizeLlmPayload(parsed, fallback, route.defaultModel.modelKey);
     } catch (error) {
       return {
         ...fallback,

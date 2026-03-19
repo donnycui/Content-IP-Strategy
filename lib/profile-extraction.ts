@@ -1,4 +1,6 @@
 import type { CreatorProfileDraft } from "@/lib/profile-data";
+import { executeModelRequest } from "@/lib/models/model-adapter";
+import { resolveCapabilityRoute } from "@/lib/services/model-routing-service";
 
 type ExtractionInput = {
   sourceText: string;
@@ -76,39 +78,44 @@ function extractTextFromResponse(payload: unknown): string | null {
 export async function extractCreatorProfileDraft({ sourceText }: ExtractionInput): Promise<CreatorProfileDraft> {
   const fallback = buildFallbackDraft(sourceText);
 
-  if (!process.env.OPENAI_API_KEY || !process.env.SIGNAL_SCORING_BASE_URL || !process.env.SIGNAL_SCORING_MODEL) {
-    return fallback;
-  }
-
   try {
-    const response = await fetch(`${process.env.SIGNAL_SCORING_BASE_URL.replace(/\/$/, "")}/responses`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+    const route = await resolveCapabilityRoute("ip_extraction_interview");
+
+    if (!route.defaultModel.gatewayBaseUrl || !route.defaultModel.modelKey) {
+      return fallback;
+    }
+
+    const result = await executeModelRequest(
+      {
+        gatewayName: route.defaultModel.gatewayName ?? "default-environment",
+        baseUrl: route.defaultModel.gatewayBaseUrl,
+        authType:
+          route.defaultModel.authType === "api_key" ||
+          route.defaultModel.authType === "passcode" ||
+          route.defaultModel.authType === "none"
+            ? route.defaultModel.authType
+            : "bearer",
+        authSecret: route.defaultModel.authSecret,
+        protocol: route.defaultModel.protocol,
+        model: route.defaultModel.modelKey,
       },
-      body: JSON.stringify({
-        model: process.env.SIGNAL_SCORING_MODEL,
-        input: [
-          {
-            role: "system",
-            content:
-              "You are an IP extraction assistant for knowledge creators. Return strict JSON with fields: name, positioning, persona, audience, coreThemes, voiceStyle, growthGoal, contentBoundaries, currentStage. currentStage must be one of EXPLORING, EMERGING, SCALING, ESTABLISHED.",
-          },
+      {
+        capabilityKey: "ip_extraction_interview",
+        systemInstruction:
+          "You are an IP extraction assistant for knowledge creators. Return strict JSON with fields: name, positioning, persona, audience, coreThemes, voiceStyle, growthGoal, contentBoundaries, currentStage. currentStage must be one of EXPLORING, EMERGING, SCALING, ESTABLISHED.",
+        messages: [
           {
             role: "user",
             content: `请根据下面的创作者自述，提炼成一份知识型创作者画像草案：\n\n${sourceText}`,
           },
         ],
-      }),
-    });
+        responseFormat: {
+          type: "json_object",
+        },
+      },
+    );
 
-    if (!response.ok) {
-      return fallback;
-    }
-
-    const payload = (await response.json()) as unknown;
-    const text = extractTextFromResponse(payload);
+    const text = result.text ? extractTextFromResponse({ output_text: result.text }) : null;
     const parsed = text ? parseJsonDraft(text) : null;
 
     return parsed ?? fallback;
@@ -116,4 +123,3 @@ export async function extractCreatorProfileDraft({ sourceText }: ExtractionInput
     return fallback;
   }
 }
-

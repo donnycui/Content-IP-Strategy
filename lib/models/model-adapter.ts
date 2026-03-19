@@ -4,7 +4,7 @@ import {
   ModelGatewayError,
   ModelGatewayTarget,
 } from "@/lib/models/model-types";
-import { invokeOpenAiChatCompletions } from "@/lib/models/gateway-client";
+import { invokeOpenAiChatCompletions, invokeOpenAiResponses } from "@/lib/models/gateway-client";
 
 export async function executeModelRequest(
   target: ModelGatewayTarget,
@@ -14,9 +14,7 @@ export async function executeModelRequest(
     case "openai-chat-completions":
       return invokeOpenAiChatCompletions(target, request);
     case "openai-responses":
-      throw new ModelGatewayError("当前适配层尚未接入 OpenAI Responses 协议。", {
-        code: "protocol_not_implemented",
-      });
+      return invokeOpenAiResponses(target, request);
     case "anthropic-messages":
       throw new ModelGatewayError("当前适配层尚未接入 Anthropic Messages 协议。", {
         code: "protocol_not_implemented",

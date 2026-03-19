@@ -24,9 +24,10 @@ export type ResolvedCapabilityRoute = {
     gatewayBaseUrl?: string;
     authType?: string;
     authSecretRef?: string | null;
+    authSecret?: string;
     tier?: string;
     providerKey?: string;
-    protocol: "openai-chat-completions";
+    protocol: "openai-chat-completions" | "openai-responses";
   };
   fallbackModel?: {
     id?: string;
@@ -36,9 +37,10 @@ export type ResolvedCapabilityRoute = {
     gatewayBaseUrl?: string;
     authType?: string;
     authSecretRef?: string | null;
+    authSecret?: string;
     tier?: string;
     providerKey?: string;
-    protocol: "openai-chat-completions";
+    protocol: "openai-chat-completions" | "openai-responses";
   } | null;
   allowFallback: boolean;
   allowUserOverride: boolean;
@@ -61,6 +63,8 @@ type CapabilityRouteWithModels = Prisma.CapabilityRouteGetPayload<{
 }>;
 
 function mapManagedModel(model: CapabilityRouteWithModels["defaultModel"]) {
+  const authSecretRef = model.gatewayConnection.authSecretRef;
+
   return {
     id: model.id,
     modelKey: model.modelKey,
@@ -68,7 +72,8 @@ function mapManagedModel(model: CapabilityRouteWithModels["defaultModel"]) {
     gatewayName: model.gatewayConnection.name,
     gatewayBaseUrl: model.gatewayConnection.baseUrl,
     authType: model.gatewayConnection.authType.toLowerCase(),
-    authSecretRef: model.gatewayConnection.authSecretRef,
+    authSecretRef,
+    authSecret: authSecretRef ? process.env[authSecretRef] : undefined,
     tier: model.tier,
     providerKey: model.providerKey,
     protocol: "openai-chat-completions" as const,
@@ -78,6 +83,10 @@ function mapManagedModel(model: CapabilityRouteWithModels["defaultModel"]) {
 function buildEnvironmentFallback(capabilityKey: ModelCapabilityKey): ResolvedCapabilityRoute {
   const baseUrl = process.env.SIGNAL_SCORING_BASE_URL?.replace(/\/$/, "");
   const model = process.env.SIGNAL_SCORING_MODEL;
+  const protocol =
+    process.env.SIGNAL_SCORING_PROTOCOL === "openai-chat-completions"
+      ? "openai-chat-completions"
+      : "openai-responses";
 
   if (!baseUrl || !model) {
     throw new ServiceError("模型路由未配置，且不存在可用的环境变量回退。", 503, "MODEL_ROUTE_UNAVAILABLE");
@@ -93,7 +102,8 @@ function buildEnvironmentFallback(capabilityKey: ModelCapabilityKey): ResolvedCa
       gatewayBaseUrl: baseUrl,
       authType: process.env.OPENAI_API_KEY ? "bearer" : "none",
       authSecretRef: process.env.OPENAI_API_KEY ? "OPENAI_API_KEY" : null,
-      protocol: "openai-chat-completions",
+      authSecret: process.env.OPENAI_API_KEY,
+      protocol,
     },
     fallbackModel: null,
     allowFallback: false,

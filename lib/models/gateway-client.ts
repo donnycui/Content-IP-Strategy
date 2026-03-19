@@ -28,6 +28,26 @@ type OpenAiChatCompletionsResponse = {
   };
 };
 
+type OpenAiResponsesResponse = {
+  output_text?: string;
+  output?: Array<{
+    content?: Array<{
+      type?: string;
+      text?: string;
+    }>;
+  }>;
+  usage?: {
+    input_tokens?: number;
+    output_tokens?: number;
+    total_tokens?: number;
+  };
+  error?: {
+    message?: string;
+    code?: string;
+    type?: string;
+  };
+};
+
 function trimTrailingSlash(value: string) {
   return value.replace(/\/$/, "");
 }
@@ -67,6 +87,33 @@ function normalizeUsage(usage?: OpenAiChatCompletionsResponse["usage"]): ModelUs
     outputTokens: usage.completion_tokens,
     totalTokens: usage.total_tokens,
   };
+}
+
+function normalizeResponsesUsage(usage?: OpenAiResponsesResponse["usage"]): ModelUsage | undefined {
+  if (!usage) {
+    return undefined;
+  }
+
+  return {
+    inputTokens: usage.input_tokens,
+    outputTokens: usage.output_tokens,
+    totalTokens: usage.total_tokens,
+  };
+}
+
+function extractResponsesText(payload: OpenAiResponsesResponse | null) {
+  if (payload?.output_text?.trim()) {
+    return payload.output_text.trim();
+  }
+
+  const parts =
+    payload?.output
+      ?.flatMap((item) => item.content ?? [])
+      .filter((item) => item.type === "output_text" && typeof item.text === "string")
+      .map((item) => item.text?.trim())
+      .filter((item): item is string => Boolean(item)) ?? [];
+
+  return parts.length ? parts.join("\n") : null;
 }
 
 export async function invokeOpenAiChatCompletions(
@@ -138,6 +185,67 @@ export async function invokeOpenAiChatCompletions(
     text,
     finishReason: payload?.choices?.[0]?.finish_reason ?? null,
     usage: normalizeUsage(payload?.usage),
+    raw: payload,
+  };
+}
+
+export async function invokeOpenAiResponses(
+  target: ModelGatewayTarget,
+  request: ModelExecutionRequest,
+): Promise<ModelExecutionResult> {
+  const endpoint = `${trimTrailingSlash(target.baseUrl)}/responses`;
+
+  const input = [
+    ...(request.systemInstruction
+      ? [
+          {
+            role: "system",
+            content: request.systemInstruction,
+          },
+        ]
+      : []),
+    ...request.messages,
+  ];
+
+  const body: Record<string, unknown> = {
+    model: target.model,
+    input,
+  };
+
+  if (request.metadata && Object.keys(request.metadata).length > 0) {
+    body.metadata = request.metadata;
+  }
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: buildGatewayHeaders(target),
+    body: JSON.stringify(body),
+  });
+
+  const payload = (await response.json().catch(() => null)) as OpenAiResponsesResponse | null;
+
+  if (!response.ok) {
+    throw new ModelGatewayError(payload?.error?.message ?? "模型网关调用失败。", {
+      code: payload?.error?.code ?? "gateway_request_failed",
+      status: response.status,
+      details: payload,
+    });
+  }
+
+  const text = extractResponsesText(payload);
+
+  if (!text) {
+    throw new ModelGatewayError("模型网关返回了空内容。", {
+      code: "empty_model_response",
+      status: response.status,
+      details: payload,
+    });
+  }
+
+  return {
+    text,
+    finishReason: null,
+    usage: normalizeResponsesUsage(payload?.usage),
     raw: payload,
   };
 }

@@ -143,11 +143,11 @@ git commit -m "Add capability routing service"
 - Modify: `lib/profile-extraction.ts`
 - Modify: later Creator OS generation files as needed
 
-- [ ] **Step 1: Move direct env-based calls behind the adapter**
+- [x] **Step 1: Move direct env-based calls behind the adapter**
 
 Stop calling provider endpoints directly from business logic.
 
-- [ ] **Step 2: Route the first two critical capabilities**
+- [x] **Step 2: Route the first two critical capabilities**
 
 Refactor:
 
@@ -160,7 +160,7 @@ to use:
 - model adapter
 - gateway client
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 Run:
 
@@ -172,6 +172,14 @@ Expected:
 
 - build passes
 - no direct raw model call remains in these two core paths
+
+Actual execution note:
+
+- `signal-scoring` and `profile-extraction` now resolve capability routes and call the shared model adapter
+- `openai-responses` support was added to preserve the current legacy environment behavior
+- `npx tsc --noEmit` passed
+- direct `fetch(...)` calls were removed from both target files
+- `next build` again refreshed `.next` diagnostics and type artifacts but did not return a clean terminal completion log in this environment
 
 - [ ] **Step 4: Commit**
 
