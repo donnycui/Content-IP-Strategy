@@ -43,17 +43,12 @@ export function AdminPlanAccessForm(props: {
   const [isPending, startTransition] = useTransition();
   const [planKey, setPlanKey] = useState<PlanKeyValue>(props.planKey ?? "STANDARD");
   const [capabilityKey, setCapabilityKey] = useState<CapabilityKeyValue | "">(props.capabilityKey ?? "");
-  const [allowedTiers, setAllowedTiers] = useState<Array<"FAST" | "BALANCED" | "DEEP">>(props.allowedTiers ?? ["BALANCED"]);
-  const [canSelectModel, setCanSelectModel] = useState(props.canSelectModel ?? false);
-  const [canUsePremiumReasoning, setCanUsePremiumReasoning] = useState(props.canUsePremiumReasoning ?? false);
+  const [allowedTier, setAllowedTier] = useState<"FAST" | "BALANCED" | "DEEP">(props.allowedTiers?.[0] ?? "BALANCED");
+  const [accessMode, setAccessMode] = useState<"STANDARD" | "MANUAL" | "DEEP_REASONING">(
+    props.canSelectModel ? "MANUAL" : props.canUsePremiumReasoning ? "DEEP_REASONING" : "STANDARD",
+  );
   const [feedback, setFeedback] = useState("");
   const [error, setError] = useState("");
-
-  function toggleTier(tier: "FAST" | "BALANCED" | "DEEP") {
-    setAllowedTiers((current) =>
-      current.includes(tier) ? current.filter((item) => item !== tier) : [...current, tier],
-    );
-  }
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -71,9 +66,9 @@ export function AdminPlanAccessForm(props: {
           body: JSON.stringify({
             planKey,
             capabilityKey: capabilityKey || null,
-            allowedTiers,
-            canSelectModel,
-            canUsePremiumReasoning,
+            allowedTiers: [accessMode === "DEEP_REASONING" ? "DEEP" : allowedTier],
+            canSelectModel: accessMode === "MANUAL",
+            canUsePremiumReasoning: accessMode === "DEEP_REASONING",
           }),
         });
 
@@ -108,7 +103,7 @@ export function AdminPlanAccessForm(props: {
         <div className="space-y-2">
           <p className="text-sm font-semibold text-slate-700">能力范围</p>
           <select className="field" onChange={(event) => setCapabilityKey(event.target.value as CapabilityKeyValue | "")} value={capabilityKey}>
-            <option value="">全局默认</option>
+            <option value="">全局模式</option>
             {capabilityOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -118,36 +113,39 @@ export function AdminPlanAccessForm(props: {
         </div>
       </div>
 
-      <div className="space-y-2">
-        <p className="text-sm font-semibold text-slate-700">允许使用的模型档位</p>
-        <div className="flex flex-wrap gap-3">
-          {tierOptions.map((option) => (
-            <label className="flex items-center gap-2 text-sm text-slate-700" key={option.value}>
-              <input
-                checked={allowedTiers.includes(option.value)}
-                onChange={() => toggleTier(option.value)}
-                type="checkbox"
-              />
-              {option.label}
-            </label>
-          ))}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="space-y-2">
+          <p className="text-sm font-semibold text-slate-700">模型档位</p>
+          <select
+            className="field"
+            disabled={accessMode === "DEEP_REASONING"}
+            onChange={(event) => setAllowedTier(event.target.value as "FAST" | "BALANCED" | "DEEP")}
+            value={accessMode === "DEEP_REASONING" ? "DEEP" : allowedTier}
+          >
+            {tierOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-2">
+          <p className="text-sm font-semibold text-slate-700">权限模式</p>
+          <select
+            className="field"
+            onChange={(event) => setAccessMode(event.target.value as "STANDARD" | "MANUAL" | "DEEP_REASONING")}
+            value={accessMode}
+          >
+            <option value="STANDARD">固定模型</option>
+            <option value="MANUAL">允许用户手动选模型</option>
+            <option value="DEEP_REASONING">启用深度推理</option>
+          </select>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-4">
-        <label className="flex items-center gap-2 text-sm text-slate-700">
-          <input checked={canSelectModel} onChange={(event) => setCanSelectModel(event.target.checked)} type="checkbox" />
-          允许用户手动选择模型
-        </label>
-        <label className="flex items-center gap-2 text-sm text-slate-700">
-          <input
-            checked={canUsePremiumReasoning}
-            onChange={(event) => setCanUsePremiumReasoning(event.target.checked)}
-            type="checkbox"
-          />
-          允许使用高推理深度
-        </label>
-      </div>
+      <p className="muted text-sm leading-6">
+        保存同一个“套餐档位 + 能力范围”时，会直接覆盖旧配置。当前页面只保留一个配置入口，下面的内容只用于展示现有规则。
+      </p>
 
       <div className="flex flex-wrap items-center gap-3">
         <button className="pill" disabled={isPending} type="submit">

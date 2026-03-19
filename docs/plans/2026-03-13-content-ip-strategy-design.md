@@ -1735,6 +1735,12 @@ If implementation speed becomes the priority, the first simplifications should b
   - limited user override eligibility by both `CapabilityRoute.allowUserOverride` and the selected plan scope
   - set `CREATOR_OS_DEFAULT_PLAN` as the first environment-backed entry point for global plan enforcement
 - verified the plan-access extension with a clean `npm run build` pass and a follow-up `npx tsc --noEmit` pass after `.next/types` regeneration
+- simplified the `/admin/plans` interaction model after first-pass testing:
+  - model tier selection is now single-choice instead of multi-checkbox
+  - permission mode is now a single choice (`固定模型 / 允许用户手动选模型 / 启用深度推理`)
+  - `全局默认` was renamed to `全局模式`
+  - existing plan rules now render as read-only summary cards instead of nested editable forms
+- verified the `/admin/plans` interaction cleanup with another clean `npm run build` and `npx tsc --noEmit` pass
 
 ## MVP Status
 

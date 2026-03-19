@@ -12,6 +12,20 @@ const planLabels: Record<string, string> = {
 export default async function AdminPlansPage() {
   const scopes = await getPlanModelAccessRows();
 
+  function describeScope(scope: (typeof scopes)[number]) {
+    const tierLabel = scope.allowedTiers.join(" / ");
+
+    if (scope.canSelectModel) {
+      return `当前模型档位：${tierLabel}；允许用户手动选择模型。`;
+    }
+
+    if (scope.canUsePremiumReasoning) {
+      return `当前模型档位：${tierLabel}；允许使用深度推理。`;
+    }
+
+    return `当前模型档位：${tierLabel}；采用系统固定模型。`;
+  }
+
   return (
     <main className="space-y-5">
       <section className="panel px-6 py-5">
@@ -36,19 +50,8 @@ export default async function AdminPlansPage() {
                 <p className="metric-label">
                   {planLabels[scope.planKey] ?? scope.planKey} / {scope.scopeLabel}
                 </p>
-                <p className="muted text-sm">
-                  当前允许档位：{scope.allowedTiers.join(" / ")} ·
-                  {scope.canSelectModel ? " 允许手动选模型" : " 不允许手动选模型"} ·
-                  {scope.canUsePremiumReasoning ? " 允许高推理深度" : " 默认限制高推理深度"}
-                </p>
+                <p className="muted text-sm">{describeScope(scope)}</p>
               </div>
-              <AdminPlanAccessForm
-                allowedTiers={scope.allowedTiers}
-                canSelectModel={scope.canSelectModel}
-                canUsePremiumReasoning={scope.canUsePremiumReasoning}
-                capabilityKey={scope.capabilityKey ?? undefined}
-                planKey={(scope.planKey as "STANDARD" | "PROFESSIONAL" | "FLAGSHIP") ?? "STANDARD"}
-              />
             </div>
           ))}
         </section>
