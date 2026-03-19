@@ -1700,6 +1700,11 @@ If implementation speed becomes the priority, the first simplifications should b
 - added a gateway sync service that can pull `/v1/providers` and `/v1/models` from a configured gateway such as `zhaocai-gateway` and cache the results in `ManagedModel`
 - added lightweight admin surfaces for `/admin/gateways`, `/admin/models`, and `/admin/routing` so the first model-management workflows exist inside the main Web runtime
 - started recording `ModelUsageLog` entries for routed AI calls, including capability, managed model, gateway, latency, success, and error metadata
+- completed a first live `zhaocai-gateway` smoke validation against `https://zhaocai.mintstudio.cn`
+- verified that `/v1/providers` returned 3 live providers and `/v1/models` returned 4 live models
+- wrote a real `GatewayConnection` record for `zhaocai-gateway` into Supabase and synchronized the returned models into `ManagedModel`
+- seeded the first default `CapabilityRoute` set so core Creator OS capabilities now have concrete mapped models (`glm-4.7` for balanced paths and `deepseek-r1` for deep reasoning paths)
+- verified a real `chat/completions` inference call through `zhaocai-gateway`, which returned a successful completion from `glm-4.7`
 
 ## MVP Status
 
