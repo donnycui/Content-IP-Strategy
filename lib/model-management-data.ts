@@ -1,4 +1,12 @@
-import type { GatewayAuthType, GatewayConnection, GatewayHealthStatus, ManagedModel, ModelTier } from "@prisma/client";
+import type {
+  GatewayAuthType,
+  GatewayConnection,
+  GatewayHealthStatus,
+  ManagedModel,
+  ModelCapabilityKey,
+  ModelTier,
+  PlanModelAccess,
+} from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export type GatewayConnectionRow = {
@@ -43,6 +51,15 @@ export type CapabilityRouteRow = {
   fallbackModelLabel: string;
 };
 
+export type PlanModelAccessRow = {
+  planKey: string;
+  capabilityKey: ModelCapabilityKey | null;
+  allowedTiers: ModelTier[];
+  canSelectModel: boolean;
+  canUsePremiumReasoning: boolean;
+  scopeLabel: string;
+};
+
 function formatDateTime(value?: Date | null) {
   return value ? value.toLocaleString("zh-CN") : "尚未同步";
 }
@@ -77,6 +94,27 @@ function mapManagedModel(
     tier: model.tier,
     enabled: model.enabled,
     visibleToUsers: model.visibleToUsers,
+  };
+}
+
+function scopeLabel(capabilityKey: ModelCapabilityKey | null) {
+  if (!capabilityKey) {
+    return "全局默认";
+  }
+
+  return capabilityKey;
+}
+
+function mapPlanAccessScope(rows: PlanModelAccess[]): PlanModelAccessRow {
+  const [first] = rows;
+
+  return {
+    planKey: first.planKey,
+    capabilityKey: first.capabilityKey,
+    allowedTiers: [...new Set(rows.map((row) => row.allowedTier))].sort(),
+    canSelectModel: rows.some((row) => row.canSelectModel),
+    canUsePremiumReasoning: rows.some((row) => row.canUsePremiumReasoning),
+    scopeLabel: scopeLabel(first.capabilityKey),
   };
 }
 
@@ -176,5 +214,28 @@ export async function getCapabilityRoutes() {
     }));
   } catch {
     return [] as CapabilityRouteRow[];
+  }
+}
+
+export async function getPlanModelAccessRows() {
+  if (!process.env.DATABASE_URL) {
+    return [] as PlanModelAccessRow[];
+  }
+
+  try {
+    const rows = await prisma.planModelAccess.findMany({
+      orderBy: [{ planKey: "asc" }, { capabilityKey: "asc" }, { allowedTier: "asc" }],
+    });
+
+    const grouped = new Map<string, PlanModelAccess[]>();
+
+    for (const row of rows) {
+      const key = `${row.planKey}::${row.capabilityKey ?? "global"}`;
+      grouped.set(key, [...(grouped.get(key) ?? []), row]);
+    }
+
+    return [...grouped.values()].map(mapPlanAccessScope);
+  } catch {
+    return [] as PlanModelAccessRow[];
   }
 }

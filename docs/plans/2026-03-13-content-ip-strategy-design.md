@@ -1728,6 +1728,13 @@ If implementation speed becomes the priority, the first simplifications should b
   - added a strategy-report action in the research workspace
   - reused the existing research-card fields as the first persistence surface for report output
 - verified the new strategic-report flow with a full `next build` pass
+- added a first working `PlanModelAccess` runtime layer:
+  - introduced `/admin/plans` and `/api/admin/plans`
+  - added `PlanModelAccess` grouping and editing in the admin surface
+  - made `resolveCapabilityRoute(...)` honor the default plan when deciding whether a capability can use a model tier
+  - limited user override eligibility by both `CapabilityRoute.allowUserOverride` and the selected plan scope
+  - set `CREATOR_OS_DEFAULT_PLAN` as the first environment-backed entry point for global plan enforcement
+- verified the plan-access extension with a clean `npm run build` pass and a follow-up `npx tsc --noEmit` pass after `.next/types` regeneration
 
 ## MVP Status
 

@@ -19,6 +19,7 @@ const navItems = [
   { href: "/reviews", label: "校准台" },
   { href: "/sources", label: "信号源" },
   { href: "/admin/gateways", label: "模型管理" },
+  { href: "/admin/plans", label: "套餐权限" },
 ];
 
 export default function RootLayout({

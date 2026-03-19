@@ -1,5 +1,5 @@
 import type { DirectionRow } from "@/lib/direction-data";
-import type { CapabilityRouteRow, GatewayConnectionRow, ManagedModelRow } from "@/lib/model-management-data";
+import type { CapabilityRouteRow, GatewayConnectionRow, ManagedModelRow, PlanModelAccessRow } from "@/lib/model-management-data";
 import type { CreatorProfileRow } from "@/lib/profile-data";
 import type { ProfileUpdateSuggestionRow } from "@/lib/profile-update-suggestion-data";
 import type { TopicCandidateRow } from "@/lib/topic-candidate-data";
@@ -162,5 +162,23 @@ export type CapabilityRouteUpsertRequest = {
 };
 
 export type CapabilityRouteUpsertResponse = ApiResponse<{
+  updated: true;
+}>;
+
+export type PlanKeyValue = "STANDARD" | "PROFESSIONAL" | "FLAGSHIP";
+
+export type PlanModelAccessListResponse = ApiResponse<{
+  scopes: PlanModelAccessRow[];
+}>;
+
+export type PlanModelAccessUpsertRequest = {
+  planKey?: PlanKeyValue;
+  capabilityKey?: CapabilityKeyValue | null;
+  allowedTiers?: ModelTierValue[];
+  canSelectModel?: boolean;
+  canUsePremiumReasoning?: boolean;
+};
+
+export type PlanModelAccessUpsertResponse = ApiResponse<{
   updated: true;
 }>;

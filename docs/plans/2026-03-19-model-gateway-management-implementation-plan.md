@@ -328,3 +328,25 @@ Actual execution note:
 git add docs/plans/2026-03-13-content-ip-strategy-design.md lib/models lib/services
 git commit -m "Record model gateway progress"
 ```
+
+---
+
+## Post-plan extension: runtime plan access enforcement
+
+After the original Task 1-7 scope was completed, the model-management layer was extended so `PlanModelAccess` is no longer just a schema placeholder.
+
+Completed extension:
+
+- added `/admin/plans` and `/api/admin/plans` for editing plan-to-tier access rules
+- added grouped `PlanModelAccess` reads to the model-management data layer
+- added a dedicated admin service for replacing plan-access scopes
+- extended `resolveCapabilityRoute(...)` so the active plan can:
+  - restrict which model tiers are allowed for a capability
+  - block capability execution when no permitted model tier exists
+  - limit user model override to plans that explicitly allow selection
+- added `CREATOR_OS_DEFAULT_PLAN` to the environment contract as the first global plan selector
+
+Verification:
+
+- `npm run build` passed
+- `npx tsc --noEmit` passed after `.next/types` regeneration
