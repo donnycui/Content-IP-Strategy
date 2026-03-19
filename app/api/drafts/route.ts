@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { executeStructuredGeneration } from "@/lib/services/structured-generation-service";
 import { prisma } from "@/lib/prisma";
 
 type DraftPayload = {
@@ -67,6 +68,55 @@ function buildDrafts(card: {
   } as const;
 }
 
+type DraftGenerationPayload = {
+  wechatArticle?: string;
+  wechatVideo?: string;
+  shortPost?: string;
+};
+
+async function generateDraftsWithModel(card: {
+  title: string;
+  eventDefinition: string | null;
+  mainstreamNarrative: string | null;
+  ignoredVariables: string | null;
+  threeMonthProjection: string | null;
+  winnersLosers: string | null;
+  positioningJudgment: string | null;
+}, supportContext?: {
+  clusterTitle?: string | null;
+  supportingSignals: Array<{
+    title: string;
+    reasoningSummary: string;
+  }>;
+}) {
+  const fallback = buildDrafts(card, supportContext);
+
+  const payload = await executeStructuredGeneration<DraftGenerationPayload>({
+    capabilityKey: "draft_generation",
+    systemInstruction:
+      "你是知识型创作者平台里的草稿生成助手。请基于研究卡和支撑信号，一次性输出三个中文草稿版本：公众号短评、视频号口播、短帖。返回严格 JSON，格式为 {\"wechatArticle\":\"...\",\"wechatVideo\":\"...\",\"shortPost\":\"...\"}。内容要保留结构感、站位判断和为什么现在值得讲，不要输出多余解释。",
+    userPrompt: JSON.stringify(
+      {
+        researchCard: card,
+        supportContext,
+        fallbackDrafts: fallback,
+      },
+      null,
+      2,
+    ),
+    metadata: {
+      channel: "web",
+      flow: "creator-os",
+    },
+  });
+
+  return {
+    WECHAT_ARTICLE: payload?.wechatArticle?.trim() || fallback.WECHAT_ARTICLE,
+    WECHAT_VIDEO: payload?.wechatVideo?.trim() || fallback.WECHAT_VIDEO,
+    SHORT_POST: payload?.shortPost?.trim() || fallback.SHORT_POST,
+  } as const;
+}
+
 export async function POST(request: Request) {
   if (!process.env.DATABASE_URL) {
     return NextResponse.json({ ok: false, error: "DATABASE_URL is not configured." }, { status: 503 });
@@ -108,7 +158,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Research card not found." }, { status: 404 });
     }
 
-    const contents = buildDrafts(researchCard, {
+    const contents = await generateDraftsWithModel(researchCard, {
       clusterTitle: researchCard.cluster.clusterTitle,
       supportingSignals: researchCard.cluster.items.map((item) => ({
         title: item.signal.title,

@@ -1722,6 +1722,7 @@ If implementation speed becomes the priority, the first simplifications should b
   - `profile_evolution`
 - added a shared structured-generation service so these flows can call `capability -> route -> adapter -> gateway -> model` while still preserving their rule-based outputs as fallbacks
 - verified the new generation-chain refactor with a full `next build` pass
+- routed `draft_generation` through the same model-routing chain, so draft creation now also supports `capability -> route -> adapter -> gateway -> model` with the previous template output retained as fallback
 
 ## MVP Status
 
