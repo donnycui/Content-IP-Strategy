@@ -62,7 +62,7 @@ git commit -m "Add model gateway data foundation"
 - Create: `lib/models/model-types.ts`
 - Create: `lib/models/gateway-client.ts`
 
-- [ ] **Step 1: Define a normalized request/response shape**
+- [x] **Step 1: Define a normalized request/response shape**
 
 The adapter should standardize:
 
@@ -72,16 +72,22 @@ The adapter should standardize:
 - text output
 - usage metadata
 
-- [ ] **Step 2: Implement an initial gateway client**
+- [x] **Step 2: Implement an initial gateway client**
 
 Support a first `chat-completions`-style client compatible with `zhaocai-gateway`.
 
-- [ ] **Step 3: Leave room for protocol expansion**
+- [x] **Step 3: Leave room for protocol expansion**
 
 Do not hardcode all business logic to one protocol. The adapter should support future variants such as:
 
 - OpenAI Responses
 - Anthropic Messages
+
+Actual execution note:
+
+- the first adapter and gateway client now support `openai-chat-completions`
+- placeholders are in place for `openai-responses` and `anthropic-messages`
+- a direct `next build` run did not return a clean terminal completion log in this environment, but `npx tsc --noEmit` passed and the generated `.next` type artifacts refreshed successfully during verification
 
 - [ ] **Step 4: Commit**
 
