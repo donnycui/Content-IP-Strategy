@@ -102,7 +102,7 @@ git commit -m "Add model adapter foundation"
 - Create: `lib/services/model-routing-service.ts`
 - Modify: service files that perform LLM work
 
-- [ ] **Step 1: Resolve capability -> model policy**
+- [x] **Step 1: Resolve capability -> model policy**
 
 Implement a resolver that can determine:
 
@@ -111,7 +111,7 @@ Implement a resolver that can determine:
 - whether fallback is allowed
 - whether user override is allowed
 
-- [ ] **Step 2: Add capability keys**
+- [x] **Step 2: Add capability keys**
 
 Normalize the first capability keys:
 
@@ -122,6 +122,12 @@ Normalize the first capability keys:
 - `topic_generation`
 - `topic_candidate_generation`
 - `profile_evolution`
+
+Actual execution note:
+
+- a first `model-routing-service` now resolves capability routes from `CapabilityRoute`
+- if no database route exists yet, the service falls back to the legacy environment model configuration
+- the normalized capability-key set is exported as a canonical constant for later runtime usage
 
 - [ ] **Step 3: Commit**
 
