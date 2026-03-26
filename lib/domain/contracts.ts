@@ -128,12 +128,10 @@ export type GatewayCreateResponse = ApiResponse<{
 
 export type GatewayTestResponse = ApiResponse<{
   healthy: boolean;
-  providersStatus: number;
   modelsStatus: number;
 }>;
 
 export type GatewaySyncResponse = ApiResponse<{
-  providersCount: number;
   modelsCount: number;
   upsertedCount: number;
 }>;

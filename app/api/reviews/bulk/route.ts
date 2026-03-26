@@ -20,6 +20,13 @@ function mapReviewStatusToSignalStatus(reviewStatus?: BulkReviewPayload["reviewS
   }
 }
 
+function getBulkReviewWriteData(payload: BulkReviewPayload) {
+  return {
+    reviewStatus: payload.reviewStatus,
+    reasoningAcceptance: payload.reasoningAcceptance,
+  };
+}
+
 export async function POST(request: Request) {
   if (!process.env.DATABASE_URL) {
     return NextResponse.json({ ok: false, error: "DATABASE_URL is not configured." }, { status: 503 });
@@ -51,16 +58,51 @@ export async function POST(request: Request) {
         throw new Error("有部分信号已经失效或不是线上真实数据，请刷新页面后重试。");
       }
 
+      const latestReviews = await tx.humanReview.findMany({
+        where: {
+          signalId: {
+            in: payload.signalIds,
+          },
+        },
+        select: {
+          id: true,
+          signalId: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      const latestReviewIdBySignalId = new Map<string, string>();
+
+      for (const review of latestReviews) {
+        if (!review.signalId || latestReviewIdBySignalId.has(review.signalId)) {
+          continue;
+        }
+
+        latestReviewIdBySignalId.set(review.signalId, review.id);
+      }
+
       const reviews = await Promise.all(
-        payload.signalIds!.map((signalId) =>
-          tx.humanReview.create({
+        payload.signalIds!.map((signalId) => {
+          const latestReviewId = latestReviewIdBySignalId.get(signalId);
+
+          if (latestReviewId) {
+            return tx.humanReview.update({
+              where: {
+                id: latestReviewId,
+              },
+              data: getBulkReviewWriteData(payload),
+            });
+          }
+
+          return tx.humanReview.create({
             data: {
               signalId,
-              reviewStatus: payload.reviewStatus,
-              reasoningAcceptance: payload.reasoningAcceptance,
+              ...getBulkReviewWriteData(payload),
             },
-          }),
-        ),
+          });
+        }),
       );
 
       const update = await tx.signal.updateMany({
@@ -74,7 +116,7 @@ export async function POST(request: Request) {
         },
       });
 
-      return { reviewsCreated: reviews.length, signalsUpdated: update.count };
+      return { reviewsSaved: reviews.length, signalsUpdated: update.count };
     });
 
     return NextResponse.json({ ok: true, ...result, status: mapReviewStatusToSignalStatus(payload.reviewStatus) });

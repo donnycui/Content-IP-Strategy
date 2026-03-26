@@ -1,4 +1,5 @@
 import { GatewayAuthType, GatewayHealthStatus } from "@prisma/client";
+import { buildOpenAiApiEndpoint } from "@/lib/models/openai-endpoints";
 import { prisma } from "@/lib/prisma";
 import { syncGatewayConnectionModels } from "@/lib/services/gateway-sync-service";
 import { ServiceError } from "@/lib/services/service-error";
@@ -10,10 +11,6 @@ type CreateGatewayInput = {
   authSecretRef?: string;
 };
 
-function trimTrailingSlash(value: string) {
-  return value.replace(/\/$/, "");
-}
-
 function buildGatewayHeaders(authType: GatewayAuthType, authSecretRef?: string | null) {
   const headers: Record<string, string> = {};
 
@@ -24,7 +21,7 @@ function buildGatewayHeaders(authType: GatewayAuthType, authSecretRef?: string |
   const secret = process.env[authSecretRef];
 
   if (!secret) {
-    throw new ServiceError(`网关密钥变量 ${authSecretRef} 未配置。`, 500, "GATEWAY_SECRET_MISSING");
+    throw new ServiceError(`Provider 密钥变量 ${authSecretRef} 未配置。`, 500, "GATEWAY_SECRET_MISSING");
   }
 
   switch (authType) {
@@ -52,13 +49,13 @@ export async function createGatewayConnection(input: CreateGatewayInput) {
   const baseUrl = input.baseUrl?.trim();
 
   if (!name || !baseUrl) {
-    throw new ServiceError("请填写网关名称和 Base URL。", 400, "GATEWAY_FIELDS_REQUIRED");
+    throw new ServiceError("请填写 Provider 名称和 Base URL。", 400, "GATEWAY_FIELDS_REQUIRED");
   }
 
   const gateway = await prisma.gatewayConnection.create({
     data: {
       name,
-      baseUrl: trimTrailingSlash(baseUrl),
+      baseUrl: baseUrl.replace(/\/$/, ""),
       authType: input.authType ?? "NONE",
       authSecretRef: input.authSecretRef?.trim() || null,
       isActive: true,
@@ -84,19 +81,15 @@ export async function testGatewayConnection(gatewayConnectionId: string) {
   });
 
   if (!gateway) {
-    throw new ServiceError("网关连接不存在。", 404, "GATEWAY_NOT_FOUND");
+    throw new ServiceError("Provider 连接不存在。", 404, "GATEWAY_NOT_FOUND");
   }
 
   const headers = buildGatewayHeaders(gateway.authType, gateway.authSecretRef);
-  const baseUrl = trimTrailingSlash(gateway.baseUrl);
+  const modelsEndpoint = buildOpenAiApiEndpoint(gateway.baseUrl, "/models");
 
   try {
-    const [providersResponse, modelsResponse] = await Promise.all([
-      fetch(`${baseUrl}/v1/providers`, { headers }),
-      fetch(`${baseUrl}/v1/models`, { headers }),
-    ]);
-
-    const healthy = providersResponse.ok && modelsResponse.ok;
+    const modelsResponse = await fetch(modelsEndpoint, { headers });
+    const healthy = modelsResponse.ok;
 
     await prisma.gatewayConnection.update({
       where: {
@@ -109,7 +102,6 @@ export async function testGatewayConnection(gatewayConnectionId: string) {
 
     return {
       healthy,
-      providersStatus: providersResponse.status,
       modelsStatus: modelsResponse.status,
     };
   } catch (error) {
@@ -123,7 +115,7 @@ export async function testGatewayConnection(gatewayConnectionId: string) {
     });
 
     throw new ServiceError(
-      error instanceof Error ? `网关测试失败：${error.message}` : "网关测试失败。",
+      error instanceof Error ? `Provider 测试失败：${error.message}` : "Provider 测试失败。",
       502,
       "GATEWAY_TEST_FAILED",
     );

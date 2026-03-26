@@ -5,14 +5,14 @@ type ReviewPayload = {
   signalId?: string;
   clusterId?: string;
   reviewStatus?: "PENDING" | "KEPT" | "REJECTED" | "DEFERRED";
-  adjustedImportanceScore?: number;
-  adjustedViewpointScore?: number;
-  adjustedConsensusStrength?: number;
-  adjustedCompanyRoutineScore?: number;
-  adjustedPriorityRecommendation?: "PRIORITIZE" | "WATCH" | "DEPRIORITIZE";
-  reasoningAcceptance?: "ACCEPTED" | "PARTIAL" | "REJECTED";
-  reviewNote?: string;
-  myAngle?: string;
+  adjustedImportanceScore?: number | null;
+  adjustedViewpointScore?: number | null;
+  adjustedConsensusStrength?: number | null;
+  adjustedCompanyRoutineScore?: number | null;
+  adjustedPriorityRecommendation?: "PRIORITIZE" | "WATCH" | "DEPRIORITIZE" | null;
+  reasoningAcceptance?: "ACCEPTED" | "PARTIAL" | "REJECTED" | null;
+  reviewNote?: string | null;
+  myAngle?: string | null;
 };
 
 function mapReviewStatusToSignalStatus(reviewStatus?: ReviewPayload["reviewStatus"]) {
@@ -26,6 +26,22 @@ function mapReviewStatusToSignalStatus(reviewStatus?: ReviewPayload["reviewStatu
     default:
       return "REVIEWED" as const;
   }
+}
+
+function getReviewWriteData(payload: ReviewPayload) {
+  return {
+    signalId: payload.signalId,
+    clusterId: payload.clusterId,
+    reviewStatus: payload.reviewStatus,
+    adjustedImportanceScore: payload.adjustedImportanceScore,
+    adjustedViewpointScore: payload.adjustedViewpointScore,
+    adjustedConsensusStrength: payload.adjustedConsensusStrength,
+    adjustedCompanyRoutineScore: payload.adjustedCompanyRoutineScore,
+    adjustedPriorityRecommendation: payload.adjustedPriorityRecommendation,
+    reasoningAcceptance: payload.reasoningAcceptance,
+    reviewNote: payload.reviewNote,
+    myAngle: payload.myAngle,
+  };
 }
 
 export async function POST(request: Request) {
@@ -68,21 +84,29 @@ export async function POST(request: Request) {
         }
       }
 
-      const review = await tx.humanReview.create({
-        data: {
-          signalId: payload.signalId,
-          clusterId: payload.clusterId,
-          reviewStatus: payload.reviewStatus,
-          adjustedImportanceScore: payload.adjustedImportanceScore,
-          adjustedViewpointScore: payload.adjustedViewpointScore,
-          adjustedConsensusStrength: payload.adjustedConsensusStrength,
-          adjustedCompanyRoutineScore: payload.adjustedCompanyRoutineScore,
-          adjustedPriorityRecommendation: payload.adjustedPriorityRecommendation,
-          reasoningAcceptance: payload.reasoningAcceptance,
-          reviewNote: payload.reviewNote,
-          myAngle: payload.myAngle,
+      const latestReview = await tx.humanReview.findFirst({
+        where: payload.signalId
+          ? {
+              signalId: payload.signalId,
+            }
+          : {
+              clusterId: payload.clusterId,
+            },
+        orderBy: {
+          createdAt: "desc",
         },
       });
+
+      const review = latestReview
+        ? await tx.humanReview.update({
+            where: {
+              id: latestReview.id,
+            },
+            data: getReviewWriteData(payload),
+          })
+        : await tx.humanReview.create({
+            data: getReviewWriteData(payload),
+          });
 
       let signal = null;
 

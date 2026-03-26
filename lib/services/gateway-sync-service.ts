@@ -1,25 +1,7 @@
 import { GatewayAuthType, ModelTier, Prisma } from "@prisma/client";
+import { buildOpenAiApiEndpoint } from "@/lib/models/openai-endpoints";
 import { prisma } from "@/lib/prisma";
 import { ServiceError } from "@/lib/services/service-error";
-
-type GatewayProviderRecord = {
-  name: string;
-  provider_type?: string;
-  base_url?: string;
-  models?: string[];
-  enabled?: boolean;
-  source?: string;
-  status?: {
-    healthy?: boolean;
-    latency_ms?: number;
-    request_count?: number;
-    error_count?: number;
-  };
-};
-
-type GatewayProvidersResponse = {
-  providers?: GatewayProviderRecord[];
-};
 
 type GatewayModelRecord = {
   id: string;
@@ -31,10 +13,6 @@ type GatewayModelsResponse = {
   data?: GatewayModelRecord[];
 };
 
-function trimTrailingSlash(value: string) {
-  return value.replace(/\/$/, "");
-}
-
 function buildGatewayHeaders(authType: GatewayAuthType, authSecretRef?: string | null) {
   const headers: Record<string, string> = {};
 
@@ -45,7 +23,7 @@ function buildGatewayHeaders(authType: GatewayAuthType, authSecretRef?: string |
   const secret = process.env[authSecretRef];
 
   if (!secret) {
-    throw new ServiceError(`网关密钥变量 ${authSecretRef} 未配置。`, 500, "GATEWAY_SECRET_MISSING");
+    throw new ServiceError(`Provider 密钥变量 ${authSecretRef} 未配置。`, 500, "GATEWAY_SECRET_MISSING");
   }
 
   switch (authType) {
@@ -91,7 +69,7 @@ async function fetchJson<T>(url: string, headers: Record<string, string>) {
   });
 
   if (!response.ok) {
-    throw new ServiceError(`网关请求失败：${response.status} ${response.statusText}`, response.status, "GATEWAY_FETCH_FAILED");
+    throw new ServiceError(`Provider 请求失败：${response.status} ${response.statusText}`, response.status, "GATEWAY_FETCH_FAILED");
   }
 
   return (await response.json()) as T;
@@ -109,35 +87,26 @@ export async function syncGatewayConnectionModels(gatewayConnectionId: string) {
   });
 
   if (!connection) {
-    throw new ServiceError("网关连接不存在。", 404, "GATEWAY_NOT_FOUND");
+    throw new ServiceError("Provider 连接不存在。", 404, "GATEWAY_NOT_FOUND");
   }
 
   const headers = buildGatewayHeaders(connection.authType, connection.authSecretRef);
-  const baseUrl = trimTrailingSlash(connection.baseUrl);
+  const modelsEndpoint = buildOpenAiApiEndpoint(connection.baseUrl, "/models");
 
   try {
-    const [providersPayload, modelsPayload] = await Promise.all([
-      fetchJson<GatewayProvidersResponse>(`${baseUrl}/v1/providers`, headers),
-      fetchJson<GatewayModelsResponse>(`${baseUrl}/v1/models`, headers),
-    ]);
-
-    const providers = providersPayload.providers ?? [];
-    const providerIndex = new Map(providers.map((provider) => [provider.name, provider]));
+    const modelsPayload = await fetchJson<GatewayModelsResponse>(modelsEndpoint, headers);
     const models = modelsPayload.data ?? [];
 
     let upsertedCount = 0;
 
     await prisma.$transaction(async (tx) => {
       for (const model of models) {
-        const providerKey = model.owned_by ?? "unknown";
-        const provider = providerIndex.get(providerKey);
+        const providerKey = model.owned_by ?? connection.name;
         const displayName = model.id;
-        const capabilityTags: Prisma.InputJsonValue | Prisma.NullableJsonNullValueInput = provider
+        const capabilityTags: Prisma.InputJsonValue | Prisma.NullableJsonNullValueInput = models.length
           ? {
-              providerType: provider.provider_type ?? "unknown",
-              source: provider.source ?? "gateway",
-              providerModels: provider.models ?? [],
-              healthy: provider.status?.healthy ?? null,
+              source: "provider",
+              discoveredFrom: modelsEndpoint,
             }
           : Prisma.JsonNull;
 
@@ -183,7 +152,6 @@ export async function syncGatewayConnectionModels(gatewayConnectionId: string) {
 
     return {
       gatewayConnectionId: connection.id,
-      providersCount: providers.length,
       modelsCount: models.length,
       upsertedCount,
     };
@@ -202,7 +170,7 @@ export async function syncGatewayConnectionModels(gatewayConnectionId: string) {
     }
 
     throw new ServiceError(
-      error instanceof Error ? `网关同步失败：${error.message}` : "网关同步失败。",
+      error instanceof Error ? `Provider 模型同步失败：${error.message}` : "Provider 模型同步失败。",
       502,
       "GATEWAY_SYNC_FAILED",
     );

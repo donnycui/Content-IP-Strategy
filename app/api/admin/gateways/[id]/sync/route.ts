@@ -11,7 +11,6 @@ export async function POST(_: Request, context: { params: Promise<{ id: string }
     return NextResponse.json<GatewaySyncResponse>({
       ok: true,
       data: {
-        providersCount: result.providersCount,
         modelsCount: result.modelsCount,
         upsertedCount: result.upsertedCount,
       },
@@ -20,7 +19,7 @@ export async function POST(_: Request, context: { params: Promise<{ id: string }
     return NextResponse.json<GatewaySyncResponse>(
       {
         ok: false,
-        error: error instanceof Error ? error.message : "同步网关模型失败。",
+        error: error instanceof Error ? error.message : "同步 Provider 模型失败。",
       },
       { status: getServiceErrorStatus(error) },
     );

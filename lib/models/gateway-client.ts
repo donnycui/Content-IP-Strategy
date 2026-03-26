@@ -5,6 +5,7 @@ import {
   ModelGatewayTarget,
   ModelUsage,
 } from "@/lib/models/model-types";
+import { buildOpenAiApiEndpoint } from "@/lib/models/openai-endpoints";
 
 type OpenAiChatCompletionsResponse = {
   id?: string;
@@ -47,10 +48,6 @@ type OpenAiResponsesResponse = {
     type?: string;
   };
 };
-
-function trimTrailingSlash(value: string) {
-  return value.replace(/\/$/, "");
-}
 
 function buildGatewayHeaders(target: ModelGatewayTarget) {
   const headers: Record<string, string> = {
@@ -120,7 +117,7 @@ export async function invokeOpenAiChatCompletions(
   target: ModelGatewayTarget,
   request: ModelExecutionRequest,
 ): Promise<ModelExecutionResult> {
-  const endpoint = `${trimTrailingSlash(target.baseUrl)}/v1/chat/completions`;
+  const endpoint = buildOpenAiApiEndpoint(target.baseUrl, "/chat/completions");
 
   const messages = [
     ...(request.systemInstruction
@@ -193,7 +190,7 @@ export async function invokeOpenAiResponses(
   target: ModelGatewayTarget,
   request: ModelExecutionRequest,
 ): Promise<ModelExecutionResult> {
-  const endpoint = `${trimTrailingSlash(target.baseUrl)}/responses`;
+  const endpoint = buildOpenAiApiEndpoint(target.baseUrl, "/responses");
 
   const input = [
     ...(request.systemInstruction

@@ -18,10 +18,10 @@ export default async function AdminGatewaysPage() {
     <main className="space-y-5">
       <section className="panel px-6 py-5">
         <div className="space-y-2">
-          <p className="section-kicker">Admin / Gateway</p>
-          <h2 className="section-title mt-2">连接模型网关并拉取可用模型</h2>
+          <p className="section-kicker">Admin / Model Providers</p>
+          <h2 className="section-title mt-2">配置模型 Provider 连接并同步可用模型</h2>
           <p className="section-desc mt-3">
-            第一阶段这里优先管理 `zhaocai-gateway`。你可以新增网关、测试连接，并把 provider/model 元数据同步进 Creator OS。
+            这里管理的是本项目自己的模型连接。你可以直接配置 OpenAI 兼容 provider，测试连接，并把可用模型同步进 Creator OS。
           </p>
         </div>
       </section>
@@ -62,8 +62,8 @@ export default async function AdminGatewaysPage() {
           ))
         ) : (
           <section className="panel px-6 py-8">
-            <p className="text-lg font-semibold">当前还没有模型网关。</p>
-            <p className="muted mt-2 max-w-3xl text-sm leading-7">先新增一个 `zhaocai-gateway` 连接，再测试和同步模型。</p>
+            <p className="text-lg font-semibold">当前还没有模型 Provider 连接。</p>
+            <p className="muted mt-2 max-w-3xl text-sm leading-7">先新增一个 provider 连接，再测试并同步模型。</p>
           </section>
         )}
       </section>

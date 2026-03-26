@@ -25,7 +25,7 @@ export async function getTodayWorkspaceService() {
     .slice(0, 4);
   const newSignals = signals.filter((signal) => signal.status === "NEW").slice(0, 4);
 
-  const latestResearchCardId = "id" in latestResearchCard ? latestResearchCard.id : null;
+  const latestResearchCardId = latestResearchCard && "id" in latestResearchCard ? latestResearchCard.id : null;
   const latestDrafts = latestResearchCardId ? await getDraftsByResearchCardId(latestResearchCardId) : [];
 
   return {

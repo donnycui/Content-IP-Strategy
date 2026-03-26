@@ -41,11 +41,12 @@ type SignalDetailPageProps = {
 export default async function SignalDetailPage({ params }: SignalDetailPageProps) {
   const { id } = await params;
   const signal = await getSignalById(id);
-  const researchCard = await getResearchCardPreview();
 
   if (!signal) {
     notFound();
   }
+
+  const researchCard = await getResearchCardPreview(signal.id);
 
   return (
     <main className="grid gap-5 xl:grid-cols-[1.2fr,0.8fr]">
@@ -120,20 +121,26 @@ export default async function SignalDetailPage({ params }: SignalDetailPageProps
 
         <div className="panel space-y-4 px-6 py-5">
           <p className="text-xs uppercase tracking-[0.25em] text-sky-200">研究卡预览</p>
-          <div className="space-y-4">
-            <div>
-              <p className="text-sm font-semibold">事件定义</p>
-              <p className="muted mt-1 text-sm leading-6">{researchCard.eventDefinition}</p>
+          {researchCard ? (
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-semibold">事件定义</p>
+                <p className="muted mt-1 text-sm leading-6">{researchCard.eventDefinition}</p>
+              </div>
+              <div>
+                <p className="text-sm font-semibold">被忽略变量</p>
+                <p className="muted mt-1 text-sm leading-6">{researchCard.ignoredVariables}</p>
+              </div>
+              <div>
+                <p className="text-sm font-semibold">站位判断</p>
+                <p className="muted mt-1 text-sm leading-6">{researchCard.positioningJudgment}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-semibold">被忽略变量</p>
-              <p className="muted mt-1 text-sm leading-6">{researchCard.ignoredVariables}</p>
-            </div>
-            <div>
-              <p className="text-sm font-semibold">站位判断</p>
-              <p className="muted mt-1 text-sm leading-6">{researchCard.positioningJudgment}</p>
-            </div>
-          </div>
+          ) : (
+            <p className="muted text-sm leading-6">
+              当前这条信号还没有关联的研究卡。先在候选池里把它推进到研究卡，再回来查看这里的预览。
+            </p>
+          )}
         </div>
       </section>
 
@@ -149,12 +156,20 @@ export default async function SignalDetailPage({ params }: SignalDetailPageProps
             <Link className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 transition hover:border-white/20" href="/candidates">
               打开候选池
             </Link>
-            <Link className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 transition hover:border-white/20" href="/research/demo">
-              打开研究卡
-            </Link>
-            <Link className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 transition hover:border-white/20" href="/drafts/demo">
-              打开草稿工作区
-            </Link>
+            {researchCard?.id ? (
+              <>
+                <Link className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 transition hover:border-white/20" href={`/research/${researchCard.id}`}>
+                  打开研究卡
+                </Link>
+                <Link className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 transition hover:border-white/20" href={`/drafts/${researchCard.id}`}>
+                  打开草稿工作区
+                </Link>
+              </>
+            ) : (
+              <p className="muted rounded-2xl border border-dashed border-white/10 px-4 py-3 leading-6">
+                当前还没有可跳转的研究卡或草稿工作区，先把这条信号推进进候选池。
+              </p>
+            )}
           </div>
         </div>
       </aside>

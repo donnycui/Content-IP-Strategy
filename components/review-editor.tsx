@@ -44,7 +44,7 @@ export function ReviewEditor({ signalId, initialReview }: ReviewEditorProps) {
 
   function toNumber(value: string) {
     if (!value.trim()) {
-      return undefined;
+      return null;
     }
 
     return Number(value);
@@ -70,8 +70,8 @@ export function ReviewEditor({ signalId, initialReview }: ReviewEditorProps) {
             adjustedCompanyRoutineScore: toNumber(form.adjustedCompanyRoutineScore),
             adjustedPriorityRecommendation: form.adjustedPriorityRecommendation,
             reasoningAcceptance: form.reasoningAcceptance,
-            reviewNote: form.reviewNote || undefined,
-            myAngle: form.myAngle || undefined,
+            reviewNote: form.reviewNote.trim() ? form.reviewNote : null,
+            myAngle: form.myAngle.trim() ? form.myAngle : null,
           }),
         });
 

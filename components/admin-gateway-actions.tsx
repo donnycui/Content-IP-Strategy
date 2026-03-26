@@ -23,9 +23,9 @@ export function AdminGatewayActions({ gatewayId }: { gatewayId: string }) {
         if (action === "test") {
           const result = (await response.json()) as GatewayTestResponse;
           if (!response.ok || !result.ok) {
-            throw new Error(result.ok ? "测试网关失败。" : (result.error ?? "测试网关失败。"));
+            throw new Error(result.ok ? "测试 Provider 连接失败。" : (result.error ?? "测试 Provider 连接失败。"));
           }
-          setFeedback(result.data.healthy ? "网关连接健康。" : "网关可连通，但状态异常。");
+          setFeedback(result.data.healthy ? "Provider 连接健康。" : "Provider 可连通，但模型目录状态异常。");
         } else {
           const result = (await response.json()) as GatewaySyncResponse;
           if (!response.ok || !result.ok) {

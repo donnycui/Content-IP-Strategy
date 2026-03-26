@@ -16,7 +16,7 @@ export async function POST(_: Request, context: { params: Promise<{ id: string }
     return NextResponse.json<GatewayTestResponse>(
       {
         ok: false,
-        error: error instanceof Error ? error.message : "测试网关连接失败。",
+        error: error instanceof Error ? error.message : "测试 Provider 连接失败。",
       },
       { status: getServiceErrorStatus(error) },
     );

@@ -7,6 +7,17 @@ type DraftPayload = {
   requestedTier?: "FAST" | "BALANCED" | "DEEP";
 };
 
+const PROTECTED_DRAFT_ERROR =
+  "已存在人工编辑或已推进状态的草稿。为避免覆盖现有内容，本次不会自动重新生成。";
+
+function hasProtectedDraft(draft: {
+  status: "DRAFT" | "READY" | "PUBLISHED" | "ARCHIVED";
+  createdAt: Date;
+  updatedAt: Date;
+}) {
+  return draft.status !== "DRAFT" || draft.updatedAt.getTime() !== draft.createdAt.getTime();
+}
+
 function buildDrafts(card: {
   title: string;
   eventDefinition: string | null;
@@ -160,6 +171,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Research card not found." }, { status: 404 });
     }
 
+    const existingDrafts = await prisma.contentDraft.findMany({
+      where: {
+        researchCardId: researchCard.id,
+      },
+    });
+
+    if (existingDrafts.some(hasProtectedDraft)) {
+      return NextResponse.json({ ok: false, error: PROTECTED_DRAFT_ERROR }, { status: 409 });
+    }
+
     const contents = await generateDraftsWithModel(researchCard, {
       clusterTitle: researchCard.cluster.clusterTitle,
       supportingSignals: researchCard.cluster.items.map((item) => ({
@@ -169,13 +190,17 @@ export async function POST(request: Request) {
     }, payload.requestedTier);
 
     const drafts = await prisma.$transaction(async (tx) => {
-      const existingDrafts = await tx.contentDraft.findMany({
+      const currentDrafts = await tx.contentDraft.findMany({
         where: {
           researchCardId: researchCard.id,
         },
       });
 
-      const existingMap = new Map(existingDrafts.map((draft) => [draft.platform, draft]));
+      if (currentDrafts.some(hasProtectedDraft)) {
+        throw new Error(PROTECTED_DRAFT_ERROR);
+      }
+
+      const existingMap = new Map(currentDrafts.map((draft) => [draft.platform, draft]));
 
       const draftInputs = [
         { platform: "WECHAT_ARTICLE" as const, content: contents.WECHAT_ARTICLE },
@@ -217,6 +242,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true, drafts });
   } catch (error) {
+    if (error instanceof Error && error.message === PROTECTED_DRAFT_ERROR) {
+      return NextResponse.json({ ok: false, error: error.message }, { status: 409 });
+    }
+
     return NextResponse.json(
       { ok: false, error: error instanceof Error ? error.message : "Failed to generate drafts." },
       { status: 500 },

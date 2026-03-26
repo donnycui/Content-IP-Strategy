@@ -14,10 +14,10 @@ const authOptions: Array<{ value: GatewayAuthTypeValue; label: string }> = [
 export function AdminGatewayCreateForm() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [name, setName] = useState("zhaocai-gateway");
+  const [name, setName] = useState("openai-primary");
   const [baseUrl, setBaseUrl] = useState("");
   const [authType, setAuthType] = useState<GatewayAuthTypeValue>("BEARER");
-  const [authSecretRef, setAuthSecretRef] = useState("ZHAOCAI_GATEWAY_TOKEN");
+  const [authSecretRef, setAuthSecretRef] = useState("OPENAI_API_KEY");
   const [feedback, setFeedback] = useState("");
   const [error, setError] = useState("");
 
@@ -45,13 +45,13 @@ export function AdminGatewayCreateForm() {
         const result = (await response.json()) as GatewayCreateResponse;
 
         if (!response.ok || !result.ok) {
-          throw new Error(result.ok ? "创建网关连接失败。" : (result.error ?? "创建网关连接失败。"));
+          throw new Error(result.ok ? "创建 Provider 连接失败。" : (result.error ?? "创建 Provider 连接失败。"));
         }
 
-        setFeedback("网关连接已创建。");
+        setFeedback("Provider 连接已创建。");
         router.refresh();
       } catch (submitError) {
-        setError(submitError instanceof Error ? submitError.message : "创建网关连接失败。");
+        setError(submitError instanceof Error ? submitError.message : "创建 Provider 连接失败。");
       }
     });
   }
@@ -59,12 +59,12 @@ export function AdminGatewayCreateForm() {
   return (
     <form className="subpanel grid gap-4 px-5 py-5 lg:grid-cols-4" onSubmit={handleSubmit}>
       <div className="space-y-2">
-        <p className="text-sm font-semibold text-slate-700">网关名称</p>
+        <p className="text-sm font-semibold text-slate-700">Provider 名称</p>
         <input className="field" onChange={(event) => setName(event.target.value)} value={name} />
       </div>
       <div className="space-y-2 lg:col-span-2">
         <p className="text-sm font-semibold text-slate-700">Base URL</p>
-        <input className="field" onChange={(event) => setBaseUrl(event.target.value)} placeholder="https://gateway.example.com" value={baseUrl} />
+        <input className="field" onChange={(event) => setBaseUrl(event.target.value)} placeholder="https://api.openai.com/v1" value={baseUrl} />
       </div>
       <div className="space-y-2">
         <p className="text-sm font-semibold text-slate-700">鉴权方式</p>
@@ -81,13 +81,13 @@ export function AdminGatewayCreateForm() {
         <input
           className="field"
           onChange={(event) => setAuthSecretRef(event.target.value)}
-          placeholder="例如 ZHAOCAI_GATEWAY_TOKEN"
+          placeholder="例如 OPENAI_API_KEY"
           value={authSecretRef}
         />
       </div>
       <div className="flex items-end gap-3">
         <button className="rounded-2xl border border-sky-300/40 bg-sky-400/10 px-4 py-3 text-sm transition hover:border-sky-200 hover:bg-sky-400/20 disabled:opacity-50" disabled={isPending} type="submit">
-          {isPending ? "创建中..." : "新增网关"}
+          {isPending ? "创建中..." : "新增 Provider"}
         </button>
       </div>
       <div className="lg:col-span-4">

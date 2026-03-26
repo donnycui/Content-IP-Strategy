@@ -22,7 +22,7 @@ export async function GET() {
     return NextResponse.json<GatewayConnectionsListResponse>(
       {
         ok: false,
-        error: error instanceof Error ? error.message : "读取网关连接失败。",
+        error: error instanceof Error ? error.message : "读取 Provider 连接失败。",
       },
       { status: getServiceErrorStatus(error) },
     );
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json<GatewayCreateResponse>(
       {
         ok: false,
-        error: error instanceof Error ? error.message : "创建网关连接失败。",
+        error: error instanceof Error ? error.message : "创建 Provider 连接失败。",
       },
       { status: getServiceErrorStatus(error) },
     );

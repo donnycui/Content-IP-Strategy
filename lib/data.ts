@@ -21,6 +21,88 @@ type SignalRecord = SignalRow & {
   };
 };
 
+type SignalWithRelations = {
+  id: string;
+  title: string;
+  publishedAt: Date | null;
+  ingestedAt: Date;
+  summary: string | null;
+  status: SignalRow["status"];
+  source: {
+    name: string;
+  };
+  tags: Array<{
+    tagType: string;
+    tag: string;
+  }>;
+  scores: Array<{
+    primaryObservationCluster?: keyof typeof observationClusterLabels | null;
+    secondaryObservationCluster?: keyof typeof observationClusterLabels | null;
+    importanceScore: number;
+    viewpointScore: number;
+    consensusStrength?: number | null;
+    companyRoutineScore?: number | null;
+    priorityRecommendation: SignalRow["priorityRecommendation"];
+    reasoningSummary: string;
+    reasoningDetail?: string | null;
+    modelName?: string | null;
+  }>;
+  reviews: Array<NonNullable<SignalRecord["latestReview"]>>;
+  clusterItems: Array<{
+    cluster: {
+      id: string;
+      clusterTitle: string;
+    } | null;
+  }>;
+};
+
+function mapSignalRecord(signal: SignalWithRelations): SignalRecord {
+  const latestScore = signal.scores[0];
+  const latestReview = signal.reviews[0];
+  const firstCluster = signal.clusterItems[0]?.cluster;
+
+  return {
+    id: signal.id,
+    title: signal.title,
+    source: getSourceNameLabel(signal.source.name),
+    publishedAt: signal.publishedAt?.toISOString() ?? signal.ingestedAt.toISOString(),
+    topicTags: signal.tags.filter((tag) => tag.tagType === "TOPIC").map((tag) => getTopicTagLabel(tag.tag)),
+    motherTheme: getMotherThemeLabel(signal.tags.find((tag) => tag.tagType === "MOTHER_THEME")?.tag)
+      ?? firstCluster?.clusterTitle
+      ?? "未映射",
+    primaryObservationCluster: latestScore?.primaryObservationCluster
+      ? observationClusterLabels[latestScore.primaryObservationCluster]
+      : "旧分发模式失效",
+    secondaryObservationCluster: latestScore?.secondaryObservationCluster
+      ? observationClusterLabels[latestScore.secondaryObservationCluster]
+      : null,
+    importanceScore: latestScore?.importanceScore ?? 0,
+    viewpointScore: latestScore?.viewpointScore ?? 0,
+    consensusStrength: latestScore?.consensusStrength ?? 0,
+    companyRoutineScore: latestScore?.companyRoutineScore ?? 0,
+    priorityRecommendation: latestScore?.priorityRecommendation ?? "WATCH",
+    reasoningSummary: latestScore?.reasoningSummary ?? signal.summary ?? "暂时还没有 AI 理由。",
+    reasoningDetail: latestScore?.reasoningDetail ?? null,
+    modelName: latestScore?.modelName ?? null,
+    status: signal.status,
+    clusterId: firstCluster?.id,
+    latestReview: latestReview
+      ? {
+          id: latestReview.id,
+          reviewStatus: latestReview.reviewStatus,
+          adjustedImportanceScore: latestReview.adjustedImportanceScore,
+          adjustedViewpointScore: latestReview.adjustedViewpointScore,
+          adjustedConsensusStrength: latestReview.adjustedConsensusStrength,
+          adjustedCompanyRoutineScore: latestReview.adjustedCompanyRoutineScore,
+          adjustedPriorityRecommendation: latestReview.adjustedPriorityRecommendation,
+          reasoningAcceptance: latestReview.reasoningAcceptance,
+          reviewNote: latestReview.reviewNote,
+          myAngle: latestReview.myAngle,
+        }
+      : undefined,
+  };
+}
+
 export async function getSignals(): Promise<SignalRecord[]> {
   if (!process.env.DATABASE_URL) {
     return mockSignals;
@@ -56,76 +138,90 @@ export async function getSignals(): Promise<SignalRecord[]> {
       take: 50,
     });
 
-    return signals.map((signal) => {
-      const latestScore = signal.scores[0];
-      const latestReview = signal.reviews[0];
-      const firstCluster = signal.clusterItems[0]?.cluster;
-
-      return {
-        id: signal.id,
-        title: signal.title,
-        source: getSourceNameLabel(signal.source.name),
-        publishedAt: signal.publishedAt?.toISOString() ?? signal.ingestedAt.toISOString(),
-        topicTags: signal.tags.filter((tag) => tag.tagType === "TOPIC").map((tag) => getTopicTagLabel(tag.tag)),
-        motherTheme: getMotherThemeLabel(signal.tags.find((tag) => tag.tagType === "MOTHER_THEME")?.tag)
-          ?? firstCluster?.clusterTitle
-          ?? "未映射",
-        primaryObservationCluster: latestScore?.primaryObservationCluster
-          ? observationClusterLabels[latestScore.primaryObservationCluster]
-          : "旧分发模式失效",
-        secondaryObservationCluster: latestScore?.secondaryObservationCluster
-          ? observationClusterLabels[latestScore.secondaryObservationCluster]
-          : null,
-        importanceScore: latestScore?.importanceScore ?? 0,
-        viewpointScore: latestScore?.viewpointScore ?? 0,
-        consensusStrength: latestScore?.consensusStrength ?? 0,
-        companyRoutineScore: latestScore?.companyRoutineScore ?? 0,
-        priorityRecommendation: latestScore?.priorityRecommendation ?? "WATCH",
-        reasoningSummary: latestScore?.reasoningSummary ?? signal.summary ?? "暂时还没有 AI 理由。",
-        reasoningDetail: latestScore?.reasoningDetail ?? null,
-        modelName: latestScore?.modelName ?? null,
-        status: signal.status,
-        clusterId: firstCluster?.id,
-        latestReview: latestReview
-          ? {
-              id: latestReview.id,
-              reviewStatus: latestReview.reviewStatus,
-              adjustedImportanceScore: latestReview.adjustedImportanceScore,
-              adjustedViewpointScore: latestReview.adjustedViewpointScore,
-              adjustedConsensusStrength: latestReview.adjustedConsensusStrength,
-              adjustedCompanyRoutineScore: latestReview.adjustedCompanyRoutineScore,
-              adjustedPriorityRecommendation: latestReview.adjustedPriorityRecommendation,
-              reasoningAcceptance: latestReview.reasoningAcceptance,
-              reviewNote: latestReview.reviewNote,
-              myAngle: latestReview.myAngle,
-            }
-          : undefined,
-      };
-    });
+    return signals.map(mapSignalRecord);
   } catch {
     return [];
   }
 }
 
 export async function getSignalById(id: string): Promise<SignalRecord | null> {
-  const signals = await getSignals();
-  return signals.find((signal) => signal.id === id) ?? null;
+  if (!process.env.DATABASE_URL) {
+    return mockSignals.find((signal) => signal.id === id) ?? null;
+  }
+
+  try {
+    const signal = await prisma.signal.findUnique({
+      where: {
+        id,
+      },
+      include: {
+        source: true,
+        tags: true,
+        scores: {
+          orderBy: {
+            createdAt: "desc",
+          },
+          take: 1,
+        },
+        reviews: {
+          orderBy: {
+            createdAt: "desc",
+          },
+          take: 1,
+        },
+        clusterItems: {
+          include: {
+            cluster: true,
+          },
+          take: 1,
+        },
+      },
+    });
+
+    return signal ? mapSignalRecord(signal) : null;
+  } catch {
+    return null;
+  }
 }
 
-export async function getResearchCardPreview() {
+type ResearchCardPreview = {
+  id?: string;
+  title: string;
+  eventDefinition: string | null;
+  mainstreamNarrative: string | null;
+  ignoredVariables: string | null;
+  historicalAnalogy: string | null;
+  threeMonthProjection: string | null;
+  oneYearProjection: string | null;
+  winnersLosers: string | null;
+  positioningJudgment: string | null;
+};
+
+export async function getResearchCardPreview(signalId?: string): Promise<ResearchCardPreview | null> {
   if (!process.env.DATABASE_URL) {
     return mockResearchCard;
   }
 
   try {
     const card = await prisma.researchCard.findFirst({
+      where: signalId
+        ? {
+            cluster: {
+              items: {
+                some: {
+                  signalId,
+                },
+              },
+            },
+          }
+        : undefined,
       orderBy: {
         updatedAt: "desc",
       },
     });
 
     if (!card) {
-      return mockResearchCard;
+      return signalId ? null : mockResearchCard;
     }
 
     return {
@@ -141,7 +237,7 @@ export async function getResearchCardPreview() {
       positioningJudgment: card.positioningJudgment,
     };
   } catch {
-    return mockResearchCard;
+    return signalId ? null : mockResearchCard;
   }
 }
 
@@ -347,10 +443,25 @@ export async function getReviewCalibrationRows() {
       orderBy: {
         createdAt: "desc",
       },
-      take: 50,
     });
 
-    return reviews
+    const latestReviews: typeof reviews = [];
+    const seenSignalIds = new Set<string>();
+
+    for (const review of reviews) {
+      if (!review.signalId || seenSignalIds.has(review.signalId)) {
+        continue;
+      }
+
+      seenSignalIds.add(review.signalId);
+      latestReviews.push(review);
+
+      if (latestReviews.length >= 50) {
+        break;
+      }
+    }
+
+    return latestReviews
       .filter((review) => review.signal && review.signal.scores[0])
       .map((review) => {
         const score = review.signal!.scores[0]!;
