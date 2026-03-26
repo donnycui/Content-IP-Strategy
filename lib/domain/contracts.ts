@@ -126,6 +126,18 @@ export type GatewayCreateResponse = ApiResponse<{
   gatewayId: string;
 }>;
 
+export type GatewayUpdateRequest = {
+  isActive?: boolean;
+};
+
+export type GatewayUpdateResponse = ApiResponse<{
+  updated: true;
+}>;
+
+export type GatewayDeleteResponse = ApiResponse<{
+  deleted: true;
+}>;
+
 export type GatewayTestResponse = ApiResponse<{
   healthy: boolean;
   modelsStatus: number;
@@ -140,6 +152,20 @@ export type ManagedModelsListResponse = ApiResponse<{
   models: ManagedModelRow[];
 }>;
 
+export type ManagedModelCreateRequest = {
+  gatewayConnectionId?: string;
+  providerKey?: string;
+  modelKey?: string;
+  displayName?: string;
+  tier?: ModelTierValue;
+  enabled?: boolean;
+  visibleToUsers?: boolean;
+};
+
+export type ManagedModelCreateResponse = ApiResponse<{
+  created: true;
+}>;
+
 export type ManagedModelUpdateRequest = {
   id?: string;
   tier?: ModelTierValue;
@@ -149,6 +175,10 @@ export type ManagedModelUpdateRequest = {
 
 export type ManagedModelUpdateResponse = ApiResponse<{
   updated: true;
+}>;
+
+export type ManagedModelDeleteResponse = ApiResponse<{
+  deleted: true;
 }>;
 
 export type CapabilityRoutesListResponse = ApiResponse<{

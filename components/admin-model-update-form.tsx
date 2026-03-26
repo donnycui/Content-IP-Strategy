@@ -1,8 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import type { ManagedModelUpdateResponse, ModelTierValue } from "@/lib/domain/contracts";
+import type {
+  ManagedModelDeleteResponse,
+  ManagedModelUpdateResponse,
+  ModelTierValue,
+} from "@/lib/domain/contracts";
 
 const tierOptions: Array<{ value: ModelTierValue; label: string }> = [
   { value: "FAST", label: "快速" },
@@ -15,6 +20,7 @@ export function AdminModelUpdateForm(props: {
   tier: ModelTierValue;
   enabled: boolean;
   visibleToUsers: boolean;
+  routeUsageCount: number;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -58,6 +64,30 @@ export function AdminModelUpdateForm(props: {
     });
   }
 
+  function handleDelete() {
+    startTransition(async () => {
+      try {
+        setFeedback("");
+        setError("");
+
+        const response = await fetch(`/api/admin/models/${props.id}`, {
+          method: "DELETE",
+        });
+
+        const result = (await response.json()) as ManagedModelDeleteResponse;
+
+        if (!response.ok || !result.ok) {
+          throw new Error(result.ok ? "删除模型失败。" : (result.error ?? "删除模型失败。"));
+        }
+
+        setFeedback("模型已删除。");
+        router.refresh();
+      } catch (submitError) {
+        setError(submitError instanceof Error ? submitError.message : "删除模型失败。");
+      }
+    });
+  }
+
   return (
     <form className="flex flex-wrap items-center gap-3" onSubmit={handleSubmit}>
       <select className="field min-w-[120px]" onChange={(event) => setTier(event.target.value as ModelTierValue)} value={tier}>
@@ -78,6 +108,18 @@ export function AdminModelUpdateForm(props: {
       <button className="pill" disabled={isPending} type="submit">
         {isPending ? "保存中..." : "保存"}
       </button>
+      <button
+        className="pill"
+        disabled={isPending || props.routeUsageCount > 0}
+        onClick={handleDelete}
+        type="button"
+      >
+        {isPending ? "处理中..." : "删除模型"}
+      </button>
+      <Link className="pill" href="/admin/routing">
+        去配置路由
+      </Link>
+      {props.routeUsageCount > 0 ? <span className="text-sm text-amber-700">当前有 {props.routeUsageCount} 条路由引用该模型，不能删除或停用。</span> : null}
       {feedback ? <span className="text-sm text-emerald-700">{feedback}</span> : null}
       {error ? <span className="text-sm text-rose-600">{error}</span> : null}
     </form>

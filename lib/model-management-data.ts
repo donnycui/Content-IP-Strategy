@@ -19,10 +19,12 @@ export type GatewayConnectionRow = {
   healthStatus: GatewayHealthStatus;
   lastSyncedAt: string;
   modelsCount: number;
+  routeUsageCount: number;
 };
 
 export type ManagedModelRow = {
   id: string;
+  gatewayConnectionId: string;
   gatewayName: string;
   providerKey: string;
   modelKey: string;
@@ -30,6 +32,7 @@ export type ManagedModelRow = {
   tier: ModelTier;
   enabled: boolean;
   visibleToUsers: boolean;
+  routeUsageCount: number;
 };
 
 export type CapabilityRouteRow = {
@@ -64,7 +67,10 @@ function formatDateTime(value?: Date | null) {
   return value ? value.toLocaleString("zh-CN") : "尚未同步";
 }
 
-function mapGatewayConnection(connection: GatewayConnection & { _count: { managedModels: number } }): GatewayConnectionRow {
+function mapGatewayConnection(
+  connection: GatewayConnection & { _count: { managedModels: number } },
+  routeUsageCount: number,
+): GatewayConnectionRow {
   return {
     id: connection.id,
     name: connection.name,
@@ -75,18 +81,22 @@ function mapGatewayConnection(connection: GatewayConnection & { _count: { manage
     healthStatus: connection.healthStatus,
     lastSyncedAt: formatDateTime(connection.lastSyncedAt),
     modelsCount: connection._count.managedModels,
+    routeUsageCount,
   };
 }
 
 function mapManagedModel(
   model: ManagedModel & {
     gatewayConnection: {
+      id: string;
       name: string;
     };
   },
+  routeUsageCount: number,
 ): ManagedModelRow {
   return {
     id: model.id,
+    gatewayConnectionId: model.gatewayConnection.id,
     gatewayName: model.gatewayConnection.name,
     providerKey: model.providerKey,
     modelKey: model.modelKey,
@@ -94,6 +104,7 @@ function mapManagedModel(
     tier: model.tier,
     enabled: model.enabled,
     visibleToUsers: model.visibleToUsers,
+    routeUsageCount,
   };
 }
 
@@ -124,20 +135,52 @@ export async function getGatewayConnections() {
   }
 
   try {
-    const rows = await prisma.gatewayConnection.findMany({
-      include: {
-        _count: {
-          select: {
-            managedModels: true,
+    const [rows, routes] = await Promise.all([
+      prisma.gatewayConnection.findMany({
+        include: {
+          _count: {
+            select: {
+              managedModels: true,
+            },
           },
         },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+        orderBy: {
+          createdAt: "desc",
+        },
+      }),
+      prisma.capabilityRoute.findMany({
+        include: {
+          defaultModel: {
+            select: {
+              gatewayConnectionId: true,
+            },
+          },
+          fallbackModel: {
+            select: {
+              gatewayConnectionId: true,
+            },
+          },
+        },
+      }),
+    ]);
 
-    return rows.map(mapGatewayConnection);
+    const routeUsageCountByGatewayId = new Map<string, number>();
+
+    for (const route of routes) {
+      routeUsageCountByGatewayId.set(
+        route.defaultModel.gatewayConnectionId,
+        (routeUsageCountByGatewayId.get(route.defaultModel.gatewayConnectionId) ?? 0) + 1,
+      );
+
+      if (route.fallbackModel?.gatewayConnectionId) {
+        routeUsageCountByGatewayId.set(
+          route.fallbackModel.gatewayConnectionId,
+          (routeUsageCountByGatewayId.get(route.fallbackModel.gatewayConnectionId) ?? 0) + 1,
+        );
+      }
+    }
+
+    return rows.map((row) => mapGatewayConnection(row, routeUsageCountByGatewayId.get(row.id) ?? 0));
   } catch {
     return [] as GatewayConnectionRow[];
   }
@@ -149,18 +192,43 @@ export async function getManagedModels() {
   }
 
   try {
-    const rows = await prisma.managedModel.findMany({
-      include: {
-        gatewayConnection: {
-          select: {
-            name: true,
+    const [rows, routes] = await Promise.all([
+      prisma.managedModel.findMany({
+        include: {
+          gatewayConnection: {
+            select: {
+              id: true,
+              name: true,
+            },
           },
         },
-      },
-      orderBy: [{ enabled: "desc" }, { displayName: "asc" }],
-    });
+        orderBy: [{ enabled: "desc" }, { displayName: "asc" }],
+      }),
+      prisma.capabilityRoute.findMany({
+        select: {
+          defaultModelId: true,
+          fallbackModelId: true,
+        },
+      }),
+    ]);
 
-    return rows.map(mapManagedModel);
+    const routeUsageCountByModelId = new Map<string, number>();
+
+    for (const route of routes) {
+      routeUsageCountByModelId.set(
+        route.defaultModelId,
+        (routeUsageCountByModelId.get(route.defaultModelId) ?? 0) + 1,
+      );
+
+      if (route.fallbackModelId) {
+        routeUsageCountByModelId.set(
+          route.fallbackModelId,
+          (routeUsageCountByModelId.get(route.fallbackModelId) ?? 0) + 1,
+        );
+      }
+    }
+
+    return rows.map((row) => mapManagedModel(row, routeUsageCountByModelId.get(row.id) ?? 0));
   } catch {
     return [] as ManagedModelRow[];
   }

@@ -38,11 +38,16 @@ export default async function AdminGatewaysPage() {
                     <span className="pill">{gateway.isActive ? "启用中" : "已停用"}</span>
                     <span className="pill">{healthLabels[gateway.healthStatus]}</span>
                     <span className="pill">{gateway.modelsCount} 个模型</span>
+                    <span className="pill">{gateway.routeUsageCount} 条路由引用</span>
                   </div>
                   <h3 className="text-xl font-semibold">{gateway.name}</h3>
                   <p className="muted text-sm break-all">{gateway.baseUrl}</p>
                 </div>
-                <AdminGatewayActions gatewayId={gateway.id} />
+                <AdminGatewayActions
+                  gatewayId={gateway.id}
+                  isActive={gateway.isActive}
+                  routeUsageCount={gateway.routeUsageCount}
+                />
               </div>
               <div className="grid gap-4 text-sm text-slate-700 lg:grid-cols-3">
                 <div>

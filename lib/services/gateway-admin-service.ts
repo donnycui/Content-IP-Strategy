@@ -11,6 +11,11 @@ type CreateGatewayInput = {
   authSecretRef?: string;
 };
 
+type UpdateGatewayInput = {
+  id?: string;
+  isActive?: boolean;
+};
+
 function buildGatewayHeaders(authType: GatewayAuthType, authSecretRef?: string | null) {
   const headers: Record<string, string> = {};
 
@@ -67,6 +72,141 @@ export async function createGatewayConnection(input: CreateGatewayInput) {
   });
 
   return { gatewayId: gateway.id };
+}
+
+export async function updateGatewayConnection(input: UpdateGatewayInput) {
+  if (!process.env.DATABASE_URL) {
+    throw new ServiceError("DATABASE_URL is not configured.", 503, "DATABASE_UNAVAILABLE");
+  }
+
+  if (!input.id || typeof input.isActive !== "boolean") {
+    throw new ServiceError("Provider 更新参数不完整。", 400, "GATEWAY_UPDATE_FIELDS_REQUIRED");
+  }
+
+  const gateway = await prisma.gatewayConnection.findUnique({
+    where: {
+      id: input.id,
+    },
+    include: {
+      managedModels: {
+        select: {
+          id: true,
+        },
+      },
+    },
+  });
+
+  if (!gateway) {
+    throw new ServiceError("Provider 连接不存在。", 404, "GATEWAY_NOT_FOUND");
+  }
+
+  if (!input.isActive) {
+    const modelIds = gateway.managedModels.map((model) => model.id);
+
+    if (modelIds.length) {
+      const referencedRoute = await prisma.capabilityRoute.findFirst({
+        where: {
+          OR: [
+            {
+              defaultModelId: {
+                in: modelIds,
+              },
+            },
+            {
+              fallbackModelId: {
+                in: modelIds,
+              },
+            },
+          ],
+        },
+        select: {
+          capabilityKey: true,
+        },
+      });
+
+      if (referencedRoute) {
+        throw new ServiceError(
+          `该 Provider 仍被能力路由 ${referencedRoute.capabilityKey} 使用，不能直接停用。请先切换路由。`,
+          409,
+          "GATEWAY_IN_USE",
+        );
+      }
+    }
+  }
+
+  await prisma.gatewayConnection.update({
+    where: {
+      id: input.id,
+    },
+    data: {
+      isActive: input.isActive,
+    },
+  });
+
+  return { updated: true as const };
+}
+
+export async function deleteGatewayConnection(gatewayConnectionId: string) {
+  if (!process.env.DATABASE_URL) {
+    throw new ServiceError("DATABASE_URL is not configured.", 503, "DATABASE_UNAVAILABLE");
+  }
+
+  const gateway = await prisma.gatewayConnection.findUnique({
+    where: {
+      id: gatewayConnectionId,
+    },
+    include: {
+      managedModels: {
+        select: {
+          id: true,
+        },
+      },
+    },
+  });
+
+  if (!gateway) {
+    throw new ServiceError("Provider 连接不存在。", 404, "GATEWAY_NOT_FOUND");
+  }
+
+  const modelIds = gateway.managedModels.map((model) => model.id);
+
+  if (modelIds.length) {
+    const referencedRoute = await prisma.capabilityRoute.findFirst({
+      where: {
+        OR: [
+          {
+            defaultModelId: {
+              in: modelIds,
+            },
+          },
+          {
+            fallbackModelId: {
+              in: modelIds,
+            },
+          },
+        ],
+      },
+      select: {
+        capabilityKey: true,
+      },
+    });
+
+    if (referencedRoute) {
+      throw new ServiceError(
+        `该 Provider 下仍有模型被能力路由 ${referencedRoute.capabilityKey} 使用，不能删除。请先切换路由。`,
+        409,
+        "GATEWAY_IN_USE",
+      );
+    }
+  }
+
+  await prisma.gatewayConnection.delete({
+    where: {
+      id: gatewayConnectionId,
+    },
+  });
+
+  return { deleted: true as const };
 }
 
 export async function testGatewayConnection(gatewayConnectionId: string) {

@@ -1,6 +1,11 @@
-import { NextResponse } from "next/server";
-import type { ManagedModelsListResponse } from "@/lib/domain/contracts";
+import { NextRequest, NextResponse } from "next/server";
+import type {
+  ManagedModelCreateRequest,
+  ManagedModelCreateResponse,
+  ManagedModelsListResponse,
+} from "@/lib/domain/contracts";
 import { getManagedModels } from "@/lib/model-management-data";
+import { createManagedModel } from "@/lib/services/model-admin-service";
 import { getServiceErrorStatus } from "@/lib/services/service-error";
 
 export async function GET() {
@@ -18,6 +23,28 @@ export async function GET() {
       {
         ok: false,
         error: error instanceof Error ? error.message : "读取模型列表失败。",
+      },
+      { status: getServiceErrorStatus(error) },
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = (await request.json()) as ManagedModelCreateRequest;
+    await createManagedModel(body);
+
+    return NextResponse.json<ManagedModelCreateResponse>({
+      ok: true,
+      data: {
+        created: true,
+      },
+    });
+  } catch (error) {
+    return NextResponse.json<ManagedModelCreateResponse>(
+      {
+        ok: false,
+        error: error instanceof Error ? error.message : "新增模型失败。",
       },
       { status: getServiceErrorStatus(error) },
     );
