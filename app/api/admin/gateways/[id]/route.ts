@@ -7,7 +7,7 @@ import type {
 import {
   deleteGatewayConnection,
   updateGatewayConnection,
-} from "@/lib/services/gateway-admin-service";
+} from "@/lib/services/gateway-access-admin-service";
 import { getServiceErrorStatus } from "@/lib/services/service-error";
 
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {

@@ -60,7 +60,7 @@ export async function createManagedModel(input: CreateManagedModelInput) {
     throw new ServiceError("Provider 连接不存在。", 404, "GATEWAY_NOT_FOUND");
   }
 
-  const providerKey = input.providerKey?.trim() || gateway.name;
+  const providerKey = input.providerKey?.trim() || "gateway-alias";
   const modelKey = input.modelKey.trim();
 
   await prisma.managedModel.upsert({

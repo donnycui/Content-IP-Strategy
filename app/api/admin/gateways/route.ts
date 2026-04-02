@@ -5,7 +5,7 @@ import type {
   GatewayCreateResponse,
 } from "@/lib/domain/contracts";
 import { getGatewayConnections } from "@/lib/model-management-data";
-import { createGatewayConnection } from "@/lib/services/gateway-admin-service";
+import { createGatewayConnection } from "@/lib/services/gateway-access-admin-service";
 import { getServiceErrorStatus } from "@/lib/services/service-error";
 
 export async function GET() {

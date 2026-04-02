@@ -1,5 +1,6 @@
 import { observationClusterLabels, type ObservationClusterKey } from "@/lib/observation-clusters";
 import { executeModelRequest } from "@/lib/models/model-adapter";
+import { resolveRouteModelTarget } from "@/lib/models/route-target";
 import { resolveCapabilityRoute } from "@/lib/services/model-routing-service";
 
 export type ScoringInput = {
@@ -359,32 +360,18 @@ const llmScoringProvider: SignalScoringProvider = {
 
     try {
       const route = await resolveCapabilityRoute("signal_scoring");
+      const target = resolveRouteModelTarget(route.defaultModel);
 
-      if (!route.defaultModel.gatewayBaseUrl || !route.defaultModel.modelKey) {
+      if (!target) {
         return {
           ...fallback,
-          reasoningDetail: `${fallback.reasoningDetail} 模型路由不可用，已回退到启发式评分。`,
+          reasoningDetail: `${fallback.reasoningDetail} Model routing is unavailable, so heuristic fallback was used.`,
           modelName: `${fallback.modelName}+fallback`,
         };
       }
 
       const result = await executeModelRequest(
-        {
-          gatewayName: route.defaultModel.gatewayName ?? "default-environment",
-          baseUrl: route.defaultModel.gatewayBaseUrl,
-          gatewayConnectionId: route.defaultModel.gatewayConnectionId,
-          managedModelId: route.defaultModel.id,
-          authType:
-            route.defaultModel.authType === "api_key" ||
-            route.defaultModel.authType === "passcode" ||
-            route.defaultModel.authType === "none"
-              ? route.defaultModel.authType
-              : "bearer",
-          authSecret: route.defaultModel.authSecret,
-          protocol: route.defaultModel.protocol,
-          model: route.defaultModel.modelKey,
-          providerKey: route.defaultModel.providerKey,
-        },
+        target,
         {
           capabilityKey: "signal_scoring",
           messages: [

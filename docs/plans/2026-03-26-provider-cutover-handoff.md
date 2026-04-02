@@ -1,5 +1,13 @@
 # Provider Cutover Handoff
 
+> Update on 2026-04-02: the latest active handoff is now documented in
+> `docs/plans/2026-04-02-gateway-alias-cutover-handoff.md`.
+> The notes below are historical context from the pre-alias cutover stage.
+>
+> Update on 2026-03-31: the latest cutover direction is now documented in
+> `docs/plans/2026-03-31-gateway-alias-cutover.md`. The provider-direct routing
+> notes below should be treated as historical context.
+
 **Date:** 2026-03-26  
 **Project:** `content-ip-research-workbench`
 

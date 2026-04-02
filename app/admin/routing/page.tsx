@@ -1,18 +1,18 @@
-import { AdminCapabilityRouteForm } from "@/components/admin-capability-route-form";
+import { AdminCapabilityRouteFormV2 as AdminCapabilityRouteForm } from "@/components/admin-capability-route-form-v2";
 import { getCapabilityRoutes, getManagedModels } from "@/lib/model-management-data";
 import { MODEL_CAPABILITY_KEYS } from "@/lib/services/model-routing-service";
 
 export const dynamic = "force-dynamic";
 
 const capabilityDescriptions: Record<(typeof MODEL_CAPABILITY_KEYS)[number], string> = {
-  signal_scoring: "信号初筛与初步判断",
-  ip_extraction_interview: "IP 提炼访谈",
-  ip_strategy_report: "IP 战略报告",
-  direction_generation: "方向生成",
-  topic_generation: "主题生成",
-  topic_candidate_generation: "选题推荐",
-  profile_evolution: "画像进化建议",
-  draft_generation: "草稿生成",
+  signal_scoring: "Initial signal scoring and screening",
+  ip_extraction_interview: "Profile extraction interview",
+  ip_strategy_report: "IP strategy report generation",
+  direction_generation: "Direction generation",
+  topic_generation: "Topic generation",
+  topic_candidate_generation: "Topic candidate generation",
+  profile_evolution: "Profile evolution suggestions",
+  draft_generation: "Draft generation",
 };
 
 export default async function AdminRoutingPage() {
@@ -22,16 +22,22 @@ export default async function AdminRoutingPage() {
     .filter((model) => model.enabled)
     .map((model) => ({
       id: model.id,
-      label: `${model.gatewayName} / ${model.displayName} / ${model.tier}`,
+      label: `${model.displayName} / ${model.modelKey} / ${model.tier}`,
     }));
 
   return (
     <main className="space-y-5">
       <section className="panel px-6 py-5">
         <div className="space-y-2">
-          <p className="section-kicker">Admin / Routing</p>
-          <h2 className="section-title mt-2">给每个 Creator OS capability 配默认模型策略</h2>
-          <p className="section-desc mt-3">这里是模型管理的核心。系统最终会按 capability 路由，而不是按页面硬编码模型。</p>
+          <p className="section-kicker">Admin / Capability Routing</p>
+          <p className="section-desc mt-2">
+            Bind each business capability to a gateway alias instead of a real upstream model.
+          </p>
+          <h2 className="section-title mt-2">Bind each capability to a default alias</h2>
+          <p className="section-desc mt-3">
+            Each capability selects from the synced alias catalog. Real upstream fallback stays inside
+            `zhaocai-gateway-v2`, not in this routing page.
+          </p>
         </div>
       </section>
 
@@ -61,8 +67,10 @@ export default async function AdminRoutingPage() {
         </section>
       ) : (
         <section className="panel px-6 py-8">
-          <p className="text-lg font-semibold">当前还没有可路由的模型。</p>
-          <p className="muted mt-2 text-sm leading-7">先去网关页同步模型，再回来给 capability 配默认模型和 fallback。</p>
+          <p className="text-lg font-semibold">No aliases are available for routing yet.</p>
+          <p className="muted mt-2 text-sm leading-7">
+            Sync aliases from Gateway Access first, then return here to bind capabilities to their default aliases.
+          </p>
         </section>
       )}
     </main>

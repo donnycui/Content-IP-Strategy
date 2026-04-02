@@ -1,5 +1,6 @@
 import type { CreatorProfileDraft } from "@/lib/profile-data";
 import { executeModelRequest } from "@/lib/models/model-adapter";
+import { resolveRouteModelTarget } from "@/lib/models/route-target";
 import { resolveCapabilityRoute } from "@/lib/services/model-routing-service";
 
 type ExtractionInput = {
@@ -83,27 +84,14 @@ export async function extractCreatorProfileDraft({ sourceText, requestedTier }: 
     const route = await resolveCapabilityRoute("ip_extraction_interview", {
       requestedTier: requestedTier ?? null,
     });
+    const target = resolveRouteModelTarget(route.defaultModel);
 
-    if (!route.defaultModel.gatewayBaseUrl || !route.defaultModel.modelKey) {
+    if (!target) {
       return fallback;
     }
 
     const result = await executeModelRequest(
-      {
-        gatewayName: route.defaultModel.gatewayName ?? "default-environment",
-        baseUrl: route.defaultModel.gatewayBaseUrl,
-        gatewayConnectionId: route.defaultModel.gatewayConnectionId,
-        managedModelId: route.defaultModel.id,
-        authType:
-          route.defaultModel.authType === "api_key" ||
-          route.defaultModel.authType === "passcode" ||
-          route.defaultModel.authType === "none"
-            ? route.defaultModel.authType
-            : "bearer",
-        authSecret: route.defaultModel.authSecret,
-        protocol: route.defaultModel.protocol,
-        model: route.defaultModel.modelKey,
-      },
+      target,
       {
         capabilityKey: "ip_extraction_interview",
         systemInstruction:

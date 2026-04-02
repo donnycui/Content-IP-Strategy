@@ -1,27 +1,7 @@
-import type { ModelCapabilityKey, ModelGatewayTarget } from "@/lib/models/model-types";
+import { resolveRouteModelTarget } from "@/lib/models/route-target";
+import type { ModelCapabilityKey } from "@/lib/models/model-types";
 import { executeModelRequest } from "@/lib/models/model-adapter";
 import { resolveCapabilityRoute } from "@/lib/services/model-routing-service";
-
-function normalizeTarget(route: Awaited<ReturnType<typeof resolveCapabilityRoute>>["defaultModel"]): ModelGatewayTarget | null {
-  if (!route.gatewayBaseUrl || !route.modelKey) {
-    return null;
-  }
-
-  return {
-    gatewayName: route.gatewayName ?? "default-environment",
-    baseUrl: route.gatewayBaseUrl,
-    gatewayConnectionId: route.gatewayConnectionId,
-    managedModelId: route.id,
-    authType:
-      route.authType === "api_key" || route.authType === "passcode" || route.authType === "none"
-        ? route.authType
-        : "bearer",
-    authSecret: route.authSecret,
-    protocol: route.protocol,
-    model: route.modelKey,
-    providerKey: route.providerKey,
-  };
-}
 
 function stripCodeFence(text: string) {
   const trimmed = text.trim();
@@ -58,7 +38,7 @@ export async function executeStructuredGeneration<T>({
     const route = await resolveCapabilityRoute(capabilityKey, {
       requestedTier: requestedTier ?? null,
     });
-    const target = normalizeTarget(route.defaultModel);
+    const target = resolveRouteModelTarget(route.defaultModel);
 
     if (!target) {
       return null;

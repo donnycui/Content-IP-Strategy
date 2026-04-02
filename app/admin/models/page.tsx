@@ -1,30 +1,34 @@
 import Link from "next/link";
-import { AdminModelCreateForm } from "@/components/admin-model-create-form";
-import { AdminModelUpdateForm } from "@/components/admin-model-update-form";
+import { AdminModelCreateFormV2 as AdminModelCreateForm } from "@/components/admin-model-create-form-v2";
+import { AdminModelUpdateFormV2 as AdminModelUpdateForm } from "@/components/admin-model-update-form-v2";
 import { getGatewayConnections, getManagedModels } from "@/lib/model-management-data";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminModelsPage() {
   const [models, gateways] = await Promise.all([getManagedModels(), getGatewayConnections()]);
-  const activeProviders = gateways.filter((gateway) => gateway.isActive);
+  const activeGateways = gateways.filter((gateway) => gateway.isActive);
 
   return (
     <main className="space-y-5">
       <section className="panel px-6 py-5">
         <div className="space-y-2">
-          <p className="section-kicker">Admin / Models</p>
-          <h2 className="section-title mt-2">把 Provider 模型变成可用的产品资产</h2>
-          <p className="section-desc mt-3">这里负责决定哪些模型启用、处于什么档位、以及是否对用户可见。</p>
+          <p className="section-kicker">Admin / Alias Catalog</p>
+          <p className="section-desc mt-2">These rows represent gateway aliases used by capability routing.</p>
+          <h2 className="section-title mt-2">Review synced aliases and control visibility</h2>
+          <p className="section-desc mt-3">
+            Use this catalog to decide which aliases stay enabled, which tier they belong to, and whether they are
+            visible to product users.
+          </p>
         </div>
         <div className="mt-4">
           <Link className="pill" href="/admin/routing">
-            打开能力路由配置
+            Open capability routing
           </Link>
         </div>
       </section>
 
-      <AdminModelCreateForm providers={activeProviders.map((provider) => ({ id: provider.id, name: provider.name }))} />
+      <AdminModelCreateForm gateways={activeGateways.map((gateway) => ({ id: gateway.id, name: gateway.name }))} />
 
       <section className="grid gap-5">
         {models.length ? (
@@ -36,7 +40,7 @@ export default async function AdminModelsPage() {
                     <span className="pill">{model.gatewayName}</span>
                     <span className="pill">{model.providerKey}</span>
                     <span className="pill">{model.modelKey}</span>
-                    <span className="pill">{model.routeUsageCount} 条路由引用</span>
+                    <span className="pill">{model.routeUsageCount} route links</span>
                   </div>
                   <h3 className="text-xl font-semibold">{model.displayName}</h3>
                 </div>
@@ -52,8 +56,10 @@ export default async function AdminModelsPage() {
           ))
         ) : (
           <section className="panel px-6 py-8">
-            <p className="text-lg font-semibold">当前还没有同步模型。</p>
-            <p className="muted mt-2 text-sm leading-7">先到 Provider 连接页完成模型同步，这里才会出现可配置的模型列表。</p>
+            <p className="text-lg font-semibold">No aliases have been synced yet.</p>
+            <p className="muted mt-2 text-sm leading-7">
+              Go to Gateway Access, test the gateway entry, and run alias sync. The synced aliases will appear here.
+            </p>
           </section>
         )}
       </section>

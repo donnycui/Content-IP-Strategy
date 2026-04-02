@@ -1,5 +1,8 @@
 import { ModelCapabilityKey, ModelTier, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import {
+  resolveGatewayEnvironmentConfig,
+} from "@/lib/services/model-routing-env";
 import { ServiceError } from "@/lib/services/service-error";
 
 export const MODEL_CAPABILITY_KEYS = [
@@ -92,7 +95,38 @@ function mapManagedModel(model: CapabilityRouteWithModels["defaultModel"]) {
   };
 }
 
-function buildEnvironmentFallback(capabilityKey: ModelCapabilityKey): ResolvedCapabilityRoute {
+function buildGatewayEnvironmentFallback(capabilityKey: ModelCapabilityKey): ResolvedCapabilityRoute | null {
+  const config = resolveGatewayEnvironmentConfig(capabilityKey, process.env);
+
+  if (!config) {
+    return null;
+  }
+
+  return {
+    capabilityKey,
+    planKey: null,
+    source: "environment-fallback",
+    defaultModel: {
+      modelKey: config.alias,
+      displayName: config.alias,
+      gatewayName: config.gatewayName,
+      gatewayBaseUrl: config.baseUrl,
+      gatewayConnectionId: undefined,
+      authType: config.authType,
+      authSecretRef: config.authSecretRef,
+      authSecret: config.authSecret,
+      protocol: config.protocol,
+      providerKey: config.providerKey,
+    },
+    fallbackModel: null,
+    allowFallback: false,
+    allowUserOverride: false,
+    effectiveModel: "default",
+    notes: "Resolved from gateway alias environment configuration.",
+  };
+}
+
+function buildLegacyEnvironmentFallback(capabilityKey: ModelCapabilityKey): ResolvedCapabilityRoute {
   const baseUrl = process.env.SIGNAL_SCORING_BASE_URL?.replace(/\/$/, "");
   const model = process.env.SIGNAL_SCORING_MODEL;
   const protocol =
@@ -125,6 +159,10 @@ function buildEnvironmentFallback(capabilityKey: ModelCapabilityKey): ResolvedCa
     effectiveModel: "default",
     notes: "Resolved from legacy environment configuration.",
   };
+}
+
+function buildEnvironmentFallback(capabilityKey: ModelCapabilityKey): ResolvedCapabilityRoute {
+  return buildGatewayEnvironmentFallback(capabilityKey) ?? buildLegacyEnvironmentFallback(capabilityKey);
 }
 
 function getDefaultPlanKey() {

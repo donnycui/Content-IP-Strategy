@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { GatewaySyncResponse } from "@/lib/domain/contracts";
-import { syncGatewayConnection } from "@/lib/services/gateway-admin-service";
+import { syncGatewayConnection } from "@/lib/services/gateway-access-admin-service";
 import { getServiceErrorStatus } from "@/lib/services/service-error";
 
 export async function POST(_: Request, context: { params: Promise<{ id: string }> }) {
