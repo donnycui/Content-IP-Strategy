@@ -9,6 +9,7 @@
 > notes below should be treated as historical context.
 
 **Date:** 2026-03-26  
+**Last Updated:** 2026-03-27  
 **Project:** `content-ip-research-workbench`
 
 ## 1. 这次改动的目标
@@ -22,6 +23,11 @@
 
 - 以前：`zhaocai-gateway` 同时承担“模型配置来源”和“运行时转发入口”
 - 现在：本项目自己维护 Provider 连接、模型列表和 capability route，运行时直接请求 OpenAI 兼容 provider
+
+补充说明：
+
+- 在后续推进中，又补了一批“Provider / 模型后台增强”，目的是让这套直连 Provider 方案至少能被正常测试和维护
+- 但当前后台仍然是三页拆分结构（`/admin/gateways`、`/admin/models`、`/admin/routing`），还不是最终的一体化模型管理后台
 
 ## 2. 改了什么，为什么这么改
 
@@ -158,6 +164,15 @@
 - 这一轮改动横跨 review、draft、signal、provider routing、数据库配置
 - 只看 git diff 很难快速理解背景和当前状态
 
+### 3.4 新增 Provider 后台增强计划
+
+**文件：**
+- `docs/plans/2026-03-26-provider-admin-hardening-plan.md`
+
+**为什么新增：**
+- 在直连 Provider 切换完成后，发现后台虽然能配置 Provider，但还不像真正可测试的管理后台
+- 需要继续补齐停用/删除 Provider、手动新增模型、模型安全删除、路由引用可视化这些能力
+
 ## 4. Provider 切换具体做了什么
 
 ### 4.1 后台语义从“Gateway”改成“Provider”
@@ -218,6 +233,45 @@
 - `direction_generation` -> `gpt-5.4`，fallback `gpt-5.2`
 - `profile_evolution` -> `gpt-5.4`，fallback `gpt-5.2`
 
+### 4.4 后台能力增强具体做了什么
+
+**目标：**
+- 在不重做统一后台的前提下，让现有三页结构至少具备可测试、可维护的 Provider / 模型管理能力
+
+**涉及文件：**
+- `app/admin/gateways/page.tsx`
+- `app/admin/models/page.tsx`
+- `app/api/admin/gateways/[id]/route.ts`
+- `app/api/admin/models/route.ts`
+- `app/api/admin/models/[id]/route.ts`
+- `components/admin-gateway-actions.tsx`
+- `components/admin-model-create-form.tsx`
+- `components/admin-model-update-form.tsx`
+- `lib/model-management-data.ts`
+- `lib/services/gateway-admin-service.ts`
+- `lib/services/model-admin-service.ts`
+- `lib/domain/contracts.ts`
+
+**新增 / 调整的能力：**
+- Provider：
+  - 支持停用
+  - 支持安全删除
+  - 如果该 Provider 下还有模型被 `CapabilityRoute` 引用，则禁止停用或删除
+- 模型：
+  - 支持手动新增
+  - 支持安全删除
+  - 如果模型仍被 `CapabilityRoute.defaultModelId` 或 `fallbackModelId` 引用，则禁止删除
+  - 如果模型仍被路由引用，则禁止停用
+- 页面可视化：
+  - Provider 页面增加 `routeUsageCount`
+  - 模型页面增加 `routeUsageCount`
+  - 模型页增加“去配置路由”的快捷入口
+
+**当前限制：**
+- `/admin/gateways` 仍然只展示 Provider 摘要，不会直接展开显示该 Provider 下的模型列表
+- 也不会直接显示“哪个 capability 正在使用哪个模型”，只能显示路由引用数量
+- 所以当前后台已经“能测、能维护”，但还不能算最终版管理后台
+
 ## 5. 旧 `zhaocai-gateway` 的处理方式
 
 这次没有删除旧数据，而是做了**安全下线**：
@@ -270,6 +324,15 @@
   - collecting page data
   - generating static pages
 
+### 代码交付状态
+
+当前与这轮改动直接相关的最新提交：
+
+- `24251c4 feat: cut over model routing to direct providers`
+- `9a3ef06 feat: add safe provider and model admin actions`
+
+这两次提交都已经推送到远端主分支，Vercel 可以拿到对应代码。
+
 ### 构建问题处理
 
 之前构建卡在 `sharp` 依赖读取超时。  
@@ -285,17 +348,12 @@
 ### 还没做的
 
 - 还没有完成最终的人工 smoke test
-- 还没有完成 GitHub 提交、推送、Vercel 部署后的线上 smoke test
+- 还没有对新增的 Provider / 模型后台增强做完整人工验收
+- 还没有完成 Vercel 部署后的线上 smoke test
 
 ## 8. 接下来还要做什么
 
-### 8.1 先做代码交付
-
-- 提交当前改动
-- 推送到 GitHub
-- 触发 Vercel 部署
-
-### 8.2 然后做人工 smoke test
+### 8.1 先做人工 smoke test
 
 建议顺序：
 
@@ -323,15 +381,54 @@
    - 线上是否能正常直连 `openai-primary`
    - 数据库连接是否稳定
 
+### 8.2 Provider / 模型后台补测
+
+优先补测这些后台动作：
+
+1. `/admin/gateways`
+   - `openai-primary` 显示为启用中
+   - `zhaocai-gateway` 显示为已停用
+   - `测试连接`
+   - `同步模型`
+   - 对有路由引用的 Provider 执行停用 / 删除，确认会被阻止
+
+2. `/admin/models`
+   - 手动新增一个测试模型
+   - 删除一个未被路由引用的测试模型
+   - 对被路由引用的模型执行删除 / 停用，确认会被阻止
+   - 从模型页跳转到 `/admin/routing`
+
+3. `/admin/routing`
+   - 8 个 capability 都能看到
+   - 默认模型 / fallback 模型显示正常
+   - 修改一条路由并保存成功
+
 ### 8.3 可选后续优化
 
 以下不是必须立即做，但建议后续安排：
 
 - 把 `GatewayConnection` 正式重命名为更准确的 `ProviderConnection`
-- 给模型后台增加“手动添加模型”入口，而不只依赖 `/v1/models` 同步
+- 在 Provider 页直接显示 Provider 下模型列表
+- 在 Provider 页直接显示 capability -> model 使用关系，而不只是引用数
+- 在 Provider 页增加环境变量状态提示（只显示“已配置/未配置”，不显示真实密钥）
 - 继续收口 mock/live 混用问题，减少“假可用”页面
 - 给关键链路补最小自动化测试
 - 把旧的历史设计文档里与 `zhaocai-gateway` 绑定过深的部分标记为 historical
+
+### 8.4 架构上的未决问题
+
+当前代码已切到“本项目自己管理 Provider 并直接请求上游”的模式。
+
+但后续讨论里已经出现一个新的方向：
+
+- 把 `zhaocai-gateway` 改成混合模式
+- 重新承担“统一配置 + 运行时转发”职责
+- 当前项目则尽量只对接单一网关入口
+
+这一点目前**还没有回切实现**，所以当前仓库真实状态仍然是：
+
+- 主路径：直连 `openai-primary`
+- `zhaocai-gateway`：已安全停用，仅保留回滚用途
 
 ## 9. 回滚方式
 
