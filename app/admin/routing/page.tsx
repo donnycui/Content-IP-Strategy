@@ -2,7 +2,7 @@ import { AdminCapabilityRouteFormV2 as AdminCapabilityRouteForm } from "@/compon
 import { getCapabilityRoutes, getManagedModels } from "@/lib/model-management-data";
 import { MODEL_CAPABILITY_KEYS } from "@/lib/services/model-routing-service";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30;
 
 const capabilityDescriptions: Record<(typeof MODEL_CAPABILITY_KEYS)[number], string> = {
   signal_scoring: "Initial signal scoring and screening",

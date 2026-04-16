@@ -1,7 +1,7 @@
 import { AdminPlanAccessForm } from "@/components/admin-plan-access-form";
 import { getPlanModelAccessRows } from "@/lib/model-management-data";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 const planLabels: Record<string, string> = {
   STANDARD: "标准版",

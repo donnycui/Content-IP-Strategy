@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import type {
   ManagedModelCreateRequest,
   ManagedModelCreateResponse,
@@ -33,6 +34,9 @@ export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as ManagedModelCreateRequest;
     await createManagedModel(body);
+    revalidatePath("/admin/gateways");
+    revalidatePath("/admin/models");
+    revalidatePath("/admin/routing");
 
     return NextResponse.json<ManagedModelCreateResponse>({
       ok: true,

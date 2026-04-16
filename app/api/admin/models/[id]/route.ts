@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import type {
   ManagedModelDeleteResponse,
   ManagedModelUpdateRequest,
@@ -15,6 +16,9 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       ...body,
       id,
     });
+    revalidatePath("/admin/gateways");
+    revalidatePath("/admin/models");
+    revalidatePath("/admin/routing");
 
     return NextResponse.json<ManagedModelUpdateResponse>({
       ok: true,
@@ -37,6 +41,9 @@ export async function DELETE(_: NextRequest, context: { params: Promise<{ id: st
   try {
     const { id } = await context.params;
     await deleteManagedModel(id);
+    revalidatePath("/admin/gateways");
+    revalidatePath("/admin/models");
+    revalidatePath("/admin/routing");
 
     return NextResponse.json<ManagedModelDeleteResponse>({
       ok: true,

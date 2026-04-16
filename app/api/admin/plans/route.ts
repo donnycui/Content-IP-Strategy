@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import type {
   PlanModelAccessListResponse,
   PlanModelAccessUpsertRequest,
@@ -40,6 +41,7 @@ export async function POST(request: NextRequest) {
       canSelectModel: body.canSelectModel,
       canUsePremiumReasoning: body.canUsePremiumReasoning,
     });
+    revalidatePath("/admin/plans");
 
     return NextResponse.json<PlanModelAccessUpsertResponse>({
       ok: true,

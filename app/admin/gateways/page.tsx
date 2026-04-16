@@ -2,7 +2,7 @@ import { AdminGatewayActionsV2 as AdminGatewayActions } from "@/components/admin
 import { AdminGatewayCreateFormV2 as AdminGatewayCreateForm } from "@/components/admin-gateway-create-form-v2";
 import { getGatewayConnections } from "@/lib/model-management-data";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30;
 
 const healthLabels = {
   UNKNOWN: "Unknown",

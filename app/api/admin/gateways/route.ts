@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import type {
   GatewayConnectionsListResponse,
   GatewayCreateRequest,
@@ -33,6 +34,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as GatewayCreateRequest;
     const result = await createGatewayConnection(body);
+    revalidatePath("/admin/gateways");
 
     return NextResponse.json<GatewayCreateResponse>({
       ok: true,

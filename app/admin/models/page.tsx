@@ -3,7 +3,7 @@ import { AdminModelCreateFormV2 as AdminModelCreateForm } from "@/components/adm
 import { AdminModelUpdateFormV2 as AdminModelUpdateForm } from "@/components/admin-model-update-form-v2";
 import { getGatewayConnections, getManagedModels } from "@/lib/model-management-data";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30;
 
 export default async function AdminModelsPage() {
   const [models, gateways] = await Promise.all([getManagedModels(), getGatewayConnections()]);
