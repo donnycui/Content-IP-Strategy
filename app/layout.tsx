@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { TopNav } from "@/components/top-nav";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -18,7 +18,11 @@ const navItems = [
   { href: "/candidates", label: "选题台" },
   { href: "/reviews", label: "校准台" },
   { href: "/sources", label: "信号源" },
-  { href: "/admin/gateways", label: "模型管理" },
+  {
+    href: "/admin/gateways",
+    label: "模型管理",
+    matchers: ["/admin/gateways", "/admin/models", "/admin/routing"],
+  },
   { href: "/admin/plans", label: "套餐权限" },
 ];
 
@@ -42,13 +46,7 @@ export default function RootLayout({
                   </p>
                 </div>
               </div>
-              <nav className="flex flex-wrap gap-2">
-                {navItems.map((item) => (
-                  <Link className="pill transition hover:border-sky-400 hover:text-slate-800" href={item.href} key={item.href}>
-                    {item.label}
-                  </Link>
-                ))}
-              </nav>
+              <TopNav items={navItems} />
             </header>
             {children}
           </div>
