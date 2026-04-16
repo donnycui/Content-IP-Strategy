@@ -1,8 +1,7 @@
-import { SignalCreateForm } from "@/components/signal-create-form";
-import { SignalTable } from "@/components/signal-table";
-import { UrlIngestForm } from "@/components/url-ingest-form";
-import { getSignals } from "@/lib/data";
-import { getSources } from "@/lib/source-data";
+import { Suspense } from "react";
+import { HomeSectionSkeleton } from "@/components/home/home-section-skeleton";
+import { SignalsFormsSection } from "@/components/signals/signals-forms-section";
+import { SignalsTableSection } from "@/components/signals/signals-table-section";
 
 export const dynamic = "force-dynamic";
 
@@ -14,9 +13,6 @@ const filters = [
 ];
 
 export default async function SignalsPage() {
-  const signals = await getSignals();
-  const sources = await getSources();
-
   return (
     <main className="space-y-5">
       <section className="panel px-6 py-5">
@@ -37,11 +33,12 @@ export default async function SignalsPage() {
           </div>
         </div>
       </section>
-      <section className="grid gap-5 xl:grid-cols-[1fr,1fr]">
-        <UrlIngestForm sources={sources} />
-        <SignalCreateForm sources={sources} />
-      </section>
-      <SignalTable signals={signals} />
+      <Suspense fallback={<HomeSectionSkeleton compact />}>
+        <SignalsFormsSection />
+      </Suspense>
+      <Suspense fallback={<HomeSectionSkeleton />}>
+        <SignalsTableSection />
+      </Suspense>
     </main>
   );
 }
