@@ -26,6 +26,61 @@ export type ProfileExtractResponse = ApiResponse<{
   profileId: string;
 }>;
 
+export type ProfileExtractionConversationMessage = {
+  role: "assistant" | "user";
+  content: string;
+  createdAt: string;
+  questionType?: string | null;
+  skipped?: boolean;
+};
+
+export type ProfileExtractionConversationDraft = {
+  name: string;
+  positioning: string;
+  persona: string;
+  audience: string;
+  coreThemes: string;
+  voiceStyle: string;
+  growthGoal: string;
+  contentBoundaries: string;
+  currentStage: "EXPLORING" | "EMERGING" | "SCALING" | "ESTABLISHED";
+};
+
+export type ProfileExtractionConversationSession = {
+  id: string;
+  status: "ACTIVE" | "COMPLETED" | "ABANDONED";
+  sourceMode: "CONVERSATIONAL" | "QUICK";
+  draftProfile: ProfileExtractionConversationDraft;
+  transcript: ProfileExtractionConversationMessage[];
+  currentQuestion: string | null;
+  questionType: string | null;
+  turnCount: number;
+  readyToFinalize: boolean;
+};
+
+export type ProfileExtractConversationStartRequest = {
+  requestedTier?: ModelTierValue;
+};
+
+export type ProfileExtractConversationReplyRequest = {
+  message?: string;
+  skip?: boolean;
+  requestedTier?: ModelTierValue;
+};
+
+export type ProfileExtractConversationStartResponse = ApiResponse<{
+  session: ProfileExtractionConversationSession;
+}>;
+
+export type ProfileExtractConversationReplyResponse = ApiResponse<{
+  session: ProfileExtractionConversationSession;
+}>;
+
+export type ProfileExtractConversationFinalizeResponse = ApiResponse<{
+  profileId: string;
+  sessionId: string;
+}>;
+
 export type ProfileGetResponse = ApiResponse<{
   profile: CreatorProfileRow | null;
 }>;

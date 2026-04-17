@@ -114,21 +114,8 @@ function normalizeDraft(draft: CreatorProfileDraft) {
   };
 }
 
-export async function extractCreatorProfileAndActivate(sourceText: string) {
-  return extractCreatorProfileAndActivateWithTier(sourceText);
-}
-
-export async function extractCreatorProfileAndActivateWithTier(sourceText: string, requestedTier?: "FAST" | "BALANCED" | "DEEP") {
+export async function activateCreatorProfileDraft(draft: CreatorProfileDraft) {
   assertDatabaseConfigured();
-
-  if (!sourceText.trim()) {
-    throw new ServiceError("创作者自述不能为空。", 400, "EMPTY_SOURCE_TEXT");
-  }
-
-  const draft = await extractCreatorProfileDraft({
-    sourceText,
-    requestedTier,
-  });
 
   const profile = await prisma.$transaction(async (tx) => {
     await tx.creatorProfile.updateMany({
@@ -148,6 +135,25 @@ export async function extractCreatorProfileAndActivateWithTier(sourceText: strin
   return {
     profileId: profile.id,
   };
+}
+
+export async function extractCreatorProfileAndActivate(sourceText: string) {
+  return extractCreatorProfileAndActivateWithTier(sourceText);
+}
+
+export async function extractCreatorProfileAndActivateWithTier(sourceText: string, requestedTier?: "FAST" | "BALANCED" | "DEEP") {
+  assertDatabaseConfigured();
+
+  if (!sourceText.trim()) {
+    throw new ServiceError("创作者自述不能为空。", 400, "EMPTY_SOURCE_TEXT");
+  }
+
+  const draft = await extractCreatorProfileDraft({
+    sourceText,
+    requestedTier,
+  });
+
+  return activateCreatorProfileDraft(draft);
 }
 
 export async function updateCreatorProfile(input: UpdateCreatorProfileInput) {

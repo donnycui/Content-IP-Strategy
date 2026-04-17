@@ -151,6 +151,17 @@ enum SuggestionStatus {
   REJECTED
 }
 
+enum ProfileExtractionSessionStatus {
+  ACTIVE
+  COMPLETED
+  ABANDONED
+}
+
+enum ProfileExtractionSourceMode {
+  CONVERSATIONAL
+  QUICK
+}
+
 enum GatewayAuthType {
   NONE
   BEARER
@@ -281,6 +292,22 @@ model ProfileUpdateSuggestion {
 
   @@index([creatorProfileId, status, createdAt])
   @@index([type, status])
+}
+
+model ProfileExtractionSession {
+  id              String                         @id @default(cuid())
+  status          ProfileExtractionSessionStatus @default(ACTIVE)
+  sourceMode      ProfileExtractionSourceMode    @default(CONVERSATIONAL)
+  transcriptJson  Json
+  draftProfileJson Json
+  currentQuestion String?
+  questionType    String?
+  turnCount       Int                            @default(0)
+  lastUserMessage String?
+  createdAt       DateTime                       @default(now())
+  updatedAt       DateTime                       @updatedAt
+
+  @@index([status, updatedAt])
 }
 
 model GatewayConnection {
