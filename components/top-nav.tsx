@@ -19,12 +19,25 @@ function matchesPath(pathname: string, matcher: string) {
 
 export function TopNav({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
+  const activeHref =
+    items
+      .map((item) => {
+        const matchers = item.matchers ?? [item.href];
+        const matchedLengths = matchers
+          .filter((matcher) => matchesPath(pathname, matcher))
+          .map((matcher) => matcher.length);
+
+        return {
+          href: item.href,
+          matchedLength: matchedLengths.length ? Math.max(...matchedLengths) : -1,
+        };
+      })
+      .sort((left, right) => right.matchedLength - left.matchedLength)[0]?.href ?? null;
 
   return (
     <nav className="flex flex-wrap gap-2">
       {items.map((item) => {
-        const matchers = item.matchers ?? [item.href];
-        const isActive = matchers.some((matcher) => matchesPath(pathname, matcher));
+        const isActive = item.href === activeHref;
 
         return (
           <Link
