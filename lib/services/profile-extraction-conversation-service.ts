@@ -13,6 +13,7 @@ export type ConversationQuestionType =
   | "AUDIENCE"
   | "CAPABILITY"
   | "POSITIONING"
+  | "THEMES"
   | "BOUNDARY"
   | "GOAL"
   | "STYLE"
@@ -148,7 +149,7 @@ function chooseHeuristicQuestion(draft: CreatorProfileDraft, lastUserMessage: st
   if (!draft.coreThemes) {
     return {
       nextQuestion: "如果连续输出三个月，你最想反复围绕哪几个议题展开？",
-      questionType: "POSITIONING",
+      questionType: "THEMES",
       readyToFinalize: false,
     };
   }
@@ -182,6 +183,51 @@ function chooseHeuristicQuestion(draft: CreatorProfileDraft, lastUserMessage: st
     questionType: "CONFIRMATION",
     readyToFinalize: true,
   };
+}
+
+function deriveHeuristicDraftPatch(
+  questionType: ConversationQuestionType | null,
+  userMessage: string,
+): Partial<CreatorProfileDraft> | null {
+  const text = userMessage.trim();
+
+  if (!text) {
+    return null;
+  }
+
+  switch (questionType) {
+    case "OPENING":
+    case "POSITIONING":
+      return {
+        positioning: text,
+      };
+    case "AUDIENCE":
+      return {
+        audience: text,
+      };
+    case "CAPABILITY":
+      return {
+        persona: text,
+      };
+    case "THEMES":
+      return {
+        coreThemes: text,
+      };
+    case "BOUNDARY":
+      return {
+        contentBoundaries: text,
+      };
+    case "GOAL":
+      return {
+        growthGoal: text,
+      };
+    case "STYLE":
+      return {
+        voiceStyle: text,
+      };
+    default:
+      return null;
+  }
 }
 
 function ensureCompleteDraft(draft: CreatorProfileDraft, transcript: ConversationTranscriptMessage[]) {
@@ -328,18 +374,21 @@ export async function replyToProfileExtractionConversationSession(input: {
     skipped: Boolean(input.skip),
   });
 
-  let nextDraft = draftProfile;
-  let nextQuestionResult = chooseHeuristicQuestion(draftProfile, userMessage || session.lastUserMessage);
+  let nextDraft = mergeDraft(
+    draftProfile,
+    input.skip ? null : deriveHeuristicDraftPatch((session.questionType as ConversationQuestionType | null) ?? null, userMessage),
+  );
+  let nextQuestionResult = chooseHeuristicQuestion(nextDraft, userMessage || session.lastUserMessage);
 
   if (!input.skip) {
     const modelResult = await generateConversationTurn({
       transcript,
-      draftProfile,
+      draftProfile: nextDraft,
       requestedTier: input.requestedTier,
     }).catch(() => null);
 
     if (modelResult) {
-      nextDraft = mergeDraft(draftProfile, modelResult.draftProfile ?? null);
+      nextDraft = mergeDraft(nextDraft, modelResult.draftProfile ?? null);
 
       if (modelResult.nextQuestion?.trim()) {
         nextQuestionResult = {
