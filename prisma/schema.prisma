@@ -209,6 +209,16 @@ enum AgentThreadStatus {
   ARCHIVED
 }
 
+enum SharedMemoryCategory {
+  PROFILE_SNAPSHOT
+  PROFILE_EVOLUTION_NOTE
+  STYLE_SNAPSHOT
+  STYLE_EVOLUTION_NOTE
+  KEY_CONCLUSION
+  REVIEW_TREND
+  LEARNING_INSIGHT
+}
+
 model CreatorProfile {
   id                String                    @id @default(cuid())
   name              String
@@ -341,6 +351,7 @@ model CenterWorkspace {
 
   creatorProfile         CreatorProfile? @relation(fields: [creatorProfileId], references: [id], onDelete: SetNull)
   agentThreads           AgentThread[]
+  sharedMemoryRecords    SharedMemoryRecord[]
 
   @@index([currentAgentKey, updatedAt])
 }
@@ -363,6 +374,29 @@ model AgentThread {
   @@unique([workspaceId, agentKey])
   @@index([workspaceId, updatedAt])
   @@index([status, updatedAt])
+}
+
+model SharedMemoryRecord {
+  id           String               @id @default(cuid())
+  workspaceId  String
+  agentKey     CenterAgentKey?
+  category     SharedMemoryCategory
+  title        String
+  summary      String
+  detail       String?
+  sourceRef    String?
+  payloadJson  Json?
+  isActive     Boolean              @default(true)
+  effectiveAt  DateTime             @default(now())
+  supersededAt DateTime?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  workspace    CenterWorkspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, category, isActive, effectiveAt])
+  @@index([workspaceId, createdAt])
+  @@index([agentKey, createdAt])
 }
 
 model GatewayConnection {

@@ -209,6 +209,29 @@ export type CenterMemorySnapshotPayload = {
   detail: string;
 };
 
+export type SharedMemoryCategoryValue =
+  | "PROFILE_SNAPSHOT"
+  | "PROFILE_EVOLUTION_NOTE"
+  | "STYLE_SNAPSHOT"
+  | "STYLE_EVOLUTION_NOTE"
+  | "KEY_CONCLUSION"
+  | "REVIEW_TREND"
+  | "LEARNING_INSIGHT";
+
+export type SharedMemoryRecordPayload = {
+  id: string;
+  workspaceId: string;
+  agentKey: CenterAgentKeyValue | null;
+  category: SharedMemoryCategoryValue;
+  title: string;
+  summary: string;
+  detail: string | null;
+  sourceRef: string | null;
+  isActive: boolean;
+  effectiveAt: string;
+  supersededAt: string | null;
+};
+
 export type CenterQuickActionPayload = {
   label: string;
   description: string;

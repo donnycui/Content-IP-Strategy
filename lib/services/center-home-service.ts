@@ -13,6 +13,7 @@ import { getActiveCreatorProfile } from "@/lib/profile-data";
 import { getProfileUpdateSuggestions } from "@/lib/profile-update-suggestion-data";
 import { syncCenterAgentThreads } from "@/lib/services/agent-thread-service";
 import { ensureActiveCenterWorkspace } from "@/lib/services/center-workspace-service";
+import { getSharedMemorySnapshotProjection, syncHomepageMemorySnapshot } from "@/lib/services/shared-memory-service";
 import { getTopicCandidates } from "@/lib/topic-candidate-data";
 import { getTopics } from "@/lib/topic-data";
 
@@ -398,6 +399,14 @@ export async function getCenterHomeData(): Promise<CenterHomePayload> {
       currentAgentKey: currentAgent,
       agentSummaries: center.agents,
     });
+
+    await syncHomepageMemorySnapshot({
+      workspaceId: workspace.id,
+      agentKey: currentAgent,
+      items: center.memory,
+    });
+
+    center.memory = await getSharedMemorySnapshotProjection(workspace.id, center.memory);
   } catch {
     // Homepage should keep rendering even before migrations are applied.
   }
