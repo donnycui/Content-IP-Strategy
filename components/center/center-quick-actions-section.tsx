@@ -1,7 +1,7 @@
 import Link from "next/link";
-import type { CenterQuickAction } from "@/lib/services/center-home-service";
+import type { CenterQuickActionPayload } from "@/lib/domain/contracts";
 
-export function CenterQuickActionsSection({ actions }: { actions: CenterQuickAction[] }) {
+export function CenterQuickActionsSection({ actions }: { actions: CenterQuickActionPayload[] }) {
   return (
     <section className="panel px-6 py-6">
       <div className="space-y-2">

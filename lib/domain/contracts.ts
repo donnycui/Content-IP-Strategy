@@ -154,6 +154,117 @@ export type ProfileUpdateStatusResponse = ApiResponse<{
   updated: true;
 }>;
 
+export type CenterAgentKeyValue =
+  | "IP_EXTRACTION"
+  | "CREATOR_PROFILE"
+  | "TOPIC_DIRECTION"
+  | "STYLE_CONTENT"
+  | "DAILY_REVIEW"
+  | "EVOLUTION";
+
+export type CenterAgentStatusValue = "CURRENT" | "LOCKED" | "REVISIT";
+export type AgentThreadStatusValue = "IDLE" | "ACTIVE" | "PAUSED" | "ARCHIVED";
+
+export type CenterJudgmentPayload = {
+  stageLabel: string;
+  title: string;
+  description: string;
+  reason: string;
+  primaryAction: {
+    label: string;
+    href: string;
+  };
+  secondaryAction: {
+    label: string;
+    href: string;
+  };
+};
+
+export type CenterMetricPayload = {
+  label: string;
+  value: string;
+  detail: string;
+};
+
+export type CenterAgentSummaryPayload = {
+  key: CenterAgentKeyValue;
+  label: string;
+  status: CenterAgentStatusValue;
+  summary: string;
+  detail: string;
+  href: string;
+  actionLabel: string;
+  note?: string;
+};
+
+export type CenterCoordinatorPayload = {
+  title: string;
+  summary: string;
+  bullets: string[];
+};
+
+export type CenterMemorySnapshotPayload = {
+  label: string;
+  value: string;
+  detail: string;
+};
+
+export type CenterQuickActionPayload = {
+  label: string;
+  description: string;
+  href: string;
+};
+
+export type CenterHomePayload = {
+  judgment: CenterJudgmentPayload;
+  metrics: CenterMetricPayload[];
+  agents: CenterAgentSummaryPayload[];
+  coordinator: CenterCoordinatorPayload;
+  memory: CenterMemorySnapshotPayload[];
+  quickActions: CenterQuickActionPayload[];
+};
+
+export type CenterHomeResponse = ApiResponse<{
+  center: CenterHomePayload;
+}>;
+
+export type CenterWorkspaceRecord = {
+  id: string;
+  workspaceKey: string;
+  creatorProfileId: string | null;
+  currentAgentKey: CenterAgentKeyValue;
+  recommendedActionLabel: string | null;
+  recommendedActionHref: string | null;
+  lastStageReason: string | null;
+  lastJudgedAt: string | null;
+};
+
+export type CenterAgentThreadMessage = {
+  role: "assistant" | "user" | "system";
+  content: string;
+  createdAt: string;
+  meta?: Record<string, string | number | boolean | null>;
+};
+
+export type AgentThreadSummaryRecord = {
+  headline?: string;
+  blockers?: string[];
+  assets?: string[];
+};
+
+export type AgentThreadRecord = {
+  id: string;
+  workspaceId: string;
+  agentKey: CenterAgentKeyValue;
+  status: AgentThreadStatusValue;
+  transcript: CenterAgentThreadMessage[];
+  summary: AgentThreadSummaryRecord | null;
+  latestSummary: string | null;
+  nextRecommendedAction: string | null;
+  lastUserMessage: string | null;
+  updatedAt: string;
+};
+
 export type GatewayAuthTypeValue = "NONE" | "BEARER" | "API_KEY" | "PASSCODE";
 export type ModelTierValue = "FAST" | "BALANCED" | "DEEP";
 export type CapabilityKeyValue =

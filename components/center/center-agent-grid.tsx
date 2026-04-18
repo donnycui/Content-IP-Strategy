@@ -1,7 +1,7 @@
 import Link from "next/link";
-import type { CenterAgentCard, CenterAgentStatus } from "@/lib/services/center-home-service";
+import type { CenterAgentStatusValue, CenterAgentSummaryPayload } from "@/lib/domain/contracts";
 
-function statusStyle(status: CenterAgentStatus) {
+function statusStyle(status: CenterAgentStatusValue) {
   if (status === "CURRENT") {
     return "border-sky-400/35 bg-sky-400/14 text-slate-800";
   }
@@ -13,7 +13,7 @@ function statusStyle(status: CenterAgentStatus) {
   return "border-slate-300/70 bg-white/55 text-slate-600";
 }
 
-function statusLabel(status: CenterAgentStatus) {
+function statusLabel(status: CenterAgentStatusValue) {
   if (status === "CURRENT") {
     return "当前";
   }
@@ -25,7 +25,7 @@ function statusLabel(status: CenterAgentStatus) {
   return "待解锁";
 }
 
-export function CenterAgentGrid({ agents }: { agents: CenterAgentCard[] }) {
+export function CenterAgentGrid({ agents }: { agents: CenterAgentSummaryPayload[] }) {
   return (
     <section className="panel px-6 py-6">
       <div className="flex flex-wrap items-end justify-between gap-4">

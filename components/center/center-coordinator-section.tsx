@@ -1,6 +1,6 @@
-import type { CenterCoordinatorData } from "@/lib/services/center-home-service";
+import type { CenterCoordinatorPayload } from "@/lib/domain/contracts";
 
-export function CenterCoordinatorSection({ data }: { data: CenterCoordinatorData }) {
+export function CenterCoordinatorSection({ data }: { data: CenterCoordinatorPayload }) {
   return (
     <section className="panel px-6 py-6">
       <div className="grid gap-6 xl:grid-cols-[0.95fr,1.05fr]">

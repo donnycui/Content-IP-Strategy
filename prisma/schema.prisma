@@ -193,6 +193,22 @@ enum ModelCapabilityKey {
   draft_generation
 }
 
+enum CenterAgentKey {
+  IP_EXTRACTION
+  CREATOR_PROFILE
+  TOPIC_DIRECTION
+  STYLE_CONTENT
+  DAILY_REVIEW
+  EVOLUTION
+}
+
+enum AgentThreadStatus {
+  IDLE
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
 model CreatorProfile {
   id                String                    @id @default(cuid())
   name              String
@@ -212,6 +228,7 @@ model CreatorProfile {
   topics            Topic[]
   profileUpdates    ProfileUpdateSuggestion[]
   modelUsageLogs    ModelUsageLog[]
+  centerWorkspaces  CenterWorkspace[]
 
   @@index([isActive, updatedAt])
 }
@@ -307,6 +324,44 @@ model ProfileExtractionSession {
   createdAt       DateTime                       @default(now())
   updatedAt       DateTime                       @updatedAt
 
+  @@index([status, updatedAt])
+}
+
+model CenterWorkspace {
+  id                     String          @id @default(cuid())
+  workspaceKey           String          @unique
+  creatorProfileId       String?         @unique
+  currentAgentKey        CenterAgentKey  @default(IP_EXTRACTION)
+  recommendedActionLabel String?
+  recommendedActionHref  String?
+  lastStageReason        String?
+  lastJudgedAt           DateTime?
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+
+  creatorProfile         CreatorProfile? @relation(fields: [creatorProfileId], references: [id], onDelete: SetNull)
+  agentThreads           AgentThread[]
+
+  @@index([currentAgentKey, updatedAt])
+}
+
+model AgentThread {
+  id                    String            @id @default(cuid())
+  workspaceId           String
+  agentKey              CenterAgentKey
+  status                AgentThreadStatus @default(IDLE)
+  transcriptJson        Json              @default("[]")
+  summaryJson           Json?
+  latestSummary         String?
+  nextRecommendedAction String?
+  lastUserMessage       String?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  workspace             CenterWorkspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, agentKey])
+  @@index([workspaceId, updatedAt])
   @@index([status, updatedAt])
 }
 

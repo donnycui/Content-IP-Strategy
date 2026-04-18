@@ -1,6 +1,6 @@
-import type { CenterMemorySnapshotItem } from "@/lib/services/center-home-service";
+import type { CenterMemorySnapshotPayload } from "@/lib/domain/contracts";
 
-export function CenterMemorySnapshotSection({ items }: { items: CenterMemorySnapshotItem[] }) {
+export function CenterMemorySnapshotSection({ items }: { items: CenterMemorySnapshotPayload[] }) {
   return (
     <section className="panel px-6 py-6">
       <div className="space-y-2">

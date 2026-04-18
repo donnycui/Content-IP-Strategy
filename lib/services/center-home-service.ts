@@ -1,77 +1,20 @@
+import type {
+  CenterAgentKeyValue,
+  CenterAgentSummaryPayload,
+  CenterCoordinatorPayload,
+  CenterHomePayload,
+  CenterJudgmentPayload,
+  CenterMemorySnapshotPayload,
+  CenterMetricPayload,
+  CenterQuickActionPayload,
+} from "@/lib/domain/contracts";
 import { getDirections } from "@/lib/direction-data";
 import { getActiveCreatorProfile } from "@/lib/profile-data";
 import { getProfileUpdateSuggestions } from "@/lib/profile-update-suggestion-data";
+import { syncCenterAgentThreads } from "@/lib/services/agent-thread-service";
+import { ensureActiveCenterWorkspace } from "@/lib/services/center-workspace-service";
 import { getTopicCandidates } from "@/lib/topic-candidate-data";
 import { getTopics } from "@/lib/topic-data";
-
-export type CenterAgentKey =
-  | "ip-extraction"
-  | "creator-profile"
-  | "topic-direction"
-  | "style-content"
-  | "daily-review"
-  | "evolution";
-
-export type CenterAgentStatus = "CURRENT" | "LOCKED" | "REVISIT";
-
-export type CenterMetric = {
-  label: string;
-  value: string;
-  detail: string;
-};
-
-export type CenterJudgment = {
-  stageLabel: string;
-  title: string;
-  description: string;
-  reason: string;
-  primaryAction: {
-    label: string;
-    href: string;
-  };
-  secondaryAction: {
-    label: string;
-    href: string;
-  };
-};
-
-export type CenterAgentCard = {
-  key: CenterAgentKey;
-  label: string;
-  status: CenterAgentStatus;
-  summary: string;
-  detail: string;
-  href: string;
-  actionLabel: string;
-  note?: string;
-};
-
-export type CenterCoordinatorData = {
-  title: string;
-  summary: string;
-  bullets: string[];
-};
-
-export type CenterMemorySnapshotItem = {
-  label: string;
-  value: string;
-  detail: string;
-};
-
-export type CenterQuickAction = {
-  label: string;
-  description: string;
-  href: string;
-};
-
-export type CenterHomeData = {
-  judgment: CenterJudgment;
-  metrics: CenterMetric[];
-  agents: CenterAgentCard[];
-  coordinator: CenterCoordinatorData;
-  memory: CenterMemorySnapshotItem[];
-  quickActions: CenterQuickAction[];
-};
 
 function hasProfile(profile: Awaited<ReturnType<typeof getActiveCreatorProfile>>) {
   if (!profile) {
@@ -86,16 +29,16 @@ function determineCurrentAgent(input: {
   directionsCount: number;
   topicsCount: number;
   topicCandidatesCount: number;
-}): CenterAgentKey {
+}): CenterAgentKeyValue {
   if (!input.hasProfile) {
-    return "ip-extraction";
+    return "IP_EXTRACTION";
   }
 
   if (!input.directionsCount || !input.topicsCount || !input.topicCandidatesCount) {
-    return "topic-direction";
+    return "TOPIC_DIRECTION";
   }
 
-  return "style-content";
+  return "STYLE_CONTENT";
 }
 
 function createJudgment(input: {
@@ -104,7 +47,7 @@ function createJudgment(input: {
   topicsCount: number;
   topicCandidatesCount: number;
   pendingSuggestionsCount: number;
-}): CenterJudgment {
+}): CenterJudgmentPayload {
   if (!input.hasProfile) {
     return {
       stageLabel: "IP提炼",
@@ -160,18 +103,18 @@ function createJudgment(input: {
 
 function buildAgentCards(input: {
   hasProfile: boolean;
-  currentAgent: CenterAgentKey;
+  currentAgent: CenterAgentKeyValue;
   directionsCount: number;
   topicsCount: number;
   topicCandidatesCount: number;
   pendingSuggestionsCount: number;
-}): CenterAgentCard[] {
+}): CenterAgentSummaryPayload[] {
   const styleUnlocked = input.topicCandidatesCount > 0;
   const evolutionActive = input.pendingSuggestionsCount > 0;
 
   return [
     {
-      key: "ip-extraction",
+      key: "IP_EXTRACTION",
       label: "IP提炼 Agent",
       status: input.hasProfile ? "REVISIT" : "CURRENT",
       summary: input.hasProfile
@@ -185,9 +128,9 @@ function buildAgentCards(input: {
       note: "对话式提炼已接入现有 v2.0 工作流。",
     },
     {
-      key: "creator-profile",
+      key: "CREATOR_PROFILE",
       label: "创作者画像 Agent",
-      status: input.hasProfile ? (input.currentAgent === "creator-profile" ? "CURRENT" : "REVISIT") : "LOCKED",
+      status: input.hasProfile ? (input.currentAgent === "CREATOR_PROFILE" ? "CURRENT" : "REVISIT") : "LOCKED",
       summary: input.hasProfile
         ? "画像已经成形，但还需要持续固化定位、受众、边界和增长目标。"
         : "先完成 IP 提炼，画像 Agent 才会有稳定主档可维护。",
@@ -199,9 +142,9 @@ function buildAgentCards(input: {
       note: "后续会增加画像版本对比与回写历史。",
     },
     {
-      key: "topic-direction",
+      key: "TOPIC_DIRECTION",
       label: "选题方向 Agent",
-      status: input.hasProfile ? (input.currentAgent === "topic-direction" ? "CURRENT" : "REVISIT") : "LOCKED",
+      status: input.hasProfile ? (input.currentAgent === "TOPIC_DIRECTION" ? "CURRENT" : "REVISIT") : "LOCKED",
       summary: input.hasProfile
         ? `当前方向 ${input.directionsCount} 条、主题 ${input.topicsCount} 条、可推进选题 ${input.topicCandidatesCount} 条。`
         : "没有画像之前，系统不会盲目给方向和选题。",
@@ -213,9 +156,9 @@ function buildAgentCards(input: {
       note: "当前先复用 v2.0 的方向、主题和候选题内核。",
     },
     {
-      key: "style-content",
+      key: "STYLE_CONTENT",
       label: "风格与内容 Agent",
-      status: styleUnlocked ? (input.currentAgent === "style-content" ? "CURRENT" : "REVISIT") : "LOCKED",
+      status: styleUnlocked ? (input.currentAgent === "STYLE_CONTENT" ? "CURRENT" : "REVISIT") : "LOCKED",
       summary: styleUnlocked
         ? "今天已经有选题储备，下一轮重点就是把它推进成你的风格化内容包。"
         : "先跑通画像和选题，风格 skill 与内容资产层再接管执行。",
@@ -227,7 +170,7 @@ function buildAgentCards(input: {
       note: "短视频脚本、小红书图文、公众号文章和直播脚本都在这个 Agent 下。",
     },
     {
-      key: "daily-review",
+      key: "DAILY_REVIEW",
       label: "每日复盘 Agent",
       status: "LOCKED",
       summary: "复盘链路会在内容发布记录接入后真正启动，第一版先支持人工录入和基础趋势判断。",
@@ -237,7 +180,7 @@ function buildAgentCards(input: {
       note: "现有 /reviews 仍以信号校准为主，后续会并入内容复盘语义。",
     },
     {
-      key: "evolution",
+      key: "EVOLUTION",
       label: "升级进化 Agent",
       status: evolutionActive ? "REVISIT" : "LOCKED",
       summary: evolutionActive
@@ -255,14 +198,14 @@ function buildAgentCards(input: {
 
 function buildCoordinator(input: {
   hasProfile: boolean;
-  currentAgent: CenterAgentKey;
+  currentAgent: CenterAgentKeyValue;
   topicCandidatesCount: number;
   pendingSuggestionsCount: number;
-}): CenterCoordinatorData {
+}): CenterCoordinatorPayload {
   const stageSentence =
-    input.currentAgent === "ip-extraction"
+    input.currentAgent === "IP_EXTRACTION"
       ? "我判断你现在最该先完成一次对话式 IP 提炼。"
-      : input.currentAgent === "topic-direction"
+      : input.currentAgent === "TOPIC_DIRECTION"
         ? "我判断你已经过了画像起步阶段，现在应该把画像落到方向、主题和选题。"
         : "我判断你已经有了可推进的方向和选题，下一步该进入风格与内容层。";
 
@@ -289,7 +232,7 @@ function buildMemory(input: {
   directions: Awaited<ReturnType<typeof getDirections>>;
   topics: Awaited<ReturnType<typeof getTopics>>;
   pendingSuggestionsCount: number;
-}): CenterMemorySnapshotItem[] {
+}): CenterMemorySnapshotPayload[] {
   return [
     {
       label: "当前画像",
@@ -325,7 +268,7 @@ function buildMemory(input: {
   ];
 }
 
-function buildQuickActions(input: { hasProfile: boolean }): CenterQuickAction[] {
+function buildQuickActions(input: { hasProfile: boolean }): CenterQuickActionPayload[] {
   return [
     {
       label: input.hasProfile ? "继续 IP 提炼" : "开始 IP 提炼",
@@ -360,7 +303,7 @@ function buildQuickActions(input: { hasProfile: boolean }): CenterQuickAction[] 
   ];
 }
 
-export async function getCenterHomeData(): Promise<CenterHomeData> {
+export async function getCenterHomeData(): Promise<CenterHomePayload> {
   const profile = await getActiveCreatorProfile();
 
   let directions: Awaited<ReturnType<typeof getDirections>> = [];
@@ -386,7 +329,7 @@ export async function getCenterHomeData(): Promise<CenterHomeData> {
     topicCandidatesCount: topicCandidates.length,
   });
 
-  return {
+  const center = {
     judgment: createJudgment({
       hasProfile: structuredProfileExists,
       directionsCount: directions.length,
@@ -439,5 +382,25 @@ export async function getCenterHomeData(): Promise<CenterHomeData> {
     quickActions: buildQuickActions({
       hasProfile: structuredProfileExists,
     }),
-  };
+  } satisfies CenterHomePayload;
+
+  try {
+    const workspace = await ensureActiveCenterWorkspace({
+      creatorProfileId: profile?.id ?? null,
+      currentAgentKey: currentAgent,
+      recommendedActionLabel: center.judgment.primaryAction.label,
+      recommendedActionHref: center.judgment.primaryAction.href,
+      lastStageReason: center.judgment.reason,
+    });
+
+    await syncCenterAgentThreads({
+      workspace,
+      currentAgentKey: currentAgent,
+      agentSummaries: center.agents,
+    });
+  } catch {
+    // Homepage should keep rendering even before migrations are applied.
+  }
+
+  return center;
 }

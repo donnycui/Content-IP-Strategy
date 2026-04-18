@@ -1,12 +1,12 @@
 import Link from "next/link";
-import type { CenterJudgment, CenterMetric } from "@/lib/services/center-home-service";
+import type { CenterJudgmentPayload, CenterMetricPayload } from "@/lib/domain/contracts";
 
 export function CenterJudgmentSection({
   data,
   metrics,
 }: {
-  data: CenterJudgment;
-  metrics: CenterMetric[];
+  data: CenterJudgmentPayload;
+  metrics: CenterMetricPayload[];
 }) {
   return (
     <section className="panel px-6 py-6">
