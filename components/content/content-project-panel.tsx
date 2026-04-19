@@ -22,6 +22,14 @@ export function ContentProjectPanel({ dashboard }: { dashboard: StyleContentDash
           <p className="section-desc">
             这里把选题方向层的候选题拉进内容层，直接生成一组基础内容资产。后续会继续接入更完整的内容编辑、发布准备和平台分发能力。
           </p>
+          <div className="pt-2">
+            <Link
+              className="rounded-2xl border border-slate-300/70 bg-white/70 px-4 py-2.5 text-sm text-slate-700 transition hover:border-slate-400 hover:bg-white"
+              href="/content/projects"
+            >
+              打开内容项目总览
+            </Link>
+          </div>
         </div>
 
         <div className="grid gap-4 xl:grid-cols-[0.9fr,1.1fr]">

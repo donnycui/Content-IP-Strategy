@@ -293,6 +293,16 @@ export type ContentProjectPayload = {
   updatedAt: string;
 };
 
+export type ContentProjectUpdateRequest = {
+  title?: string;
+  summary?: string | null;
+  status?: ContentProjectStatusValue;
+};
+
+export type ContentProjectUpdateResponse = ApiResponse<{
+  project: ContentProjectPayload;
+}>;
+
 export type ContentAssetPayload = {
   id: string;
   projectId: string;

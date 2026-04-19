@@ -1,5 +1,6 @@
 import type {
   ContentAssetPayload,
+  ContentProjectUpdateRequest,
   ContentProjectPayload,
   PublishRecordPayload,
   ReviewSnapshotPayload,
@@ -251,6 +252,60 @@ export async function getStyleContentDashboard(): Promise<StyleContentDashboardP
       recommendedCandidates,
       projects: [],
     };
+  }
+}
+
+export async function updateContentProject(input: {
+  id: string;
+  payload: ContentProjectUpdateRequest;
+}): Promise<ContentProjectPayload> {
+  const title = input.payload.title !== undefined ? input.payload.title.trim() : undefined;
+  const summary = input.payload.summary !== undefined ? input.payload.summary?.trim() || null : undefined;
+  const status = input.payload.status;
+
+  if (title === undefined && summary === undefined && !status) {
+    throw new Error("At least one content-project field is required.");
+  }
+
+  if (!process.env.DATABASE_URL) {
+    return {
+      id: input.id,
+      workspaceId: "center-workspace-primary",
+      creatorProfileId: null,
+      topicCandidateId: null,
+      styleSkillId: null,
+      status: status ?? "ACTIVE",
+      title: title || "未命名内容项目",
+      summary: summary ?? null,
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  try {
+    const prismaClient = prisma as typeof prisma & {
+      contentProject?: {
+        update: (args: unknown) => Promise<unknown>;
+      };
+    };
+
+    const project = await prismaClient.contentProject?.update({
+      where: {
+        id: input.id,
+      },
+      data: {
+        ...(title !== undefined ? { title } : {}),
+        ...(summary !== undefined ? { summary } : {}),
+        ...(status ? { status } : {}),
+      },
+    });
+
+    if (!project) {
+      throw new Error("Content project not found.");
+    }
+
+    return mapContentProject(project as Parameters<typeof mapContentProject>[0]);
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : "更新内容项目失败。");
   }
 }
 

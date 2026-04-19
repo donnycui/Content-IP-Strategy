@@ -1,3 +1,4 @@
+import { ContentProjectEditor } from "@/components/content/content-project-editor";
 import Link from "next/link";
 import { ContentAssetEditor } from "@/components/content/content-asset-editor";
 import { PublishRecordPackage } from "@/components/content/publish-record-package";
@@ -54,7 +55,9 @@ export function ContentProjectDetail({
       </section>
 
       <section className="panel px-6 py-6">
-        <div className="grid gap-4 xl:grid-cols-[0.85fr,1.15fr]">
+        <div className="grid gap-4 xl:grid-cols-3">
+          <ContentProjectEditor project={data.project} />
+
           <div className="subpanel px-4 py-4">
             <p className="text-sm font-semibold text-slate-800">来源选题</p>
             {data.candidate ? (
