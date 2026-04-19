@@ -8,6 +8,7 @@ import type {
   CenterMetricPayload,
   CenterQuickActionPayload,
 } from "@/lib/domain/contracts";
+import { getAgentRoutePath } from "@/lib/center/agent-stage-config";
 import { getDirections } from "@/lib/direction-data";
 import { getActiveCreatorProfile } from "@/lib/profile-data";
 import { getProfileUpdateSuggestions } from "@/lib/profile-update-suggestion-data";
@@ -57,11 +58,11 @@ function createJudgment(input: {
       reason: "当前还没有稳定画像，后面的方向、内容和复盘都缺少统一基线。",
       primaryAction: {
         label: "开始第一次 IP 提炼",
-        href: "/profile/extract",
+        href: getAgentRoutePath("IP_EXTRACTION"),
       },
       secondaryAction: {
         label: "先看看创作者画像结构",
-        href: "/profile",
+        href: getAgentRoutePath("CREATOR_PROFILE"),
       },
     };
   }
@@ -74,11 +75,11 @@ function createJudgment(input: {
       reason: "当前画像已经具备基础信息，但方向/选题链路还没有稳定跑满。",
       primaryAction: {
         label: "进入方向与选题",
-        href: "/candidates",
+        href: getAgentRoutePath("TOPIC_DIRECTION"),
       },
       secondaryAction: {
         label: "回看创作者画像",
-        href: "/profile",
+        href: getAgentRoutePath("CREATOR_PROFILE"),
       },
     };
   }
@@ -93,11 +94,11 @@ function createJudgment(input: {
         : "今天已经有足够的方向和选题储备，适合从内容形态和平台包装开始。",
     primaryAction: {
       label: "从今日选题推进内容",
-      href: "/candidates",
+      href: getAgentRoutePath("STYLE_CONTENT"),
     },
     secondaryAction: {
       label: "查看升级进化建议",
-      href: "/evolution",
+      href: getAgentRoutePath("EVOLUTION"),
     },
   };
 }
@@ -124,7 +125,7 @@ function buildAgentCards(input: {
       detail: input.hasProfile
         ? "当定位、目标或内容边界发生变化时，这里是最早应该回看的入口。"
         : "第一次正式使用从这里开始，系统会把模糊需求收敛成第一版 IP 提炼报告。",
-      href: "/profile/extract",
+      href: getAgentRoutePath("IP_EXTRACTION"),
       actionLabel: input.hasProfile ? "回到 IP 提炼" : "开始第一次 IP 提炼",
       note: "对话式提炼已接入现有 v2.0 工作流。",
     },
@@ -138,7 +139,7 @@ function buildAgentCards(input: {
       detail: input.hasProfile
         ? "画像不是一次性填写，而是后续方向、风格和进化的共享基线。"
         : "这里会在提炼完成后接住第一版报告，并转成长期有效画像。",
-      href: "/profile",
+      href: getAgentRoutePath("CREATOR_PROFILE"),
       actionLabel: input.hasProfile ? "打开创作者画像" : "等待画像解锁",
       note: "后续会增加画像版本对比与回写历史。",
     },
@@ -152,7 +153,7 @@ function buildAgentCards(input: {
       detail: input.hasProfile
         ? "这一层负责把画像翻译成方向、主题线和今日推荐选题。"
         : "先把创作者画像稳定下来，方向与选题才会真正贴着你走。",
-      href: "/candidates",
+      href: getAgentRoutePath("TOPIC_DIRECTION"),
       actionLabel: input.hasProfile ? "查看方向与选题" : "等待方向解锁",
       note: "当前先复用 v2.0 的方向、主题和候选题内核。",
     },
@@ -166,7 +167,7 @@ function buildAgentCards(input: {
       detail: styleUnlocked
         ? "这里会接住代表作、AI 初稿和你的手改稿，沉淀成 style skill，并输出图文、短视频和直播脚本。"
         : "这一轮先把中枢壳层立起来，后续会新增 style skill、内容资产和发布准备层。",
-      href: "/topics",
+      href: getAgentRoutePath("STYLE_CONTENT"),
       actionLabel: styleUnlocked ? "进入内容准备" : "查看内容层规划",
       note: "短视频脚本、小红书图文、公众号文章和直播脚本都在这个 Agent 下。",
     },
@@ -176,7 +177,7 @@ function buildAgentCards(input: {
       status: "LOCKED",
       summary: "复盘链路会在内容发布记录接入后真正启动，第一版先支持人工录入和基础趋势判断。",
       detail: "当前先保留一个明确入口，后续用 ReviewSnapshot 和长期曲线把发布后反馈拉回系统。",
-      href: "/reviews",
+      href: getAgentRoutePath("DAILY_REVIEW"),
       actionLabel: "查看复盘底座",
       note: "现有 /reviews 仍以信号校准为主，后续会并入内容复盘语义。",
     },
@@ -190,7 +191,7 @@ function buildAgentCards(input: {
       detail: evolutionActive
         ? "先复用现有画像进化建议链路，后续再接入跨阶段长期资产和策略调整。"
         : "这一层不会只是展示建议，而是负责把复盘结果写回长期资产。",
-      href: "/evolution",
+      href: getAgentRoutePath("EVOLUTION"),
       actionLabel: evolutionActive ? "查看升级建议" : "等待进化解锁",
       note: "现有进化建议链路会作为这一层的第一批内核。",
     },

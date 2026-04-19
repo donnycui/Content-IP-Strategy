@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 const navItems = [
-  { href: "/", label: "中枢首页" },
+  { href: "/", label: "中枢首页", matchers: ["/", "/agents"] },
   { href: "/profile/extract", label: "IP 提炼" },
   { href: "/profile", label: "创作者画像" },
   {
