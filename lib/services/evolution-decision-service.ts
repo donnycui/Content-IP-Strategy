@@ -64,7 +64,7 @@ function buildMockDecision(input: {
   };
 }
 
-function deriveDecisionDrafts(review: ReviewSnapshotPayload): Array<{
+export function deriveEvolutionDecisionDraftsForTest(review: ReviewSnapshotPayload): Array<{
   targetType: EvolutionTargetTypeValue;
   headline: string;
   rationale: string;
@@ -212,7 +212,7 @@ export async function generateEvolutionDecisions(): Promise<{ createdCount: numb
   const workspace = await ensureActiveCenterWorkspace();
   const reviewDashboard = await getReviewDashboard();
   const latestReviews = reviewDashboard.reviews.slice(0, 3);
-  const drafts = latestReviews.flatMap(deriveDecisionDrafts);
+  const drafts = latestReviews.flatMap(deriveEvolutionDecisionDraftsForTest);
 
   if (!drafts.length) {
     return { createdCount: 0 };
