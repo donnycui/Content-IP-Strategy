@@ -1,14 +1,18 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import type { ReviewDashboardPayload, ReviewSnapshotCreateResponse } from "@/lib/domain/contracts";
 
 export function ReviewMetricsForm({ dashboard }: { dashboard: ReviewDashboardPayload }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const preferredProjectId = searchParams.get("projectId") ?? dashboard.projects[0]?.project.id ?? "";
+  const preferredChannelKey = searchParams.get("channelKey") ?? dashboard.projects[0]?.publishRecords[0]?.channelKey ?? "xiaohongshu";
   const [isPending, startTransition] = useTransition();
-  const [projectId, setProjectId] = useState(dashboard.projects[0]?.project.id ?? "");
-  const [channelKey, setChannelKey] = useState(dashboard.projects[0]?.publishRecords[0]?.channelKey ?? "xiaohongshu");
+  const [projectId, setProjectId] = useState(preferredProjectId);
+  const [channelKey, setChannelKey] = useState(preferredChannelKey);
   const [views, setViews] = useState("");
   const [likes, setLikes] = useState("");
   const [comments, setComments] = useState("");

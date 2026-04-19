@@ -41,6 +41,14 @@ export function ContentProjectDetail({
             <Link className="pill hover:border-sky-400 hover:text-slate-800" href="/agents/style-content">
               返回风格与内容 Agent
             </Link>
+            <Link
+              className="pill hover:border-sky-400 hover:text-slate-800"
+              href={`/agents/daily-review?projectId=${data.project.id}${
+                data.publishRecords[0]?.channelKey ? `&channelKey=${data.publishRecords[0].channelKey}` : ""
+              }`}
+            >
+              去录入复盘
+            </Link>
           </div>
         </div>
       </section>
