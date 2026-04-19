@@ -52,3 +52,51 @@ export async function regenerateDirectionsWithTier(
 
   return { createdCount };
 }
+
+export async function createDirectionFromEvolutionDecision(input: {
+  title: string;
+  whyNow: string;
+  fitReason: string;
+  priority?: "PRIMARY" | "SECONDARY" | "WATCH";
+}) {
+  assertDatabaseConfigured();
+
+  const profile = await requireCreatorProfile();
+  const normalizedTitle = input.title.trim();
+
+  if (!normalizedTitle) {
+    throw new Error("Direction title is required.");
+  }
+
+  const existing = await prisma.direction.findFirst({
+    where: {
+      creatorProfileId: profile.id,
+      title: normalizedTitle,
+      status: "ACTIVE",
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (existing) {
+    return { created: false, directionId: existing.id };
+  }
+
+  const direction = await prisma.direction.create({
+    data: {
+      creatorProfileId: profile.id,
+      title: normalizedTitle,
+      whyNow: input.whyNow,
+      fitReason: input.fitReason,
+      priority: input.priority ?? "SECONDARY",
+      status: "ACTIVE",
+      timeHorizon: "未来 2-4 周",
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  return { created: true, directionId: direction.id };
+}

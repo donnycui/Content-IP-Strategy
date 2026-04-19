@@ -397,6 +397,7 @@ export type EvolutionDecisionPayload = {
   headline: string;
   rationale: string;
   suggestedAction: string;
+  actionPayload: Record<string, string | number | boolean | null> | null;
   updatedAt: string;
 };
 

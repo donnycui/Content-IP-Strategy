@@ -43,7 +43,7 @@ export function EvolutionDecisionPanel({ dashboard }: { dashboard: EvolutionDash
             <p className="section-kicker">Evolution Decisions</p>
             <h2 className="section-title">把复盘结果变成真正可采纳的系统更新建议</h2>
             <p className="section-desc">
-              这里不是只看数据，而是把最近的复盘快照压缩成“画像 / 风格 / 方向 / 平台策略”四类可执行建议。采纳后会写进长期记忆层，其中 `STYLE` 类型会直接回写到当前 style skill。
+              这里不是只看数据，而是把最近的复盘快照压缩成“画像 / 风格 / 方向 / 平台策略”四类可执行建议。采纳后会写进长期记忆层，其中 `STYLE` 会回写 style skill，`PROFILE` 会更新画像边界，`DIRECTION` 会生成新的方向条目。
             </p>
           </div>
           <button

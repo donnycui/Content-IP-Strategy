@@ -612,6 +612,7 @@ model EvolutionDecision {
   headline         String
   rationale        String
   suggestedAction  String
+  actionPayloadJson Json?
   createdAt        DateTime                @default(now())
   updatedAt        DateTime                @updatedAt
 
