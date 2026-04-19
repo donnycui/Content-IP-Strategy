@@ -260,6 +260,19 @@ enum PublishStatus {
   FAILED
 }
 
+enum EvolutionTargetType {
+  PROFILE
+  STYLE
+  DIRECTION
+  PLATFORM_STRATEGY
+}
+
+enum EvolutionDecisionStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
 model CreatorProfile {
   id                String                    @id @default(cuid())
   name              String
@@ -515,6 +528,7 @@ model ContentProject {
   styleSkill       StyleSkill?          @relation(fields: [styleSkillId], references: [id], onDelete: SetNull)
   assets           ContentAsset[]
   publishRecords   PublishRecord[]
+  reviewSnapshots  ReviewSnapshot[]
 
   @@index([workspaceId, status, updatedAt])
   @@index([creatorProfileId, updatedAt])
@@ -558,6 +572,55 @@ model PublishRecord {
   @@index([projectId, createdAt])
   @@index([channelKey, status, createdAt])
   @@index([assetId])
+}
+
+model ReviewSnapshot {
+  id             String        @id @default(cuid())
+  workspaceId     String
+  projectId       String
+  assetId         String?
+  channelKey      String
+  views           Int?
+  likes           Int?
+  comments        Int?
+  shares          Int?
+  saves           Int?
+  inquiries       Int?
+  leads           Int?
+  conversions     Int?
+  reviewNote      String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  workspace       CenterWorkspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project         ContentProject  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  asset           ContentAsset?   @relation(fields: [assetId], references: [id], onDelete: SetNull)
+  evolutionDecisions EvolutionDecision[]
+
+  @@index([workspaceId, createdAt])
+  @@index([projectId, createdAt])
+  @@index([channelKey, createdAt])
+  @@index([assetId])
+}
+
+model EvolutionDecision {
+  id               String                  @id @default(cuid())
+  workspaceId      String
+  reviewSnapshotId String?
+  targetType       EvolutionTargetType
+  status           EvolutionDecisionStatus @default(PENDING)
+  headline         String
+  rationale        String
+  suggestedAction  String
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+
+  workspace        CenterWorkspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  reviewSnapshot   ReviewSnapshot?         @relation(fields: [reviewSnapshotId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, status, updatedAt])
+  @@index([targetType, createdAt])
+  @@index([reviewSnapshotId])
 }
 
 model GatewayConnection {

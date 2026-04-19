@@ -5,6 +5,8 @@ import type { ProfileUpdateSuggestionRow } from "@/lib/profile-update-suggestion
 import type { TopicCandidateRow } from "@/lib/topic-candidate-data";
 import type { TopicRow } from "@/lib/topic-data";
 
+export type { TopicCandidateRow };
+
 export type ApiSuccess<T> = {
   ok: true;
   data: T;
@@ -333,6 +335,92 @@ export type ContentProjectCreateRequest = {
 export type ContentProjectCreateResponse = ApiResponse<{
   project: ContentProjectPayload;
   assets: ContentAssetPayload[];
+}>;
+
+export type ReviewSnapshotPayload = {
+  id: string;
+  workspaceId: string;
+  projectId: string;
+  assetId: string | null;
+  channelKey: string;
+  views: number | null;
+  likes: number | null;
+  comments: number | null;
+  shares: number | null;
+  saves: number | null;
+  inquiries: number | null;
+  leads: number | null;
+  conversions: number | null;
+  reviewNote: string | null;
+  updatedAt: string;
+};
+
+export type EvolutionTargetTypeValue = "PROFILE" | "STYLE" | "DIRECTION" | "PLATFORM_STRATEGY";
+export type EvolutionDecisionStatusValue = "PENDING" | "ACCEPTED" | "REJECTED";
+
+export type EvolutionDecisionPayload = {
+  id: string;
+  workspaceId: string;
+  reviewSnapshotId: string | null;
+  targetType: EvolutionTargetTypeValue;
+  status: EvolutionDecisionStatusValue;
+  headline: string;
+  rationale: string;
+  suggestedAction: string;
+  updatedAt: string;
+};
+
+export type ReviewDashboardPayload = {
+  projects: Array<{
+    project: ContentProjectPayload;
+    assets: ContentAssetPayload[];
+    publishRecords: PublishRecordPayload[];
+  }>;
+  reviews: ReviewSnapshotPayload[];
+};
+
+export type ReviewDashboardResponse = ApiResponse<{
+  dashboard: ReviewDashboardPayload;
+}>;
+
+export type ReviewSnapshotCreateRequest = {
+  projectId?: string;
+  assetId?: string | null;
+  channelKey?: string;
+  views?: number | null;
+  likes?: number | null;
+  comments?: number | null;
+  shares?: number | null;
+  saves?: number | null;
+  inquiries?: number | null;
+  leads?: number | null;
+  conversions?: number | null;
+  reviewNote?: string;
+};
+
+export type ReviewSnapshotCreateResponse = ApiResponse<{
+  review: ReviewSnapshotPayload;
+}>;
+
+export type EvolutionDashboardPayload = {
+  decisions: EvolutionDecisionPayload[];
+  latestReviews: ReviewSnapshotPayload[];
+};
+
+export type EvolutionDashboardResponse = ApiResponse<{
+  dashboard: EvolutionDashboardPayload;
+}>;
+
+export type EvolutionDecisionGenerateResponse = ApiResponse<{
+  createdCount: number;
+}>;
+
+export type EvolutionDecisionStatusRequest = {
+  status?: EvolutionDecisionStatusValue;
+};
+
+export type EvolutionDecisionStatusResponse = ApiResponse<{
+  updated: true;
 }>;
 
 export type StyleSkillDashboardResponse = ApiResponse<{

@@ -1,0 +1,71 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import type { EvolutionDecisionStatusResponse } from "@/lib/domain/contracts";
+
+export function EvolutionDecisionStatusActions({
+  decisionId,
+  currentStatus,
+}: {
+  decisionId: string;
+  currentStatus: "PENDING" | "ACCEPTED" | "REJECTED";
+}) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState("");
+
+  function updateStatus(status: "ACCEPTED" | "REJECTED") {
+    startTransition(async () => {
+      try {
+        setError("");
+
+        const response = await fetch(`/api/evolution-decisions/${decisionId}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ status }),
+        });
+
+        const result = (await response.json()) as EvolutionDecisionStatusResponse;
+
+        if (!response.ok || !result.ok) {
+          throw new Error(result.ok ? "更新进化决策失败。" : (result.error ?? "更新进化决策失败。"));
+        }
+
+        router.refresh();
+      } catch (submitError) {
+        setError(submitError instanceof Error ? submitError.message : "更新进化决策失败。");
+      }
+    });
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap gap-3">
+        <button
+          className={`pill transition hover:border-sky-400 hover:text-slate-800 ${
+            currentStatus === "ACCEPTED" ? "border-sky-400 bg-sky-50 text-slate-900" : ""
+          }`}
+          disabled={isPending}
+          onClick={() => updateStatus("ACCEPTED")}
+          type="button"
+        >
+          采纳
+        </button>
+        <button
+          className={`pill transition hover:border-sky-400 hover:text-slate-800 ${
+            currentStatus === "REJECTED" ? "border-slate-400 bg-slate-50 text-slate-900" : ""
+          }`}
+          disabled={isPending}
+          onClick={() => updateStatus("REJECTED")}
+          type="button"
+        >
+          暂不采纳
+        </button>
+      </div>
+      {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+    </div>
+  );
+}
