@@ -432,6 +432,27 @@ export type EvolutionDecisionStatusResponse = ApiResponse<{
   updated: true;
 }>;
 
+export type LearningInsightPayload = {
+  kind: "STYLE" | "MARKET_HOTSPOT" | "FUTURE_TRACK";
+  title: string;
+  summary: string;
+  detail: string;
+};
+
+export type LearningInsightsDashboardPayload = {
+  insights: LearningInsightPayload[];
+  activeMemorySummary: string | null;
+  activeMemoryDetail: string | null;
+};
+
+export type LearningInsightsDashboardResponse = ApiResponse<{
+  dashboard: LearningInsightsDashboardPayload;
+}>;
+
+export type LearningInsightsGenerateResponse = ApiResponse<{
+  createdCount: number;
+}>;
+
 export type StyleSkillDashboardResponse = ApiResponse<{
   dashboard: StyleSkillDashboardPayload;
 }>;
