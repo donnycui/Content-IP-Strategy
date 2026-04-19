@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { PublishRecordPayload } from "@/lib/domain/contracts";
 
 export function PublishRecordPackage({ record }: { record: PublishRecordPayload }) {
@@ -20,6 +21,15 @@ export function PublishRecordPackage({ record }: { record: PublishRecordPayload 
       ) : (
         <p className="muted mt-3 text-sm leading-7">当前还没有更细的导出包描述，后续会扩到多平台素材与发布参数。</p>
       )}
+      <div className="mt-3">
+        <Link
+          className="rounded-2xl border border-slate-300/70 bg-white/70 px-4 py-2.5 text-sm text-slate-700 transition hover:border-slate-400 hover:bg-white"
+          href={`/api/publish-records/${record.id}/package`}
+          target="_blank"
+        >
+          打开导出包 JSON
+        </Link>
+      </div>
       {record.failureReason ? <p className="muted mt-3 text-sm leading-7">{record.failureReason}</p> : null}
     </div>
   );

@@ -179,3 +179,27 @@ export async function updatePublishRecord(input: {
     };
   }
 }
+
+export async function getPublishRecordById(id: string): Promise<PublishRecordPayload | null> {
+  if (!process.env.DATABASE_URL) {
+    return null;
+  }
+
+  try {
+    const prismaClient = prisma as typeof prisma & {
+      publishRecord?: {
+        findUnique: (args: unknown) => Promise<unknown>;
+      };
+    };
+
+    const record = await prismaClient.publishRecord?.findUnique({
+      where: {
+        id,
+      },
+    });
+
+    return record ? mapPublishRecord(record as Parameters<typeof mapPublishRecord>[0]) : null;
+  } catch {
+    return null;
+  }
+}
