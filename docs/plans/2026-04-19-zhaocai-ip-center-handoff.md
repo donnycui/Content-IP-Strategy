@@ -88,6 +88,10 @@ These are the main branch-local slices in order:
 - `0a31ba6` `docs: add zhaocai IP center branch handoff`
 - `5826781` `feat: add content project export bundle`
 - `2f40b1d` `feat: add asset-aware review flow`
+- `910f422` `feat: add platform strategy memo writebacks`
+- `9fdfe4b` `feat: add zhaocai IP center demo path`
+- `2464e01` `test: add zhaocai center smoke checks`
+- `cfeac3f` `test: add content package smoke check`
 
 ## 4. Working End-to-End Paths
 
@@ -156,6 +160,8 @@ Accepted evolution decisions already have real writeback behavior in these cases
   - appends note into `CreatorProfile.contentBoundaries`
 - `DIRECTION`
   - creates a new direction derived from the related content project
+- `PLATFORM_STRATEGY`
+  - updates `PlatformStrategyMemo`
 
 This is important: the system is no longer only recording suggestions. It now begins to mutate real product objects.
 
@@ -182,6 +188,13 @@ Additional enums and payload structures have been added to support:
 - style skill state
 - content asset types and publish states
 - evolution target typing
+
+Additional supporting product structures now also exist for:
+
+- `PlatformStrategyMemo`
+- project-level export bundle assembly
+- demo-path assembly
+- smoke-test entrypoints
 
 ## 6. Known Risks / Gaps
 
@@ -217,7 +230,7 @@ Current writebacks are meaningful but not yet fully structured:
 
 - profile writeback currently appends to content boundaries
 - direction writeback currently creates a new direction
-- platform-strategy decisions still do not update a dedicated platform strategy object
+- platform strategy now has a dedicated object, but still does not have a richer rule or scheduling model
 
 ### 6.5 Content-project model still needs broader workflow polish
 
@@ -227,6 +240,17 @@ The content layer is now functional, but still needs:
 - stronger project-level operations once the project list grows
 - more explicit package/download flows
 
+### 6.6 Full-environment verification is still weaker than lightweight verification
+
+The branch now has repeatable smoke checks, but full toolchain verification remains weaker than desired.
+
+Current smoke checks:
+
+- `npm run test:zhaocai-center:evolution`
+- `npm run test:zhaocai-center:demo`
+- `npm run test:zhaocai-center:content-package`
+- `npm run test:zhaocai-center:smoke`
+
 ## 7. Recommended Next Priorities
 
 If work resumes on this branch, the recommended next order is:
@@ -235,7 +259,9 @@ If work resumes on this branch, the recommended next order is:
 - try to get one clean build / type-check run in a friendlier environment
 
 2. Deepen object writebacks
-- especially `PROFILE`, `DIRECTION`, and future `PLATFORM_STRATEGY`
+- especially more structured `PROFILE`
+- richer `DIRECTION` update semantics beyond “create new direction”
+- more expressive `PLATFORM_STRATEGY` rules
 
 3. Improve content-project operations
 - stronger project overview / filtering
