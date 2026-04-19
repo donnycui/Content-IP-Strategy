@@ -90,7 +90,6 @@ Commits:
 - `61d7093` workspace/thread foundation
 - `95e8152` shared memory foundation
 - `d325cfa` explicit stage-agent shell
-- `9fdfe4b` demo path
 
 Result:
 
@@ -135,6 +134,7 @@ Result:
 Commits:
 
 - `9d36c2d` design + plan docs
+- `9fdfe4b` demo path
 - `0a31ba6` branch handoff
 - `80dc895` refreshed handoff
 - `4585b0b` merge readiness + smoke script
@@ -160,6 +160,7 @@ Reason:
 - the shell should land before the deep stage internals
 - the content layer should exist before the review/evolution loop
 - the loop should exist before final docs and verification are declared authoritative
+- the demo path depends on content/review/evolution layers and should not be treated as shell-only
 
 ## 6. Verification Gate Before Merge
 
@@ -210,4 +211,3 @@ The remaining question is no longer “is there enough product here?”
 The remaining question is:
 
 `how much review surface do we want to absorb in a single merge step?`
-

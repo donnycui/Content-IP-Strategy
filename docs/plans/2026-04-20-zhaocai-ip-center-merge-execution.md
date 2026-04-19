@@ -52,7 +52,6 @@ Commits:
 - `61d7093`
 - `95e8152`
 - `d325cfa`
-- `9fdfe4b`
 
 ### Group 2: Style + Content
 
@@ -85,6 +84,7 @@ Commits:
 Commits:
 
 - `9d36c2d`
+- `9fdfe4b`
 - `0a31ba6`
 - `80dc895`
 - `4585b0b`
@@ -107,7 +107,7 @@ git pull --ff-only
 
 ```bash
 git switch -c codex/merge-zhaocai-center-shell
-git cherry-pick d9ca967 61d7093 95e8152 d325cfa 9fdfe4b
+git cherry-pick d9ca967 61d7093 95e8152 d325cfa
 ```
 
 Recommended verification after Group 1:
@@ -161,7 +161,7 @@ If Group 3 is accepted into `main`, then:
 git switch main
 git pull --ff-only
 git switch -c codex/merge-zhaocai-docs-verification
-git cherry-pick 9d36c2d 0a31ba6 80dc895 4585b0b 2464e01 cfeac3f 09aec60 6e29255 a8729c9
+git cherry-pick 9d36c2d 9fdfe4b 0a31ba6 80dc895 4585b0b 2464e01 cfeac3f 09aec60 6e29255 a8729c9
 ```
 
 Recommended verification after Group 4:
@@ -206,6 +206,12 @@ Current best verified state is:
 - source-level type-check passes
 - full `build` still needs a cleaner environment for final confidence
 
+### Grouping caveat discovered during execution
+
+An actual Group 1 integration attempt showed that `demo path` should not be merged as part of the shell-only group because it imports later content/review/evolution services.
+
+That is why `9fdfe4b` is grouped under docs + verification instead of center shell in this execution document.
+
 ## 7. Bottom Line
 
 This branch is ready for a deliberate merge process.
@@ -217,4 +223,3 @@ The right execution style is:
 - grouped
 - verified
 - documented
-
