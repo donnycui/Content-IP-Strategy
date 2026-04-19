@@ -273,6 +273,68 @@ export type StyleSkillDashboardPayload = {
   revisions: StyleRevisionPayload[];
 };
 
+export type ContentProjectStatusValue = "DRAFT" | "ACTIVE" | "READY" | "ARCHIVED";
+export type ContentAssetTypeValue = "XHS_POST" | "SHORT_VIDEO_SCRIPT" | "WECHAT_ARTICLE" | "LIVESTREAM_SCRIPT";
+export type ContentAssetStatusValue = "DRAFT" | "READY" | "APPROVED" | "ARCHIVED";
+export type PublishModeValue = "EXPORT" | "DIRECT";
+export type PublishStatusValue = "DRAFT" | "READY" | "EXPORTED" | "QUEUED" | "PUBLISHED" | "FAILED";
+
+export type ContentProjectPayload = {
+  id: string;
+  workspaceId: string;
+  creatorProfileId: string | null;
+  topicCandidateId: string | null;
+  styleSkillId: string | null;
+  status: ContentProjectStatusValue;
+  title: string;
+  summary: string | null;
+  updatedAt: string;
+};
+
+export type ContentAssetPayload = {
+  id: string;
+  projectId: string;
+  assetType: ContentAssetTypeValue;
+  title: string | null;
+  content: string;
+  targetPlatform: string;
+  status: ContentAssetStatusValue;
+  updatedAt: string;
+};
+
+export type PublishRecordPayload = {
+  id: string;
+  projectId: string;
+  assetId: string | null;
+  channelKey: string;
+  mode: PublishModeValue;
+  status: PublishStatusValue;
+  failureReason: string | null;
+  updatedAt: string;
+};
+
+export type StyleContentDashboardPayload = {
+  recommendedCandidates: TopicCandidateRow[];
+  projects: Array<{
+    project: ContentProjectPayload;
+    assets: ContentAssetPayload[];
+    publishRecords: PublishRecordPayload[];
+  }>;
+};
+
+export type StyleContentDashboardResponse = ApiResponse<{
+  dashboard: StyleContentDashboardPayload;
+}>;
+
+export type ContentProjectCreateRequest = {
+  topicCandidateId?: string;
+};
+
+export type ContentProjectCreateResponse = ApiResponse<{
+  project: ContentProjectPayload;
+  assets: ContentAssetPayload[];
+}>;
+
 export type StyleSkillDashboardResponse = ApiResponse<{
   dashboard: StyleSkillDashboardPayload;
 }>;
