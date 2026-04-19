@@ -315,6 +315,15 @@ export type PublishRecordPayload = {
   updatedAt: string;
 };
 
+export type PublishRecordUpdateRequest = {
+  status?: PublishStatusValue;
+  failureReason?: string | null;
+};
+
+export type PublishRecordUpdateResponse = ApiResponse<{
+  updated: true;
+}>;
+
 export type StyleContentDashboardPayload = {
   recommendedCandidates: TopicCandidateRow[];
   projects: Array<{

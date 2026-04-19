@@ -1,4 +1,5 @@
 import { ContentProjectCreateButton } from "@/components/content/content-project-create-button";
+import { PublishRecordStatusActions } from "@/components/content/publish-record-status-actions";
 import type { StyleContentDashboardPayload } from "@/lib/domain/contracts";
 
 const assetTypeLabels = {
@@ -71,11 +72,21 @@ export function ContentProjectPanel({ dashboard }: { dashboard: StyleContentDash
                     </div>
 
                     {item.publishRecords.length ? (
-                      <div className="mt-4 flex flex-wrap gap-2">
+                      <div className="mt-4 space-y-3">
                         {item.publishRecords.map((record) => (
-                          <span className="pill" key={record.id}>
-                            {record.channelKey} · {record.mode} · {record.status}
-                          </span>
+                          <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3" key={record.id}>
+                            <div className="flex flex-wrap gap-2">
+                              <span className="pill">{record.channelKey}</span>
+                              <span className="pill">{record.mode}</span>
+                              <span className="pill">{record.status}</span>
+                            </div>
+                            {record.failureReason ? (
+                              <p className="muted mt-2 text-sm leading-7">{record.failureReason}</p>
+                            ) : null}
+                            <div className="mt-3">
+                              <PublishRecordStatusActions record={record} />
+                            </div>
+                          </div>
                         ))}
                       </div>
                     ) : null}

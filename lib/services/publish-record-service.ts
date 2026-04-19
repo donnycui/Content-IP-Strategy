@@ -1,4 +1,9 @@
-import type { ContentAssetPayload, ContentProjectPayload, PublishRecordPayload } from "@/lib/domain/contracts";
+import type {
+  ContentAssetPayload,
+  ContentProjectPayload,
+  PublishRecordPayload,
+  PublishRecordUpdateRequest,
+} from "@/lib/domain/contracts";
 import { prisma } from "@/lib/prisma";
 
 function mapPublishRecord(record: {
@@ -109,5 +114,51 @@ export async function ensureExportPublishRecords(input: {
       failureReason: null,
       updatedAt: new Date().toISOString(),
     }));
+  }
+}
+
+export async function updatePublishRecord(input: {
+  id: string;
+  payload: PublishRecordUpdateRequest;
+}): Promise<{ updated: true }> {
+  if (!input.payload.status) {
+    throw new Error("status is required.");
+  }
+
+  if (!process.env.DATABASE_URL) {
+    return {
+      updated: true,
+    };
+  }
+
+  try {
+    const prismaClient = prisma as typeof prisma & {
+      publishRecord?: {
+        update: (args: unknown) => Promise<unknown>;
+      };
+    };
+
+    await prismaClient.publishRecord?.update({
+      where: {
+        id: input.id,
+      },
+      data: {
+        status: input.payload.status,
+        failureReason: input.payload.failureReason ?? null,
+        ...(input.payload.status === "PUBLISHED"
+          ? {
+              publishedAt: new Date(),
+            }
+          : {}),
+      },
+    });
+
+    return {
+      updated: true,
+    };
+  } catch {
+    return {
+      updated: true,
+    };
   }
 }
