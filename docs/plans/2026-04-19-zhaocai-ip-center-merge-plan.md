@@ -95,41 +95,32 @@ Result:
 
 - `main` gains the new center shell and explicit stage-agent navigation
 
-### Group 2: Style + Content
+### Group 2: Creator Workflow
 
 Commits:
 
 - `70f435b` style skill foundation
 - `e3fb0db` content project foundation
-- `9b261a1` editable content assets
-- `2137cd9` content project detail workspace
-- `1601ee9` content project overview and editing
-- `d379919` export output
-- `5826781` project export bundle
-- `8eac2b7` style feedback from content edits
-
-Result:
-
-- `main` gains a real creator-specific content workflow
-
-### Group 3: Review + Evolution + Learning
-
-Commits:
-
 - `e37831f` review/evolution loop foundation
 - `728a63f` publish prep status flow
+- `8014805` proactive learning insights
+- `9b261a1` editable content assets
+- `2137cd9` content project detail workspace
 - `44682a3` review linking
+- `1601ee9` content project overview and editing
+- `d379919` export output
+- `8eac2b7` style feedback from content edits
 - `181e27b` style evolution writeback
 - `efc0bb2` structured evolution writebacks
-- `910f422` platform strategy memo writebacks
-- `8014805` proactive learning insights
+- `5826781` project export bundle
 - `2f40b1d` asset-aware review flow
+- `910f422` platform strategy memo writebacks
 
 Result:
 
-- `main` gains the first real closed loop
+- `main` gains the full creator workflow: style, content, review, evolution, export, and learning
 
-### Group 4: Docs + Verification
+### Group 3: Docs + Verification
 
 Commits:
 
@@ -151,15 +142,14 @@ Result:
 If grouped merges are used, do them in this order:
 
 1. Group 1: Center Shell
-2. Group 2: Style + Content
-3. Group 3: Review + Evolution + Learning
-4. Group 4: Docs + Verification
+2. Group 2: Creator Workflow
+3. Group 3: Docs + Verification
 
 Reason:
 
 - the shell should land before the deep stage internals
-- the content layer should exist before the review/evolution loop
-- the loop should exist before final docs and verification are declared authoritative
+- style/content and review/evolution turned out to be more interdependent than the original split assumed
+- docs and verification should still land after the product layers are in place
 - the demo path depends on content/review/evolution layers and should not be treated as shell-only
 
 ## 6. Verification Gate Before Merge

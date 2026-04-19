@@ -53,33 +53,28 @@ Commits:
 - `95e8152`
 - `d325cfa`
 
-### Group 2: Style + Content
+### Group 2: Creator Workflow
 
 Commits:
 
 - `70f435b`
 - `e3fb0db`
-- `9b261a1`
-- `2137cd9`
-- `1601ee9`
-- `d379919`
-- `5826781`
-- `8eac2b7`
-
-### Group 3: Review + Evolution + Learning
-
-Commits:
-
 - `e37831f`
 - `728a63f`
+- `8014805`
+- `9b261a1`
+- `2137cd9`
 - `44682a3`
+- `1601ee9`
+- `d379919`
+- `8eac2b7`
 - `181e27b`
 - `efc0bb2`
 - `910f422`
-- `8014805`
+- `5826781`
 - `2f40b1d`
 
-### Group 4: Docs + Verification
+### Group 3: Docs + Verification
 
 Commits:
 
@@ -124,16 +119,23 @@ If Group 1 is accepted into `main`, then:
 ```bash
 git switch main
 git pull --ff-only
-git switch -c codex/merge-zhaocai-style-content
-git cherry-pick 70f435b e3fb0db 9b261a1 2137cd9 1601ee9 d379919 5826781 8eac2b7
+git switch -c codex/merge-zhaocai-creator-workflow
+git cherry-pick 70f435b e3fb0db e37831f 728a63f 8014805 9b261a1 2137cd9 44682a3 1601ee9 d379919 8eac2b7 181e27b efc0bb2 5826781 2f40b1d 910f422
 ```
 
 Recommended verification after Group 2:
 
 ```bash
+npm run test:zhaocai-center:smoke
 npm run test:zhaocai-center:content-package
 ./node_modules/.bin/tsc --noEmit --incremental false
 ```
+
+Practical note from an actual dry-run:
+
+- the earlier “style + content” group was not sufficiently independent
+- `content-project-detail`, project export, and review linking all depend on review-layer services
+- because of that, Group 2 is now defined as one coherent creator-workflow slice instead of two smaller slices
 
 ### 4.4 Create integration branch for Group 3
 
@@ -142,29 +144,11 @@ If Group 2 is accepted into `main`, then:
 ```bash
 git switch main
 git pull --ff-only
-git switch -c codex/merge-zhaocai-review-evolution
-git cherry-pick e37831f 728a63f 44682a3 181e27b efc0bb2 910f422 8014805 2f40b1d
-```
-
-Recommended verification after Group 3:
-
-```bash
-npm run test:zhaocai-center:evolution
-./node_modules/.bin/tsc --noEmit --incremental false
-```
-
-### 4.5 Create integration branch for Group 4
-
-If Group 3 is accepted into `main`, then:
-
-```bash
-git switch main
-git pull --ff-only
 git switch -c codex/merge-zhaocai-docs-verification
 git cherry-pick 9d36c2d 9fdfe4b 0a31ba6 80dc895 4585b0b 2464e01 cfeac3f 09aec60 6e29255 a8729c9
 ```
 
-Recommended verification after Group 4:
+Recommended verification after Group 3:
 
 ```bash
 npm run test:zhaocai-center:smoke
