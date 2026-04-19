@@ -173,3 +173,8 @@ export async function getReviewDashboard(): Promise<ReviewDashboardPayload> {
     };
   }
 }
+
+export async function getReviewSnapshotsByProjectId(projectId: string): Promise<ReviewSnapshotPayload[]> {
+  const dashboard = await getReviewDashboard();
+  return dashboard.reviews.filter((review) => review.projectId === projectId);
+}

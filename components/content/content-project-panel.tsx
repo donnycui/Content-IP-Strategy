@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ContentAssetEditor } from "@/components/content/content-asset-editor";
 import { ContentProjectCreateButton } from "@/components/content/content-project-create-button";
 import { PublishRecordPackage } from "@/components/content/publish-record-package";
@@ -59,6 +60,14 @@ export function ContentProjectPanel({ dashboard }: { dashboard: StyleContentDash
                       <span className="pill">{item.project.status}</span>
                     </div>
                     {item.project.summary ? <p className="muted mt-2 text-sm leading-7">{item.project.summary}</p> : null}
+                    <div className="mt-3">
+                      <Link
+                        className="rounded-2xl border border-slate-300/70 bg-white/70 px-4 py-2.5 text-sm text-slate-700 transition hover:border-slate-400 hover:bg-white"
+                        href={`/content/projects/${item.project.id}`}
+                      >
+                        打开项目详情页
+                      </Link>
+                    </div>
 
                     <div className="mt-4 grid gap-3">
                       {item.assets.map((asset) => (

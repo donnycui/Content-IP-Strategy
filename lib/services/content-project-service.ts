@@ -2,6 +2,8 @@ import type {
   ContentAssetPayload,
   ContentProjectPayload,
   PublishRecordPayload,
+  ReviewSnapshotPayload,
+  StyleSkillPayload,
   StyleContentDashboardPayload,
   TopicCandidateRow,
 } from "@/lib/domain/contracts";
@@ -9,6 +11,7 @@ import { prisma } from "@/lib/prisma";
 import { getTopicCandidates } from "@/lib/topic-candidate-data";
 import { generateProjectAssets } from "@/lib/services/content-asset-service";
 import { ensureExportPublishRecords } from "@/lib/services/publish-record-service";
+import { getReviewSnapshotsByProjectId } from "@/lib/services/review-snapshot-service";
 import { ensureActiveStyleSkill } from "@/lib/services/style-skill-service";
 import { ensureActiveCenterWorkspace } from "@/lib/services/center-workspace-service";
 
@@ -248,5 +251,86 @@ export async function getStyleContentDashboard(): Promise<StyleContentDashboardP
       recommendedCandidates,
       projects: [],
     };
+  }
+}
+
+export async function getContentProjectDetail(projectId: string): Promise<{
+  project: ContentProjectPayload;
+  assets: ContentAssetPayload[];
+  publishRecords: PublishRecordPayload[];
+  candidate: TopicCandidateRow | null;
+  styleSkill: StyleSkillPayload;
+  reviews: ReviewSnapshotPayload[];
+} | null> {
+  const [workspace, styleSkill, candidates] = await Promise.all([
+    ensureActiveCenterWorkspace(),
+    ensureActiveStyleSkill(),
+    getTopicCandidates(),
+  ]);
+
+  if (!process.env.DATABASE_URL) {
+    const dashboard = await getStyleContentDashboard();
+    const projectEntry = dashboard.projects.find((item) => item.project.id === projectId) ?? null;
+
+    if (!projectEntry) {
+      return null;
+    }
+
+    return {
+      project: projectEntry.project,
+      assets: projectEntry.assets,
+      publishRecords: projectEntry.publishRecords,
+      candidate: candidates.find((candidate) => candidate.id === projectEntry.project.topicCandidateId) ?? null,
+      styleSkill,
+      reviews: [],
+    };
+  }
+
+  try {
+    const prismaClient = prisma as typeof prisma & {
+      contentProject?: {
+        findFirst: (args: unknown) => Promise<unknown>;
+      };
+    };
+
+    const project = await prismaClient.contentProject?.findFirst({
+      where: {
+        id: projectId,
+        workspaceId: workspace.id,
+      },
+      include: {
+        assets: true,
+        publishRecords: true,
+      },
+    });
+
+    if (!project) {
+      return null;
+    }
+
+    const typedProject = project as {
+      id: string;
+      workspaceId: string;
+      creatorProfileId: string | null;
+      topicCandidateId: string | null;
+      styleSkillId: string | null;
+      status: "DRAFT" | "ACTIVE" | "READY" | "ARCHIVED";
+      title: string;
+      summary: string | null;
+      updatedAt: Date;
+      assets: Array<Parameters<typeof mapContentAsset>[0]>;
+      publishRecords: Array<Parameters<typeof mapPublishRecord>[0]>;
+    };
+
+    return {
+      project: mapContentProject(typedProject),
+      assets: typedProject.assets.map(mapContentAsset),
+      publishRecords: typedProject.publishRecords.map(mapPublishRecord),
+      candidate: candidates.find((candidate) => candidate.id === typedProject.topicCandidateId) ?? null,
+      styleSkill,
+      reviews: await getReviewSnapshotsByProjectId(projectId),
+    };
+  } catch {
+    return null;
   }
 }
