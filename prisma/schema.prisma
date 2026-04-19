@@ -219,6 +219,12 @@ enum SharedMemoryCategory {
   LEARNING_INSIGHT
 }
 
+enum StyleSkillStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
 model CreatorProfile {
   id                String                    @id @default(cuid())
   name              String
@@ -239,6 +245,7 @@ model CreatorProfile {
   profileUpdates    ProfileUpdateSuggestion[]
   modelUsageLogs    ModelUsageLog[]
   centerWorkspaces  CenterWorkspace[]
+  styleSkills       StyleSkill[]
 
   @@index([isActive, updatedAt])
 }
@@ -352,6 +359,7 @@ model CenterWorkspace {
   creatorProfile         CreatorProfile? @relation(fields: [creatorProfileId], references: [id], onDelete: SetNull)
   agentThreads           AgentThread[]
   sharedMemoryRecords    SharedMemoryRecord[]
+  styleSkill             StyleSkill?
 
   @@index([currentAgentKey, updatedAt])
 }
@@ -397,6 +405,60 @@ model SharedMemoryRecord {
   @@index([workspaceId, category, isActive, effectiveAt])
   @@index([workspaceId, createdAt])
   @@index([agentKey, createdAt])
+}
+
+model StyleSkill {
+  id             String           @id @default(cuid())
+  workspaceId    String           @unique
+  creatorProfileId String?
+  status         StyleSkillStatus @default(DRAFT)
+  title          String           @default("个人风格 Skill")
+  summary        String
+  rulesMarkdown  String
+  version        Int              @default(1)
+  revisionCount  Int              @default(0)
+  sampleCount    Int              @default(0)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  workspace      CenterWorkspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  creatorProfile CreatorProfile?  @relation(fields: [creatorProfileId], references: [id], onDelete: SetNull)
+  samples        StyleSample[]
+  revisions      StyleRevision[]
+
+  @@index([creatorProfileId, updatedAt])
+  @@index([status, updatedAt])
+}
+
+model StyleSample {
+  id          String      @id @default(cuid())
+  styleSkillId String
+  title       String
+  sourceLabel String?
+  sampleText  String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  styleSkill  StyleSkill  @relation(fields: [styleSkillId], references: [id], onDelete: Cascade)
+  revisions   StyleRevision[]
+
+  @@index([styleSkillId, createdAt])
+}
+
+model StyleRevision {
+  id          String      @id @default(cuid())
+  styleSkillId String
+  sampleId    String?
+  draftText   String
+  revisedText String
+  ruleDelta   String?
+  createdAt   DateTime    @default(now())
+
+  styleSkill  StyleSkill  @relation(fields: [styleSkillId], references: [id], onDelete: Cascade)
+  sample      StyleSample? @relation(fields: [sampleId], references: [id], onDelete: SetNull)
+
+  @@index([styleSkillId, createdAt])
+  @@index([sampleId])
 }
 
 model GatewayConnection {

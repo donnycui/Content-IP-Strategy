@@ -232,6 +232,74 @@ export type SharedMemoryRecordPayload = {
   supersededAt: string | null;
 };
 
+export type StyleSkillStatusValue = "DRAFT" | "ACTIVE" | "ARCHIVED";
+
+export type StyleSkillPayload = {
+  id: string;
+  workspaceId: string;
+  creatorProfileId: string | null;
+  status: StyleSkillStatusValue;
+  title: string;
+  summary: string;
+  rulesMarkdown: string;
+  version: number;
+  revisionCount: number;
+  sampleCount: number;
+  updatedAt: string;
+};
+
+export type StyleSamplePayload = {
+  id: string;
+  styleSkillId: string;
+  title: string;
+  sourceLabel: string | null;
+  sampleText: string;
+  updatedAt: string;
+};
+
+export type StyleRevisionPayload = {
+  id: string;
+  styleSkillId: string;
+  sampleId: string | null;
+  draftText: string;
+  revisedText: string;
+  ruleDelta: string | null;
+  createdAt: string;
+};
+
+export type StyleSkillDashboardPayload = {
+  skill: StyleSkillPayload;
+  samples: StyleSamplePayload[];
+  revisions: StyleRevisionPayload[];
+};
+
+export type StyleSkillDashboardResponse = ApiResponse<{
+  dashboard: StyleSkillDashboardPayload;
+}>;
+
+export type StyleSampleCreateRequest = {
+  title?: string;
+  sourceLabel?: string;
+  sampleText?: string;
+};
+
+export type StyleSampleCreateResponse = ApiResponse<{
+  sample: StyleSamplePayload;
+  skill: StyleSkillPayload;
+}>;
+
+export type StyleRevisionCreateRequest = {
+  sampleId?: string | null;
+  draftText?: string;
+  revisedText?: string;
+  ruleDelta?: string;
+};
+
+export type StyleRevisionCreateResponse = ApiResponse<{
+  revision: StyleRevisionPayload;
+  skill: StyleSkillPayload;
+}>;
+
 export type CenterQuickActionPayload = {
   label: string;
   description: string;

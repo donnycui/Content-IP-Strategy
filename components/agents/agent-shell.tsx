@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { AgentSummaryPanel } from "@/components/agents/agent-summary-panel";
 import { AgentThreadPanel } from "@/components/agents/agent-thread-panel";
+import { StyleContentAgentPanel } from "@/components/style/style-content-agent-panel";
 import type { AgentStageShellData } from "@/lib/services/agent-stage-service";
 
-export function AgentShell({ data }: { data: AgentStageShellData }) {
+export async function AgentShell({ data }: { data: AgentStageShellData }) {
   return (
     <main className="space-y-5">
       <section className="panel px-6 py-6">
@@ -28,6 +29,7 @@ export function AgentShell({ data }: { data: AgentStageShellData }) {
 
       <AgentSummaryPanel data={data} />
       <AgentThreadPanel data={data} />
+      {data.definition.routeKey === "style-content" ? <StyleContentAgentPanel /> : null}
 
       <section className="panel px-6 py-6">
         <div className="space-y-3">
