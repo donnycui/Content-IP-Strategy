@@ -33,12 +33,21 @@ export function ContentProjectOverview({ dashboard }: { dashboard: StyleContentD
                 ))}
               </div>
               <div className="mt-5">
-                <Link
-                  className="rounded-2xl border border-slate-300/70 bg-white/70 px-4 py-2.5 text-sm text-slate-700 transition hover:border-slate-400 hover:bg-white"
-                  href={`/content/projects/${item.project.id}`}
-                >
-                  打开项目工作区
-                </Link>
+                <div className="flex flex-wrap gap-3">
+                  <Link
+                    className="rounded-2xl border border-slate-300/70 bg-white/70 px-4 py-2.5 text-sm text-slate-700 transition hover:border-slate-400 hover:bg-white"
+                    href={`/content/projects/${item.project.id}`}
+                  >
+                    打开项目工作区
+                  </Link>
+                  <Link
+                    className="rounded-2xl border border-slate-300/70 bg-white/70 px-4 py-2.5 text-sm text-slate-700 transition hover:border-slate-400 hover:bg-white"
+                    href={`/api/content/projects/${item.project.id}/package`}
+                    target="_blank"
+                  >
+                    打开项目导出包
+                  </Link>
+                </div>
               </div>
             </section>
           ))

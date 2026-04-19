@@ -389,3 +389,56 @@ export async function getContentProjectDetail(projectId: string): Promise<{
     return null;
   }
 }
+
+export async function getContentProjectPackage(projectId: string) {
+  const detail = await getContentProjectDetail(projectId);
+
+  if (!detail) {
+    return null;
+  }
+
+  return {
+    project: detail.project,
+    sourceCandidate: detail.candidate
+      ? {
+          id: detail.candidate.id,
+          title: detail.candidate.title,
+          whyNow: detail.candidate.whyNow,
+          fitReason: detail.candidate.fitReason,
+          topicTitle: detail.candidate.topicTitle,
+          formatRecommendation: detail.candidate.formatRecommendation,
+        }
+      : null,
+    styleSkill: {
+      id: detail.styleSkill.id,
+      summary: detail.styleSkill.summary,
+      version: detail.styleSkill.version,
+    },
+    assets: detail.assets.map((asset) => ({
+      assetType: asset.assetType,
+      title: asset.title,
+      targetPlatform: asset.targetPlatform,
+      status: asset.status,
+      content: asset.content,
+    })),
+    publishRecords: detail.publishRecords.map((record) => ({
+      channelKey: record.channelKey,
+      mode: record.mode,
+      status: record.status,
+      package: record.packageJson,
+      failureReason: record.failureReason,
+    })),
+    reviews: detail.reviews.map((review) => ({
+      channelKey: review.channelKey,
+      views: review.views,
+      likes: review.likes,
+      comments: review.comments,
+      shares: review.shares,
+      saves: review.saves,
+      inquiries: review.inquiries,
+      leads: review.leads,
+      conversions: review.conversions,
+      reviewNote: review.reviewNote,
+    })),
+  };
+}

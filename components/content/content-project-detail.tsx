@@ -44,6 +44,13 @@ export function ContentProjectDetail({
             </Link>
             <Link
               className="pill hover:border-sky-400 hover:text-slate-800"
+              href={`/api/content/projects/${data.project.id}/package`}
+              target="_blank"
+            >
+              打开项目导出包
+            </Link>
+            <Link
+              className="pill hover:border-sky-400 hover:text-slate-800"
               href={`/agents/daily-review?projectId=${data.project.id}${
                 data.publishRecords[0]?.channelKey ? `&channelKey=${data.publishRecords[0].channelKey}` : ""
               }`}
