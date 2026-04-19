@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { DemoStep } from "@/lib/services/demo-playbook-service";
+import type { DemoStep } from "@/lib/demo/demo-playbook-logic";
 
 export function DemoStepCard({
   index,

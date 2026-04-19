@@ -99,7 +99,7 @@ export function ReviewMetricsForm({ dashboard }: { dashboard: ReviewDashboardPay
       <div className="space-y-3">
         <div className="space-y-1">
           <p className="text-sm font-semibold text-slate-800">录入复盘数据</p>
-          <p className="muted text-sm leading-7">第一版先手动回填数据，不等平台 API。重点是让系统开始积累“内容表现 -> 进化建议”的真实闭环。</p>
+          <p className="muted text-sm leading-7">第一版先手动回填数据，不等平台 API。重点是让系统开始积累“内容表现到进化建议”的真实闭环。</p>
         </div>
 
         <div className="grid gap-3 xl:grid-cols-2">

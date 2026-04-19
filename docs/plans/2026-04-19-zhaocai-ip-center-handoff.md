@@ -200,19 +200,20 @@ Additional supporting product structures now also exist for:
 
 ### 6.1 Build / Type-check instability in current environment
 
-The branch has not yet received a stable full-environment verification result.
+The branch still does not have a clean, stable full `build`, but verification is stronger than before.
 
 Observed behavior:
 
 - `npm run build` enters normal Next production build
-- `tsc --noEmit` starts normally
+- `tsc --noEmit` now completes successfully after clearing duplicate generated `.next/types` files and fixing source-level type issues
 - `prisma generate` starts normally
-- all three can become abnormally slow / effectively stalled in the current environment
+- `build` and `prisma generate` can still become abnormally slow / effectively stalled in the current environment
 
 Current practical interpretation:
 
-- no surfaced compile error has been observed from these changes
-- but final green verification is still incomplete
+- source-level type-check now passes
+- lightweight smoke validation now passes
+- but final full-build verification is still incomplete
 
 ### 6.2 Direct platform publishing is still deferred
 
@@ -249,6 +250,11 @@ Current smoke checks:
 - `npm run test:zhaocai-center:evolution`
 - `npm run test:zhaocai-center:demo`
 - `npm run test:zhaocai-center:content-package`
+- `npm run test:zhaocai-center:smoke`
+
+Current known-good verification:
+
+- `./node_modules/.bin/tsc --noEmit --incremental false`
 - `npm run test:zhaocai-center:smoke`
 
 ## 7. Recommended Next Priorities

@@ -135,9 +135,15 @@ export async function ensureStageAgentThreads(
       $transaction: typeof prisma.$transaction;
     };
 
-    await prismaClient.$transaction(
-      ALL_CENTER_AGENT_KEYS.map((agentKey) =>
-        prismaClient.agentThread!.upsert({
+    await prismaClient.$transaction(async (tx) => {
+      const inner = tx as typeof prisma & {
+        agentThread?: {
+          upsert: (args: unknown) => Promise<unknown>;
+        };
+      };
+
+      for (const agentKey of ALL_CENTER_AGENT_KEYS) {
+        await inner.agentThread?.upsert({
           where: {
             workspaceId_agentKey: {
               workspaceId,
@@ -151,9 +157,9 @@ export async function ensureStageAgentThreads(
             status: "IDLE",
             transcriptJson: [],
           },
-        }),
-      ),
-    );
+        });
+      }
+    });
 
     return getAgentThreadsForWorkspace(workspaceId);
   } catch {
@@ -192,9 +198,15 @@ export async function syncCenterAgentThreads(input: {
       $transaction: typeof prisma.$transaction;
     };
 
-    await prismaClient.$transaction(
-      input.agentSummaries.map((agent) =>
-        prismaClient.agentThread!.update({
+    await prismaClient.$transaction(async (tx) => {
+      const inner = tx as typeof prisma & {
+        agentThread?: {
+          update: (args: unknown) => Promise<unknown>;
+        };
+      };
+
+      for (const agent of input.agentSummaries) {
+        await inner.agentThread?.update({
           where: {
             workspaceId_agentKey: {
               workspaceId: workspace.id,
@@ -210,9 +222,9 @@ export async function syncCenterAgentThreads(input: {
               assets: agent.note ? [agent.note] : [],
             },
           }),
-        }),
-      ),
-    );
+        });
+      }
+    });
 
     return getAgentThreadsForWorkspace(workspace.id);
   } catch {

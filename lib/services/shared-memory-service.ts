@@ -157,8 +157,15 @@ export async function upsertActiveSharedMemoryRecord(input: {
       return mappedExisting;
     }
 
-    await prismaClient.$transaction([
-      prismaClient.sharedMemoryRecord!.updateMany({
+    await prismaClient.$transaction(async (tx) => {
+      const inner = tx as typeof prisma & {
+        sharedMemoryRecord?: {
+          updateMany: (args: unknown) => Promise<unknown>;
+          create: (args: unknown) => Promise<unknown>;
+        };
+      };
+
+      await inner.sharedMemoryRecord?.updateMany({
         where: {
           workspaceId: input.workspaceId,
           category: input.category,
@@ -168,8 +175,9 @@ export async function upsertActiveSharedMemoryRecord(input: {
           isActive: false,
           supersededAt: new Date(),
         },
-      }),
-      prismaClient.sharedMemoryRecord!.create({
+      });
+
+      await inner.sharedMemoryRecord?.create({
         data: {
           workspaceId: input.workspaceId,
           agentKey: input.agentKey ?? null,
@@ -180,8 +188,8 @@ export async function upsertActiveSharedMemoryRecord(input: {
           sourceRef: input.sourceRef ?? null,
           payloadJson: input.payload ?? null,
         },
-      }),
-    ]);
+      });
+    });
 
     const latest = await prismaClient.sharedMemoryRecord!.findFirst({
       where: {
