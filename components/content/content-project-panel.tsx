@@ -1,4 +1,6 @@
+import { ContentAssetEditor } from "@/components/content/content-asset-editor";
 import { ContentProjectCreateButton } from "@/components/content/content-project-create-button";
+import { PublishRecordPackage } from "@/components/content/publish-record-package";
 import { PublishRecordStatusActions } from "@/components/content/publish-record-status-actions";
 import type { StyleContentDashboardPayload } from "@/lib/domain/contracts";
 
@@ -60,14 +62,11 @@ export function ContentProjectPanel({ dashboard }: { dashboard: StyleContentDash
 
                     <div className="mt-4 grid gap-3">
                       {item.assets.map((asset) => (
-                        <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3" key={asset.id}>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="pill">{assetTypeLabels[asset.assetType]}</span>
-                            <span className="pill">{asset.status}</span>
-                          </div>
-                          <p className="mt-2 text-sm font-medium text-slate-800">{asset.title || assetTypeLabels[asset.assetType]}</p>
-                          <p className="muted mt-2 line-clamp-4 text-sm leading-7">{asset.content}</p>
-                        </div>
+                        <ContentAssetEditor
+                          asset={asset}
+                          key={asset.id}
+                          label={asset.title || assetTypeLabels[asset.assetType]}
+                        />
                       ))}
                     </div>
 
@@ -75,14 +74,7 @@ export function ContentProjectPanel({ dashboard }: { dashboard: StyleContentDash
                       <div className="mt-4 space-y-3">
                         {item.publishRecords.map((record) => (
                           <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3" key={record.id}>
-                            <div className="flex flex-wrap gap-2">
-                              <span className="pill">{record.channelKey}</span>
-                              <span className="pill">{record.mode}</span>
-                              <span className="pill">{record.status}</span>
-                            </div>
-                            {record.failureReason ? (
-                              <p className="muted mt-2 text-sm leading-7">{record.failureReason}</p>
-                            ) : null}
+                            <PublishRecordPackage record={record} />
                             <div className="mt-3">
                               <PublishRecordStatusActions record={record} />
                             </div>

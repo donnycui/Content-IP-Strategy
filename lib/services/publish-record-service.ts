@@ -14,6 +14,7 @@ function mapPublishRecord(record: {
   mode: "EXPORT" | "DIRECT";
   status: "DRAFT" | "READY" | "EXPORTED" | "QUEUED" | "PUBLISHED" | "FAILED";
   failureReason: string | null;
+  packageJson: Record<string, string | number | boolean | null> | null;
   updatedAt: Date;
 }): PublishRecordPayload {
   return {
@@ -24,6 +25,7 @@ function mapPublishRecord(record: {
     mode: record.mode,
     status: record.status,
     failureReason: record.failureReason,
+    packageJson: record.packageJson,
     updatedAt: record.updatedAt.toISOString(),
   };
 }
@@ -57,6 +59,11 @@ export async function ensureExportPublishRecords(input: {
       mode: "EXPORT",
       status: "READY",
       failureReason: null,
+      packageJson: {
+        assetType: asset.assetType,
+        targetPlatform: asset.targetPlatform,
+        title: asset.title,
+      },
       updatedAt: new Date().toISOString(),
     }));
   }
@@ -101,6 +108,11 @@ export async function ensureExportPublishRecords(input: {
           mode: "EXPORT",
           status: "READY",
           failureReason: null,
+          packageJson: {
+            assetType: asset.assetType,
+            targetPlatform: asset.targetPlatform,
+            title: asset.title,
+          },
           updatedAt: new Date().toISOString(),
         }));
   } catch {
@@ -112,6 +124,11 @@ export async function ensureExportPublishRecords(input: {
       mode: "EXPORT",
       status: "READY",
       failureReason: null,
+      packageJson: {
+        assetType: asset.assetType,
+        targetPlatform: asset.targetPlatform,
+        title: asset.title,
+      },
       updatedAt: new Date().toISOString(),
     }));
   }

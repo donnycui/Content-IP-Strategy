@@ -312,8 +312,19 @@ export type PublishRecordPayload = {
   mode: PublishModeValue;
   status: PublishStatusValue;
   failureReason: string | null;
+  packageJson: Record<string, string | number | boolean | null> | null;
   updatedAt: string;
 };
+
+export type ContentAssetUpdateRequest = {
+  title?: string | null;
+  content?: string;
+  status?: ContentAssetStatusValue;
+};
+
+export type ContentAssetUpdateResponse = ApiResponse<{
+  asset: ContentAssetPayload;
+}>;
 
 export type PublishRecordUpdateRequest = {
   status?: PublishStatusValue;

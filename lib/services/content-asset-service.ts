@@ -1,6 +1,7 @@
 import type {
   ContentAssetPayload,
   ContentAssetTypeValue,
+  ContentAssetUpdateRequest,
   ContentProjectPayload,
   StyleSkillPayload,
   TopicCandidateRow,
@@ -253,5 +254,58 @@ export async function generateProjectAssets(input: {
       status: "DRAFT",
       updatedAt: new Date().toISOString(),
     }));
+  }
+}
+
+export async function updateContentAsset(input: {
+  id: string;
+  payload: ContentAssetUpdateRequest;
+}): Promise<ContentAssetPayload> {
+  const title = input.payload.title !== undefined ? input.payload.title?.trim() || null : undefined;
+  const content = input.payload.content !== undefined ? input.payload.content : undefined;
+  const status = input.payload.status;
+
+  if (title === undefined && content === undefined && !status) {
+    throw new Error("At least one content-asset field is required.");
+  }
+
+  if (!process.env.DATABASE_URL) {
+    return {
+      id: input.id,
+      projectId: "content-project-mock",
+      assetType: "XHS_POST",
+      title: title ?? "未命名内容资产",
+      content: content ?? "",
+      targetPlatform: "xiaohongshu",
+      status: status ?? "DRAFT",
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  try {
+    const prismaClient = prisma as typeof prisma & {
+      contentAsset?: {
+        update: (args: unknown) => Promise<unknown>;
+      };
+    };
+
+    const asset = await prismaClient.contentAsset?.update({
+      where: {
+        id: input.id,
+      },
+      data: {
+        ...(title !== undefined ? { title } : {}),
+        ...(content !== undefined ? { content } : {}),
+        ...(status ? { status } : {}),
+      },
+    });
+
+    if (!asset) {
+      throw new Error("Content asset not found.");
+    }
+
+    return mapContentAsset(asset as Parameters<typeof mapContentAsset>[0]);
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : "更新内容资产失败。");
   }
 }
