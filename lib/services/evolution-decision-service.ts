@@ -8,6 +8,7 @@ import type {
 import { prisma } from "@/lib/prisma";
 import { createDirectionFromEvolutionDecision } from "@/lib/services/direction-service";
 import { getContentProjectDetail } from "@/lib/services/content-project-service";
+import { upsertPlatformStrategyMemo } from "@/lib/services/platform-strategy-service";
 import { appendProfileEvolutionNote } from "@/lib/services/profile-service";
 import { getReviewDashboard } from "@/lib/services/review-snapshot-service";
 import { ensureActiveCenterWorkspace } from "@/lib/services/center-workspace-service";
@@ -189,6 +190,20 @@ async function maybeApplyEvolutionDecisionWriteback(mapped: EvolutionDecisionPay
           priority: priority === "PRIMARY" || priority === "SECONDARY" || priority === "WATCH" ? priority : "SECONDARY",
         });
       }
+    }
+  }
+
+  if (mapped.targetType === "PLATFORM_STRATEGY" && mapped.actionPayload?.kind === "PLATFORM_STRATEGY_NOTE") {
+    const channelKey = mapped.actionPayload.channelKey;
+
+    if (typeof channelKey === "string" && channelKey) {
+      await upsertPlatformStrategyMemo({
+        channelKey,
+        headline: mapped.headline,
+        summary: mapped.suggestedAction,
+        detail: mapped.rationale,
+        sourceRef: mapped.reviewSnapshotId ?? "evolution-decision",
+      });
     }
   }
 }

@@ -475,6 +475,17 @@ export type LearningInsightsGenerateResponse = ApiResponse<{
   createdCount: number;
 }>;
 
+export type PlatformStrategyMemoPayload = {
+  id: string;
+  workspaceId: string;
+  channelKey: string;
+  headline: string;
+  summary: string;
+  detail: string | null;
+  sourceRef: string | null;
+  updatedAt: string;
+};
+
 export type StyleSkillDashboardResponse = ApiResponse<{
   dashboard: StyleSkillDashboardPayload;
 }>;

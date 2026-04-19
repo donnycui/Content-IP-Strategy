@@ -409,8 +409,26 @@ model CenterWorkspace {
   sharedMemoryRecords    SharedMemoryRecord[]
   styleSkill             StyleSkill?
   contentProjects        ContentProject[]
+  platformStrategyMemos  PlatformStrategyMemo[]
 
   @@index([currentAgentKey, updatedAt])
+}
+
+model PlatformStrategyMemo {
+  id          String         @id @default(cuid())
+  workspaceId String
+  channelKey  String
+  headline    String
+  summary     String
+  detail      String?
+  sourceRef   String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  workspace   CenterWorkspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, channelKey])
+  @@index([workspaceId, updatedAt])
 }
 
 model AgentThread {
