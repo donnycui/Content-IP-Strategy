@@ -8,6 +8,7 @@ import type {
   StyleContentDashboardPayload,
   TopicCandidateRow,
 } from "@/lib/domain/contracts";
+import { buildContentProjectPackage } from "@/lib/content/content-project-package-logic";
 import { prisma } from "@/lib/prisma";
 import { getTopicCandidates } from "@/lib/topic-candidate-data";
 import { generateProjectAssets } from "@/lib/services/content-asset-service";
@@ -397,48 +398,12 @@ export async function getContentProjectPackage(projectId: string) {
     return null;
   }
 
-  return {
+  return buildContentProjectPackage({
     project: detail.project,
-    sourceCandidate: detail.candidate
-      ? {
-          id: detail.candidate.id,
-          title: detail.candidate.title,
-          whyNow: detail.candidate.whyNow,
-          fitReason: detail.candidate.fitReason,
-          topicTitle: detail.candidate.topicTitle,
-          formatRecommendation: detail.candidate.formatRecommendation,
-        }
-      : null,
-    styleSkill: {
-      id: detail.styleSkill.id,
-      summary: detail.styleSkill.summary,
-      version: detail.styleSkill.version,
-    },
-    assets: detail.assets.map((asset) => ({
-      assetType: asset.assetType,
-      title: asset.title,
-      targetPlatform: asset.targetPlatform,
-      status: asset.status,
-      content: asset.content,
-    })),
-    publishRecords: detail.publishRecords.map((record) => ({
-      channelKey: record.channelKey,
-      mode: record.mode,
-      status: record.status,
-      package: record.packageJson,
-      failureReason: record.failureReason,
-    })),
-    reviews: detail.reviews.map((review) => ({
-      channelKey: review.channelKey,
-      views: review.views,
-      likes: review.likes,
-      comments: review.comments,
-      shares: review.shares,
-      saves: review.saves,
-      inquiries: review.inquiries,
-      leads: review.leads,
-      conversions: review.conversions,
-      reviewNote: review.reviewNote,
-    })),
-  };
+    candidate: detail.candidate,
+    styleSkill: detail.styleSkill,
+    assets: detail.assets,
+    publishRecords: detail.publishRecords,
+    reviews: detail.reviews,
+  });
 }
