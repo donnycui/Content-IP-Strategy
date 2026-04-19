@@ -85,6 +85,9 @@ These are the main branch-local slices in order:
 - `1601ee9` `feat: add content project overview and editing`
 - `181e27b` `feat: apply style evolution decisions to skill`
 - `efc0bb2` `feat: add structured evolution writebacks`
+- `0a31ba6` `docs: add zhaocai IP center branch handoff`
+- `5826781` `feat: add content project export bundle`
+- `2f40b1d` `feat: add asset-aware review flow`
 
 ## 4. Working End-to-End Paths
 
@@ -126,12 +129,20 @@ Users can:
 - inspect publish records
 - change internal publish/export status
 - open an actual export JSON bundle
+- open a full project-level export bundle that includes:
+  - project metadata
+  - source candidate context
+  - style summary
+  - all generated assets
+  - publish records
+  - linked review snapshots
 
 ### 4.5 Review -> Evolution
 
 Users can:
 
 - record manual review snapshots
+- record review snapshots with project and asset context
 - generate evolution decisions
 - accept / reject decisions
 
@@ -213,7 +224,7 @@ Current writebacks are meaningful but not yet fully structured:
 The content layer is now functional, but still needs:
 
 - richer project filtering and index views
-- better asset-to-review linking
+- stronger project-level operations once the project list grows
 - more explicit package/download flows
 
 ## 7. Recommended Next Priorities
@@ -227,9 +238,9 @@ If work resumes on this branch, the recommended next order is:
 - especially `PROFILE`, `DIRECTION`, and future `PLATFORM_STRATEGY`
 
 3. Improve content-project operations
-- stronger project overview
-- richer export package structures
-- better project metadata and status flows
+- stronger project overview / filtering
+- more complete project metadata and status flows
+- better package/export ergonomics
 
 4. Only after that, explore external platform APIs
 - Xiaohongshu
@@ -241,4 +252,3 @@ If work resumes on this branch, the recommended next order is:
 ## 8. Branch Rule
 
 For this branch, treat this document as the active branch-level handoff unless a newer dated `zhaocai-IP-center` handoff supersedes it.
-
