@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import type {
@@ -144,6 +145,12 @@ export function ContentAssetEditor({
         >
           保存并沉淀风格信号
         </button>
+        <Link
+          className="pill transition hover:border-sky-400 hover:text-slate-800"
+          href={`/agents/daily-review?projectId=${asset.projectId}&assetId=${asset.id}&channelKey=${asset.targetPlatform}`}
+        >
+          去复盘这条资产
+        </Link>
       </div>
 
       {feedback ? <p className="mt-3 text-sm text-emerald-700">{feedback}</p> : null}

@@ -9,9 +9,11 @@ export function ReviewMetricsForm({ dashboard }: { dashboard: ReviewDashboardPay
   const router = useRouter();
   const searchParams = useSearchParams();
   const preferredProjectId = searchParams.get("projectId") ?? dashboard.projects[0]?.project.id ?? "";
+  const preferredAssetId = searchParams.get("assetId") ?? dashboard.projects[0]?.assets[0]?.id ?? "";
   const preferredChannelKey = searchParams.get("channelKey") ?? dashboard.projects[0]?.publishRecords[0]?.channelKey ?? "xiaohongshu";
   const [isPending, startTransition] = useTransition();
   const [projectId, setProjectId] = useState(preferredProjectId);
+  const [assetId, setAssetId] = useState(preferredAssetId);
   const [channelKey, setChannelKey] = useState(preferredChannelKey);
   const [views, setViews] = useState("");
   const [likes, setLikes] = useState("");
@@ -29,6 +31,19 @@ export function ReviewMetricsForm({ dashboard }: { dashboard: ReviewDashboardPay
     return value.trim() ? Number(value) : null;
   }
 
+  const selectedProject = dashboard.projects.find((item) => item.project.id === projectId) ?? null;
+  const selectedAsset = selectedProject?.assets.find((asset) => asset.id === assetId) ?? selectedProject?.assets[0] ?? null;
+
+  function handleProjectChange(nextProjectId: string) {
+    setProjectId(nextProjectId);
+    const nextProject = dashboard.projects.find((item) => item.project.id === nextProjectId);
+    const nextAsset = nextProject?.assets[0] ?? null;
+    const nextChannel = nextProject?.publishRecords[0]?.channelKey ?? channelKey;
+
+    setAssetId(nextAsset?.id ?? "");
+    setChannelKey(nextChannel);
+  }
+
   function submit() {
     startTransition(async () => {
       try {
@@ -42,6 +57,7 @@ export function ReviewMetricsForm({ dashboard }: { dashboard: ReviewDashboardPay
           },
           body: JSON.stringify({
             projectId,
+            assetId: assetId || null,
             channelKey,
             views: toNumber(views),
             likes: toNumber(likes),
@@ -89,7 +105,7 @@ export function ReviewMetricsForm({ dashboard }: { dashboard: ReviewDashboardPay
         <div className="grid gap-3 xl:grid-cols-2">
           <select
             className="w-full rounded-2xl border px-4 py-3 text-sm outline-none transition"
-            onChange={(event) => setProjectId(event.target.value)}
+            onChange={(event) => handleProjectChange(event.target.value)}
             value={projectId}
           >
             {dashboard.projects.length ? (
@@ -103,12 +119,33 @@ export function ReviewMetricsForm({ dashboard }: { dashboard: ReviewDashboardPay
             )}
           </select>
 
+          <select
+            className="w-full rounded-2xl border px-4 py-3 text-sm outline-none transition"
+            onChange={(event) => setAssetId(event.target.value)}
+            value={assetId}
+          >
+            {selectedProject?.assets.length ? (
+              selectedProject.assets.map((asset) => (
+                <option key={asset.id} value={asset.id}>
+                  {asset.title || asset.assetType}
+                </option>
+              ))
+            ) : (
+              <option value="">暂无内容资产</option>
+            )}
+          </select>
+        </div>
+
+        <div className="grid gap-3 xl:grid-cols-2">
           <input
             className="w-full rounded-2xl border px-4 py-3 text-sm outline-none transition"
             onChange={(event) => setChannelKey(event.target.value)}
             placeholder="channel key，例如 xiaohongshu"
             value={channelKey}
           />
+          <div className="rounded-2xl border px-4 py-3 text-sm leading-7 text-slate-700">
+            {selectedAsset ? `当前复盘资产：${selectedAsset.title || selectedAsset.assetType}` : "当前项目还没有可选内容资产。"}
+          </div>
         </div>
 
         <div className="grid gap-3 md:grid-cols-4">
