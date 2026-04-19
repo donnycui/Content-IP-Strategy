@@ -2,7 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import type { ContentAssetPayload, ContentAssetUpdateResponse } from "@/lib/domain/contracts";
+import type {
+  ContentAssetPayload,
+  ContentAssetUpdateResponse,
+  StyleRevisionCreateResponse,
+} from "@/lib/domain/contracts";
 
 export function ContentAssetEditor({
   asset,
@@ -18,7 +22,10 @@ export function ContentAssetEditor({
   const [feedback, setFeedback] = useState("");
   const [error, setError] = useState("");
 
-  function save(status?: ContentAssetPayload["status"]) {
+  function save(options?: {
+    status?: ContentAssetPayload["status"];
+    syncRevision?: boolean;
+  }) {
     startTransition(async () => {
       try {
         setFeedback("");
@@ -32,7 +39,7 @@ export function ContentAssetEditor({
           body: JSON.stringify({
             title,
             content,
-            ...(status ? { status } : {}),
+            ...(options?.status ? { status: options.status } : {}),
           }),
         });
 
@@ -42,7 +49,41 @@ export function ContentAssetEditor({
           throw new Error(result.ok ? "更新内容资产失败。" : (result.error ?? "更新内容资产失败。"));
         }
 
-        setFeedback(status === "READY" ? "已保存并标记为可交付。" : status === "APPROVED" ? "已保存并标记为已确认。" : "内容资产已保存。");
+        const hasMeaningfulRevision = content.trim() !== asset.content.trim();
+
+        if (options?.syncRevision && hasMeaningfulRevision) {
+          const revisionResponse = await fetch("/api/style/revisions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              draftText: asset.content,
+              revisedText: content,
+              ruleDelta: `来自内容资产「${label}」的手改修订信号`,
+            }),
+          });
+
+          const revisionResult = (await revisionResponse.json()) as StyleRevisionCreateResponse;
+
+          if (!revisionResponse.ok || !revisionResult.ok) {
+            throw new Error(
+              revisionResult.ok ? "内容资产已保存，但写入风格修订信号失败。" : revisionResult.error ?? "写入风格修订信号失败。",
+            );
+          }
+        }
+
+        setFeedback(
+          options?.syncRevision
+            ? hasMeaningfulRevision
+              ? "内容资产已保存，并同步为一条风格修订信号。"
+              : "内容资产已保存；内容未发生变化，所以没有新增风格修订信号。"
+            : options?.status === "READY"
+              ? "已保存并标记为可交付。"
+              : options?.status === "APPROVED"
+                ? "已保存并标记为已确认。"
+                : "内容资产已保存。",
+        );
         router.refresh();
       } catch (submitError) {
         setError(submitError instanceof Error ? submitError.message : "更新内容资产失败。");
@@ -82,7 +123,7 @@ export function ContentAssetEditor({
         <button
           className="pill transition hover:border-sky-400 hover:text-slate-800"
           disabled={isPending}
-          onClick={() => save("READY")}
+          onClick={() => save({ status: "READY" })}
           type="button"
         >
           标记可交付
@@ -90,10 +131,18 @@ export function ContentAssetEditor({
         <button
           className="pill transition hover:border-sky-400 hover:text-slate-800"
           disabled={isPending}
-          onClick={() => save("APPROVED")}
+          onClick={() => save({ status: "APPROVED" })}
           type="button"
         >
           标记已确认
+        </button>
+        <button
+          className="pill transition hover:border-sky-400 hover:text-slate-800"
+          disabled={isPending}
+          onClick={() => save({ syncRevision: true })}
+          type="button"
+        >
+          保存并沉淀风格信号
         </button>
       </div>
 
