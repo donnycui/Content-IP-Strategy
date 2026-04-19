@@ -77,6 +77,13 @@ These areas still need caution before merging to `main`:
 - `prisma generate`
 currently remain slower / less reliable than ideal in this environment
 
+Updated current state:
+
+- `tsc` now passes
+- lightweight smoke checks now pass
+- `gateway-cutover` smoke check passes
+- `build` remains the main unstable verification item
+
 2. `Some writebacks are still coarse`
 - profile updates append notes instead of doing richer field-level mutations
 - direction writebacks create new directions rather than updating structured direction weights or strategy graphs
@@ -106,6 +113,12 @@ But it is not yet “fully merge-safe by default” until one of these happens:
 1. a clean full build / type-check run is captured, or
 2. the merge is explicitly accepted with the current environment-level verification caveat
 
+Current more precise reading:
+
+- type-check is no longer the blocker
+- lightweight smoke is no longer the blocker
+- the remaining merge caution is mainly the still-unstable full `build`
+
 ## Recommended Merge Path
 
 If the goal becomes merging this work back toward `main`, the recommended path is:
@@ -113,8 +126,11 @@ If the goal becomes merging this work back toward `main`, the recommended path i
 1. Review the branch against the demo path
 2. Run smoke checks:
    - `npm run test:zhaocai-center:smoke`
-3. Attempt one clean build / type-check in a friendlier environment
-4. Decide whether to:
+   - `npm run test:gateway-cutover`
+3. Run:
+   - `./node_modules/.bin/tsc --noEmit --incremental false`
+4. Attempt one clean build in a friendlier environment
+5. Decide whether to:
    - merge as one feature branch, or
    - cherry-pick / squash selected slices
 
@@ -154,4 +170,3 @@ The branch is already strong enough for:
 - merge planning
 
 The main blocker to a more confident merge is still toolchain-level verification rather than missing core product structure.
-

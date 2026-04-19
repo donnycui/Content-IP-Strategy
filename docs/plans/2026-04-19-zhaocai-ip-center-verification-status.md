@@ -9,6 +9,7 @@ This branch now has partial but meaningful verification:
 
 - source-level type-check passes
 - all lightweight smoke checks pass
+- gateway alias env smoke check passes
 - full `build` still remains unstable in the current environment
 
 ## Verified Commands
@@ -40,6 +41,7 @@ npm run test:zhaocai-center:evolution
 npm run test:zhaocai-center:demo
 npm run test:zhaocai-center:content-package
 npm run test:zhaocai-center:smoke
+npm run test:gateway-cutover
 ```
 
 Status:
@@ -51,6 +53,7 @@ Covered areas:
 - evolution decision draft logic
 - demo path assembly
 - content project export bundle assembly
+- gateway alias environment resolution
 
 Notes:
 
@@ -102,6 +105,12 @@ The remaining practical blocker is:
 Before any serious merge:
 
 1. run `npm run test:zhaocai-center:smoke`
-2. run one clean `build` in a friendlier environment
-3. treat `build` instability as an environment-level merge caveat unless it reproduces elsewhere
+2. run `npm run test:gateway-cutover`
+3. run:
 
+```bash
+./node_modules/.bin/tsc --noEmit --incremental false
+```
+
+4. run one clean `build` in a friendlier environment
+5. treat `build` instability as an environment-level merge caveat unless it reproduces elsewhere
