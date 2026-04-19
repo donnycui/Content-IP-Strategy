@@ -295,3 +295,52 @@ export async function syncStyleSkillCounts(styleSkillId: string) {
     // Ignore count sync failures until the style-skill layer is fully migrated.
   }
 }
+
+export async function applyStyleEvolutionDecision(input: {
+  workspaceId: string;
+  headline: string;
+  rationale: string;
+  suggestedAction: string;
+}) {
+  const skill = await ensureActiveStyleSkill();
+
+  if (!process.env.DATABASE_URL) {
+    return skill;
+  }
+
+  try {
+    const prismaClient = prisma as typeof prisma & {
+      styleSkill?: {
+        update: (args: unknown) => Promise<unknown>;
+      };
+    };
+
+    const appendedRule = [
+      skill.rulesMarkdown,
+      "",
+      "## 新增进化信号",
+      `- ${input.headline}`,
+      `- 原因：${input.rationale}`,
+      `- 动作：${input.suggestedAction}`,
+    ].join("\n");
+
+    const summary = `${skill.summary}；最新进化：${input.headline}`;
+
+    const updated = await prismaClient.styleSkill?.update({
+      where: {
+        id: skill.id,
+      },
+      data: {
+        summary,
+        rulesMarkdown: appendedRule,
+        version: {
+          increment: 1,
+        },
+      },
+    });
+
+    return updated ? mapStyleSkill(updated as Parameters<typeof mapStyleSkill>[0]) : skill;
+  } catch {
+    return skill;
+  }
+}

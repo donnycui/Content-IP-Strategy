@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { getReviewDashboard } from "@/lib/services/review-snapshot-service";
 import { ensureActiveCenterWorkspace } from "@/lib/services/center-workspace-service";
 import { upsertActiveSharedMemoryRecord } from "@/lib/services/shared-memory-service";
+import { applyStyleEvolutionDecision } from "@/lib/services/style-skill-service";
 
 function mapEvolutionDecision(record: {
   id: string;
@@ -287,6 +288,15 @@ export async function updateEvolutionDecisionStatus(id: string, input: Evolution
       agentKey: "EVOLUTION",
       sourceRef: mapped.reviewSnapshotId ?? "evolution-decision",
     });
+
+    if (mapped.targetType === "STYLE") {
+      await applyStyleEvolutionDecision({
+        workspaceId: mapped.workspaceId,
+        headline: mapped.headline,
+        rationale: mapped.rationale,
+        suggestedAction: mapped.suggestedAction,
+      });
+    }
   }
 
   return {
