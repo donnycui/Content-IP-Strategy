@@ -1,7 +1,6 @@
 import type { CreatorProfile, CreatorStage } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getActiveCreatorProfile, type CreatorProfileDraft, type CreatorProfileRow } from "@/lib/profile-data";
-import { extractCreatorProfileDraft } from "@/lib/profile-extraction";
 import { ServiceError } from "@/lib/services/service-error";
 
 export type UpdateCreatorProfileInput = {
@@ -135,25 +134,6 @@ export async function activateCreatorProfileDraft(draft: CreatorProfileDraft) {
   return {
     profileId: profile.id,
   };
-}
-
-export async function extractCreatorProfileAndActivate(sourceText: string) {
-  return extractCreatorProfileAndActivateWithTier(sourceText);
-}
-
-export async function extractCreatorProfileAndActivateWithTier(sourceText: string, requestedTier?: "FAST" | "BALANCED" | "DEEP") {
-  assertDatabaseConfigured();
-
-  if (!sourceText.trim()) {
-    throw new ServiceError("创作者自述不能为空。", 400, "EMPTY_SOURCE_TEXT");
-  }
-
-  const draft = await extractCreatorProfileDraft({
-    sourceText,
-    requestedTier,
-  });
-
-  return activateCreatorProfileDraft(draft);
 }
 
 export async function updateCreatorProfile(input: UpdateCreatorProfileInput) {

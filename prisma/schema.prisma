@@ -159,7 +159,6 @@ enum ProfileExtractionSessionStatus {
 
 enum ProfileExtractionSourceMode {
   CONVERSATIONAL
-  QUICK
 }
 
 enum GatewayAuthType {

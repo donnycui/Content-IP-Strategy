@@ -19,15 +19,6 @@ export type ApiFailure = {
 
 export type ApiResponse<T> = ApiSuccess<T> | ApiFailure;
 
-export type ProfileExtractRequest = {
-  sourceText?: string;
-  requestedTier?: ModelTierValue;
-};
-
-export type ProfileExtractResponse = ApiResponse<{
-  profileId: string;
-}>;
-
 export type ProfileExtractionConversationMessage = {
   role: "assistant" | "user" | "system";
   content: string;
@@ -58,7 +49,7 @@ export type ProfileExtractionConversationDraft = {
 export type ProfileExtractionConversationSession = {
   id: string;
   status: "ACTIVE" | "COMPLETED" | "ABANDONED";
-  sourceMode: "CONVERSATIONAL" | "QUICK";
+  sourceMode: "CONVERSATIONAL";
   brainstormingMode: BrainstormingModeValue;
   responseMode: "BRAINSTORMING" | "EXTRACTION";
   draftProfile: ProfileExtractionConversationDraft;

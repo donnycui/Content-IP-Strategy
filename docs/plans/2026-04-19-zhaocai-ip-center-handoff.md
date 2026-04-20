@@ -26,6 +26,8 @@ Current shape note:
 - the stage-agent shell is the primary runtime surface
 - legacy workbench shells have been silenced or redirected
 - IP extraction is being refactored away from template-like field collection toward `Brainstorming OFF / AUTO / ON`
+- the old quick extraction path has been deleted from runtime code
+- direct `zhaocai-gateway` runtime connectivity has been verified against `https://zhaocai.mintstudio.cn/v1/chat/completions`
 
 ## 2. Current Product Shape
 

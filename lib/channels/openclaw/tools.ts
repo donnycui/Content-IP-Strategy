@@ -1,11 +1,9 @@
 import { regenerateDirections } from "@/lib/services/direction-service";
-import { extractCreatorProfileAndActivate } from "@/lib/services/profile-service";
 import { regenerateProfileEvolutionSuggestions } from "@/lib/services/profile-evolution-service";
 import { regenerateTopicCandidates } from "@/lib/services/topic-candidate-service";
 import { regenerateTopics } from "@/lib/services/topic-service";
 
 export type OpenClawTool =
-  | "extract_ip_profile"
   | "generate_directions"
   | "generate_topics"
   | "generate_topic_candidates"
@@ -14,11 +12,6 @@ export type OpenClawTool =
   | "run_review";
 
 export const openClawToolCatalog = {
-  extract_ip_profile: {
-    tool: "extract_ip_profile",
-    description: "基于创作者输入运行一次 IP 提炼，并激活新的 Creator Profile。",
-    backingCapabilities: ["extractCreatorProfileAndActivate"],
-  },
   generate_directions: {
     tool: "generate_directions",
     description: "基于当前 Creator Profile 和信号上下文生成方向建议。",
@@ -65,8 +58,6 @@ export async function runOpenClawTool(
   },
 ) {
   switch (tool) {
-    case "extract_ip_profile":
-      return extractCreatorProfileAndActivate(input?.sourceText ?? "");
     case "generate_directions":
       return regenerateDirections();
     case "generate_topics":

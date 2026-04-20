@@ -10,6 +10,7 @@ The new flow should:
 - avoid fixed field-by-field interview behavior
 - reduce generic fallback wording in the final profile draft
 - keep the existing gateway-routed model execution path
+- fully remove the old quick-extraction code path
 
 ## Product Decision
 
@@ -36,6 +37,7 @@ Previous behavior:
 - ask the next missing field
 - silently fall back to fixed heuristic questions
 - auto-fill final profile with generic “knowledge creator” defaults
+- keep a separate quick-extraction endpoint and form
 
 New behavior:
 
@@ -43,6 +45,7 @@ New behavior:
 - guide the user through exploration when the input is ambiguous
 - only then compress into profile fields
 - keep incomplete fields visibly incomplete instead of auto-fabricating a polished generic identity
+- remove the old quick extraction route, component, and service path entirely
 
 ## Acceptance Impact
 
