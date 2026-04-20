@@ -55,7 +55,7 @@ export function AgentSummaryPanel({ data }: { data: AgentStageShellData }) {
         </div>
 
         <div className="flex flex-wrap gap-3">
-          {data.definition.legacyLinks.map((link) => (
+          {data.definition.workspaceLinks.map((link) => (
             <Link
               className="rounded-2xl border border-slate-300/70 bg-white/70 px-4 py-2.5 text-sm text-slate-700 transition hover:border-slate-400 hover:bg-white"
               href={link.href}

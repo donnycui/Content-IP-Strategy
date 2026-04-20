@@ -127,7 +127,7 @@ function buildAgentCards(input: {
         : "第一次正式使用从这里开始，系统会把模糊需求收敛成第一版 IP 提炼报告。",
       href: getAgentRoutePath("IP_EXTRACTION"),
       actionLabel: input.hasProfile ? "回到 IP 提炼" : "开始第一次 IP 提炼",
-      note: "对话式提炼已接入现有 v2.0 工作流。",
+      note: "当前阶段只保留对话式提炼主路径。",
     },
     {
       key: "CREATOR_PROFILE",
@@ -155,7 +155,7 @@ function buildAgentCards(input: {
         : "先把创作者画像稳定下来，方向与选题才会真正贴着你走。",
       href: getAgentRoutePath("TOPIC_DIRECTION"),
       actionLabel: input.hasProfile ? "查看方向与选题" : "等待方向解锁",
-      note: "当前先复用 v2.0 的方向、主题和候选题内核。",
+      note: "方向、主题线和选题被统一收拢到同一个 Agent 工作区。",
     },
     {
       key: "STYLE_CONTENT",
@@ -179,7 +179,7 @@ function buildAgentCards(input: {
       detail: "当前先保留一个明确入口，后续用 ReviewSnapshot 和长期曲线把发布后反馈拉回系统。",
       href: getAgentRoutePath("DAILY_REVIEW"),
       actionLabel: "查看复盘底座",
-      note: "现有 /reviews 仍以信号校准为主，后续会并入内容复盘语义。",
+      note: "当前先聚焦内容表现和人工回填复盘，不再暴露旧校准页作为主入口。",
     },
     {
       key: "EVOLUTION",
@@ -275,32 +275,32 @@ function buildQuickActions(input: { hasProfile: boolean }): CenterQuickActionPay
     {
       label: input.hasProfile ? "继续 IP 提炼" : "开始 IP 提炼",
       description: "用对话式访谈把定位、目标和边界再收敛一轮。",
-      href: "/profile/extract",
+      href: getAgentRoutePath("IP_EXTRACTION"),
     },
     {
       label: "打开创作者画像",
       description: "查看当前定位、人设、受众、核心议题和内容边界。",
-      href: "/profile",
+      href: getAgentRoutePath("CREATOR_PROFILE"),
     },
     {
       label: "生成今日选题",
       description: "从方向、主题线和候选题里推进今天最值得做的内容。",
-      href: "/candidates",
+      href: getAgentRoutePath("TOPIC_DIRECTION"),
     },
     {
       label: "查看方向策略",
       description: "回看当前方向、主题线和应该加权的长期主线。",
-      href: "/directions",
+      href: getAgentRoutePath("TOPIC_DIRECTION"),
     },
     {
       label: "回看升级建议",
       description: "检查哪些画像、风格或策略值得被系统更新。",
-      href: "/evolution",
+      href: getAgentRoutePath("EVOLUTION"),
     },
     {
-      label: "进入信号研究",
-      description: "打开信号、来源和校准底盘，查看今天的市场上下文。",
-      href: "/signals",
+      label: "进入每日复盘",
+      description: "回填表现数据，给系统新的复盘和进化信号。",
+      href: getAgentRoutePath("DAILY_REVIEW"),
     },
   ];
 }

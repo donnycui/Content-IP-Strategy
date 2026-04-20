@@ -24,8 +24,8 @@ export async function HomeTopicsCandidatesSection() {
             <p className="metric-label">今日主题</p>
             <h3 className="text-2xl font-semibold">哪些主题线正在积累</h3>
           </div>
-          <Link className="action-link" href="/topics">
-            进入主题台
+          <Link className="action-link" href="/agents/topic-direction">
+            进入方向与选题 Agent
           </Link>
         </div>
         <div className="mt-4 grid gap-4 xl:grid-cols-2">
@@ -57,8 +57,8 @@ export async function HomeTopicsCandidatesSection() {
             <p className="metric-label">今日选题</p>
             <h3 className="text-2xl font-semibold">今天真正值得推进的内容动作</h3>
           </div>
-          <Link className="action-link" href="/candidates">
-            进入选题台
+          <Link className="action-link" href="/agents/topic-direction">
+            查看今日选题
           </Link>
         </div>
         <div className="mt-4 grid gap-4">

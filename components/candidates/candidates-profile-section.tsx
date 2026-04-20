@@ -12,11 +12,11 @@ export async function CandidatesProfileSection() {
           <p className="text-lg font-semibold">{profile.name}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link className="pill hover:border-sky-400 hover:text-slate-800" href="/topics">
-            打开主题台
+          <Link className="pill hover:border-sky-400 hover:text-slate-800" href="/agents/creator-profile">
+            查看创作者画像
           </Link>
-          <Link className="pill hover:border-sky-400 hover:text-slate-800" href="/directions">
-            打开方向台
+          <Link className="pill hover:border-sky-400 hover:text-slate-800" href="/agents/style-content">
+            推进内容层
           </Link>
         </div>
       </div>

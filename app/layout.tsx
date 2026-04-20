@@ -9,20 +9,16 @@ export const metadata: Metadata = {
 
 const navItems = [
   { href: "/", label: "中枢首页", matchers: ["/", "/agents"] },
-  { href: "/demo", label: "演示路径" },
-  { href: "/profile/extract", label: "IP 提炼" },
-  { href: "/profile", label: "创作者画像" },
+  { href: "/agents/ip-extraction", label: "IP 提炼" },
+  { href: "/agents/creator-profile", label: "创作者画像" },
   {
-    href: "/directions",
+    href: "/agents/topic-direction",
     label: "方向与选题",
-    matchers: ["/directions", "/topics", "/candidates"],
+    matchers: ["/directions", "/topics", "/candidates", "/agents/topic-direction"],
   },
-  { href: "/evolution", label: "升级进化" },
-  {
-    href: "/signals",
-    label: "信号研究",
-    matchers: ["/signals", "/reviews", "/sources"],
-  },
+  { href: "/agents/style-content", label: "风格与内容" },
+  { href: "/agents/daily-review", label: "每日复盘" },
+  { href: "/agents/evolution", label: "升级进化" },
   {
     href: "/admin/gateways",
     label: "模型路由",

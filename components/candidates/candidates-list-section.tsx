@@ -41,8 +41,8 @@ export async function CandidatesListSection() {
           先在主题台生成主题线，再点击“刷新选题建议”。这一步会把方向、主题线和支撑信号一起压缩成今天真正可执行的选题列表。
         </p>
         <div className="mt-4">
-          <Link className="pill hover:border-sky-400 hover:text-slate-800" href="/topics">
-            打开主题台
+          <Link className="pill hover:border-sky-400 hover:text-slate-800" href="/agents/topic-direction">
+            留在方向与选题 Agent
           </Link>
         </div>
       </section>
@@ -98,14 +98,11 @@ export async function CandidatesListSection() {
                 <div className="flex flex-wrap gap-3">
                   {candidate.anchorSignalId ? (
                     <>
-                      <Link className="pill hover:border-sky-400 hover:text-slate-800" href={`/signals/${candidate.anchorSignalId}`}>
-                        复核信号
-                      </Link>
                       <ResearchCardCreateButton signalId={candidate.anchorSignalId} />
                     </>
                   ) : (
-                    <Link className="pill hover:border-sky-400 hover:text-slate-800" href="/topics">
-                      查看主题线
+                    <Link className="pill hover:border-sky-400 hover:text-slate-800" href="/agents/topic-direction">
+                      查看当前工作区
                     </Link>
                   )}
                 </div>

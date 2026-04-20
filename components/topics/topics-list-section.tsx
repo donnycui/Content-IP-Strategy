@@ -76,26 +76,22 @@ export async function TopicsListSection() {
                       <p className="text-sm font-semibold text-slate-700">当前支撑信号</p>
                       <div className="space-y-2">
                         {topic.sampleSignals.map((signal) => (
-                          <Link
-                            className="block rounded-2xl border border-slate-200/80 bg-white/70 px-4 py-3 text-sm leading-6 transition hover:border-slate-300/90"
-                            href={`/signals/${signal.id}`}
-                            key={signal.id}
-                          >
+                          <div className="block rounded-2xl border border-slate-200/80 bg-white/70 px-4 py-3 text-sm leading-6" key={signal.id}>
                             <div className="flex items-start justify-between gap-3">
                               <span>{signal.title}</span>
                               <span className="pill shrink-0">重要性 {signal.importanceScore.toFixed(1)}</span>
                             </div>
-                          </Link>
+                          </div>
                         ))}
                       </div>
                     </div>
                   ) : null}
                   <div className="flex flex-wrap gap-3">
-                    <Link className="pill transition hover:border-sky-400 hover:text-slate-800" href="/candidates">
-                      查看相关候选
+                    <Link className="pill transition hover:border-sky-400 hover:text-slate-800" href="/agents/style-content">
+                      推进内容准备
                     </Link>
-                    <Link className="pill transition hover:border-sky-400 hover:text-slate-800" href="/signals">
-                      回到信号流
+                    <Link className="pill transition hover:border-sky-400 hover:text-slate-800" href="/agents/topic-direction">
+                      保持在方向与选题 Agent
                     </Link>
                   </div>
                 </div>

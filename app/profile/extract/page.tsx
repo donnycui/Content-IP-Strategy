@@ -1,11 +1,7 @@
-import { ProfileExtractWorkbench } from "@/components/profile-extract-workbench";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default function ProfileExtractPage() {
-  return (
-    <main className="space-y-5">
-      <ProfileExtractWorkbench />
-    </main>
-  );
+  redirect("/agents/ip-extraction");
 }

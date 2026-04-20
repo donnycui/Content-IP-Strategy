@@ -24,8 +24,8 @@ export async function HomeEvolutionOutputSection() {
             <p className="metric-label">待确认进化建议</p>
             <h3 className="text-2xl font-semibold">系统认为你正在发生的变化</h3>
           </div>
-          <Link className="action-link" href="/evolution">
-            进入进化建议
+          <Link className="action-link" href="/agents/evolution">
+            进入升级进化 Agent
           </Link>
         </div>
         <div className="mt-4 grid gap-3">
@@ -52,8 +52,8 @@ export async function HomeEvolutionOutputSection() {
             <h3 className="text-2xl font-semibold">信号和产出仍然在这里落地</h3>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Link className="action-link" href="/signals">
-              进入信号流
+            <Link className="action-link" href="/agents/daily-review">
+              进入每日复盘 Agent
             </Link>
             {workspace.output?.latestResearchCardId ? (
               <Link className="action-link" href={`/drafts/${workspace.output.latestResearchCardId}`}>

@@ -18,8 +18,8 @@ export async function HomeProfileDirectionsSection() {
             <p className="metric-label">当前画像</p>
             <h3 className="text-2xl font-semibold">今天先记住你是谁</h3>
           </div>
-          <Link className="action-link" href="/profile">
-            查看画像
+          <Link className="action-link" href="/agents/creator-profile">
+            查看画像 Agent
           </Link>
         </div>
         <div className="mt-4 space-y-4">
@@ -44,8 +44,8 @@ export async function HomeProfileDirectionsSection() {
             <p className="metric-label">今日方向</p>
             <h3 className="text-2xl font-semibold">未来 2 到 4 周先押哪几条</h3>
           </div>
-          <Link className="action-link" href="/directions">
-            进入方向台
+          <Link className="action-link" href="/agents/topic-direction">
+            进入方向与选题 Agent
           </Link>
         </div>
         <div className="mt-4 grid gap-3">
