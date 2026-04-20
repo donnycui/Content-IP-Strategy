@@ -28,6 +28,7 @@ Current shape note:
 - IP extraction is being refactored away from template-like field collection toward `Brainstorming OFF / AUTO / ON`
 - the old quick extraction path has been deleted from runtime code
 - direct `zhaocai-gateway` runtime connectivity has been verified against `https://zhaocai.mintstudio.cn/v1/chat/completions`
+- old `signals / sources / reviews / research / drafts` workbench code is being physically removed from runtime modules
 
 ## 2. Current Product Shape
 

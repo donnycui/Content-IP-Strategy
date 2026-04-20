@@ -1,6 +1,5 @@
 import type { LearningInsightPayload, LearningInsightsDashboardPayload } from "@/lib/domain/contracts";
 import { getDirections } from "@/lib/direction-data";
-import { getSignals } from "@/lib/data";
 import { getActiveSharedMemoryRecords, upsertActiveSharedMemoryRecord } from "@/lib/services/shared-memory-service";
 import { getStyleSkillDashboard } from "@/lib/services/style-skill-service";
 import { getReviewDashboard } from "@/lib/services/review-snapshot-service";
@@ -12,13 +11,12 @@ function buildFallbackInsights(input: {
   hottestTopicSummary?: string | null;
   topDirectionTitle?: string | null;
   topDirectionWhyNow?: string | null;
-  signalTitles: string[];
   styleSummary: string;
   reviewHint?: string | null;
 }): LearningInsightPayload[] {
-  const marketTitle = input.hottestTopicTitle || input.signalTitles[0] || "当前热点仍在继续收敛中";
+  const marketTitle = input.hottestTopicTitle || "当前热点仍在继续收敛中";
   const marketSummary =
-    input.hottestTopicSummary || (input.signalTitles.length ? `最近高频出现的信号包括：${input.signalTitles.join("、")}` : "系统还在积累更稳定的热点观察。");
+    input.hottestTopicSummary || "系统还在根据方向、主题线和复盘结果积累更稳定的热点观察。";
   const styleDetail = input.reviewHint
     ? `最近复盘显示：${input.reviewHint}。结合当前 style skill，系统更倾向继续强化“${input.styleSummary}”这类表达。`
     : `当前还缺少足够复盘数据，先把风格学习重心放在“${input.styleSummary}”这一底味上。`;
@@ -49,10 +47,9 @@ function buildFallbackInsights(input: {
 }
 
 export async function deriveLearningInsights(): Promise<LearningInsightPayload[]> {
-  const [topics, directions, signals, styleDashboard, reviewDashboard] = await Promise.all([
+  const [topics, directions, styleDashboard, reviewDashboard] = await Promise.all([
     getTopics(),
     getDirections(),
-    getSignals(),
     getStyleSkillDashboard(),
     getReviewDashboard(),
   ]);
@@ -60,7 +57,6 @@ export async function deriveLearningInsights(): Promise<LearningInsightPayload[]
   const hottestTopic = topics[0];
   const topDirection = directions[0];
   const latestReview = reviewDashboard.reviews[0];
-  const signalTitles = signals.slice(0, 3).map((item) => item.title);
   const styleSummary = styleDashboard.skill.summary || "先从创作者画像里的表达风格字段起步";
   const reviewHint = latestReview?.reviewNote || null;
 
@@ -69,7 +65,6 @@ export async function deriveLearningInsights(): Promise<LearningInsightPayload[]
     hottestTopicSummary: hottestTopic?.summary,
     topDirectionTitle: topDirection?.title,
     topDirectionWhyNow: topDirection?.whyNow,
-    signalTitles,
     styleSummary,
     reviewHint,
   });

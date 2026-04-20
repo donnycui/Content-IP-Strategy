@@ -1,7 +1,7 @@
-import { getReviewCalibrationSummary } from "@/lib/data";
 import { getDirections } from "@/lib/direction-data";
 import type { CreatorProfileRow } from "@/lib/profile-data";
 import { executeStructuredGeneration } from "@/lib/services/structured-generation-service";
+import { getReviewDashboard } from "@/lib/services/review-snapshot-service";
 import { getTopicCandidates } from "@/lib/topic-candidate-data";
 import { getTopics } from "@/lib/topic-data";
 
@@ -53,7 +53,7 @@ export async function generateProfileUpdateSuggestionsForProfileWithTier(
   requestedTier?: "FAST" | "BALANCED" | "DEEP",
 ): Promise<DraftProfileUpdateSuggestion[]> {
   const [reviewSummary, topicCandidates, directions, topics] = await Promise.all([
-    getReviewCalibrationSummary(),
+    getReviewDashboard(),
     getTopicCandidates(profile.id),
     getDirections(profile.id),
     getTopics(profile.id),
@@ -83,13 +83,13 @@ export async function generateProfileUpdateSuggestionsForProfileWithTier(
     });
   }
 
-  if (reviewSummary.routineUnderDetected > 0 && !profile.contentBoundaries.includes("公司日常新闻")) {
+  if (reviewSummary.reviews.length >= 2 && !profile.contentBoundaries.includes("低价值内容")) {
     suggestions.push({
       type: "CONTENT_BOUNDARY",
       beforeValue: profile.contentBoundaries,
-      suggestedValue: `${profile.contentBoundaries}；进一步压低没有行业外溢的公司日常新闻。`,
-      reason: `最近人工复核里，“日常噪音识别不足”已出现 ${reviewSummary.routineUnderDetected} 次，说明你的内容边界应该更明确地排除这类信号。`,
-      confidence: 0.82,
+      suggestedValue: `${profile.contentBoundaries}；进一步压低不能体现判断、经验和方向价值的低价值内容。`,
+      reason: `最近已经积累了 ${reviewSummary.reviews.length} 条复盘记录，说明你的内容边界可以从“泛表达”进一步收紧到“真正有判断价值的表达”。`,
+      confidence: 0.72,
     });
   }
 
@@ -138,7 +138,9 @@ export async function generateProfileUpdateSuggestionsForProfileWithTier(
           currentStage: profile.currentStage,
           growthGoal: profile.growthGoal,
         },
-        reviewSummary,
+        reviewSummary: {
+          reviewsCount: reviewSummary.reviews.length,
+        },
         directions: directions.map((direction) => ({
           title: direction.title,
           priority: direction.priority,

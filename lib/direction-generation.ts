@@ -1,4 +1,3 @@
-import { getSignals } from "@/lib/data";
 import type { CreatorProfileRow } from "@/lib/profile-data";
 import { executeStructuredGeneration } from "@/lib/services/structured-generation-service";
 
@@ -10,8 +9,11 @@ type DraftDirection = {
   timeHorizon: string;
 };
 
-function summarizeClusterSignals(cluster: string, count: number) {
-  return `${cluster} 这条主题线最近已累计 ${count} 条高相关信号，说明它已经具备持续产出条件。`;
+function splitThemes(text: string) {
+  return text
+    .split(/[；;。,\n]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 type DirectionGenerationPayload = {
@@ -45,48 +47,34 @@ function normalizeDirections(payload: DirectionGenerationPayload | null, fallbac
 }
 
 async function buildFallbackDirections(profile: CreatorProfileRow): Promise<DraftDirection[]> {
-  const signals = await getSignals();
-  const relevantSignals = signals.filter((signal) => signal.status === "NEW" || signal.status === "CANDIDATE" || signal.status === "REVIEWED");
+  const themes = splitThemes(profile.coreThemes);
+  const primary = themes[0] || "先建立第一条清晰主线";
+  const secondary = themes[1] || "把经验沉淀成方法";
+  const watch = themes[2] || "持续观察新的表达切口";
 
-  const grouped = relevantSignals.reduce<Record<string, number>>((accumulator, signal) => {
-    const key = signal.primaryObservationCluster;
-    accumulator[key] = (accumulator[key] ?? 0) + 1;
-    return accumulator;
-  }, {});
-
-  const rankedClusters = Object.entries(grouped)
-    .sort((left, right) => right[1] - left[1])
-    .slice(0, 3);
-
-  if (!rankedClusters.length) {
-    return [
-      {
-        title: "先围绕当前定位建立第一条主方向",
-        whyNow: "当前系统里的信号积累还不够密，但你已经完成画像定义，适合先把主线定下来。",
-        fitReason: `你的定位是“${profile.positioning}”，因此第一步应先确立最核心的长期方向。`,
-        priority: "PRIMARY",
-        timeHorizon: "未来 2-4 周",
-      },
-    ];
-  }
-
-  return rankedClusters.map(([cluster, count], index) => ({
-    title:
-      index === 0
-        ? `把“${cluster}”升级成主方向`
-        : index === 1
-          ? `让“${cluster}”成为第二方向`
-          : `把“${cluster}”保留为观察方向`,
-    whyNow: summarizeClusterSignals(cluster, count),
-    fitReason:
-      index === 0
-        ? `这条方向和你的定位“${profile.positioning}”最贴合，也最容易形成清晰的人设与方法论。`
-        : index === 1
-          ? `它能补足你当前内容系统的第二解释维度，让选题不只围绕一个母命题旋转。`
-          : "保留观察方向有助于平台判断你未来的画像变化，并为后续主题台预留增长空间。",
-    priority: index === 0 ? "PRIMARY" : index === 1 ? "SECONDARY" : "WATCH",
-    timeHorizon: "未来 2-4 周",
-  }));
+  return [
+    {
+      title: `围绕“${primary}”建立主方向`,
+      whyNow: "画像已经形成，当前最重要的不是继续扩散，而是先形成一条可以持续讲下去的主线。",
+      fitReason: `这条方向与当前定位“${profile.positioning || "待继续明确"}”最贴近，也最容易形成稳定辨识度。`,
+      priority: "PRIMARY",
+      timeHorizon: "未来 2-4 周",
+    },
+    {
+      title: `把“${secondary}”作为第二方向`,
+      whyNow: "第二方向负责补充主线，避免内容只围绕一个切口反复重复。",
+      fitReason: "它适合承接案例、经验和方法论，让后续主题线更有扩展空间。",
+      priority: "SECONDARY",
+      timeHorizon: "未来 2-4 周",
+    },
+    {
+      title: `保留“${watch}”为观察方向`,
+      whyNow: "观察方向不是今天立刻重投入，而是为后续可能成立的内容增长线预留空间。",
+      fitReason: "它可以让系统持续观察用户真实表达和市场反应，再决定是否升级成稳定主线。",
+      priority: "WATCH",
+      timeHorizon: "未来 2-4 周",
+    },
+  ];
 }
 
 export async function generateDirectionsForProfile(profile: CreatorProfileRow): Promise<DraftDirection[]> {
@@ -98,21 +86,11 @@ export async function generateDirectionsForProfileWithTier(
   requestedTier?: "FAST" | "BALANCED" | "DEEP",
 ): Promise<DraftDirection[]> {
   const fallback = await buildFallbackDirections(profile);
-  const signals = await getSignals();
-  const signalContext = signals
-    .filter((signal) => signal.status === "NEW" || signal.status === "CANDIDATE" || signal.status === "REVIEWED")
-    .slice(0, 8)
-    .map((signal) => ({
-      title: signal.title,
-      primaryObservationCluster: signal.primaryObservationCluster,
-      importanceScore: signal.importanceScore,
-      viewpointScore: signal.viewpointScore,
-    }));
 
   const payload = await executeStructuredGeneration<DirectionGenerationPayload>({
     capabilityKey: "direction_generation",
     systemInstruction:
-      "你是知识型创作者平台里的方向生成助手。请根据创作者画像、近期信号和已有的方向草案，输出 1 到 3 条未来 2-4 周的内容方向。返回严格 JSON，格式为 {\"directions\":[{\"title\":\"...\",\"whyNow\":\"...\",\"fitReason\":\"...\",\"priority\":\"PRIMARY|SECONDARY|WATCH\",\"timeHorizon\":\"未来 2-4 周\"}]}。不要输出多余解释。",
+      "你是 zhaocai-IP-center 的方向生成助手。请根据创作者画像和已有方向草案，输出 1 到 3 条未来 2-4 周的内容方向。返回严格 JSON，格式为 {\"directions\":[{\"title\":\"...\",\"whyNow\":\"...\",\"fitReason\":\"...\",\"priority\":\"PRIMARY|SECONDARY|WATCH\",\"timeHorizon\":\"未来 2-4 周\"}]}。不要输出多余解释。",
     userPrompt: JSON.stringify(
       {
         creatorProfile: {
@@ -122,7 +100,6 @@ export async function generateDirectionsForProfileWithTier(
           growthGoal: profile.growthGoal,
           currentStage: profile.currentStage,
         },
-        recentSignals: signalContext,
         fallbackDirections: fallback,
       },
       null,

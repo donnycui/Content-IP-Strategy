@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ResearchCardCreateButton } from "@/components/research-card-create-button";
+import { ContentProjectCreateButton } from "@/components/content/content-project-create-button";
 import { TopicCandidateStatusActions } from "@/components/topic-candidate-status-actions";
 import { getTopicCandidates } from "@/lib/topic-candidate-data";
 
@@ -96,15 +96,10 @@ export async function CandidatesListSection() {
                 ) : null}
                 <TopicCandidateStatusActions candidateId={candidate.id} currentStatus={candidate.status} />
                 <div className="flex flex-wrap gap-3">
-                  {candidate.anchorSignalId ? (
-                    <>
-                      <ResearchCardCreateButton signalId={candidate.anchorSignalId} />
-                    </>
-                  ) : (
-                    <Link className="pill hover:border-sky-400 hover:text-slate-800" href="/agents/topic-direction">
-                      查看当前工作区
-                    </Link>
-                  )}
+                  <ContentProjectCreateButton candidate={candidate} />
+                  <Link className="pill hover:border-sky-400 hover:text-slate-800" href="/agents/style-content">
+                    进入风格与内容 Agent
+                  </Link>
                 </div>
               </div>
             ))}

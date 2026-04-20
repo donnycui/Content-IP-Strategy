@@ -20,6 +20,11 @@
 
 旧版 `signals / sources / reviews / research / drafts` 不再作为独立主产品页面对外暴露。它们如果仍有底层用途，也必须被隐藏在新工作流之后。
 
+Current implementation target:
+
+- these old product surfaces should be removed from active runtime code, not merely hidden
+- direction/topic/learning logic should no longer depend on old signal-workbench services
+
 ## 导航验收
 
 顶部导航应只保留：

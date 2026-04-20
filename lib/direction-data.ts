@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { getSignals } from "@/lib/data";
 import { getActiveCreatorProfile, mockCreatorProfile, type CreatorProfileRow } from "@/lib/profile-data";
 
 export type DirectionRow = {
@@ -137,26 +136,22 @@ export async function getDirections(creatorProfileId?: string): Promise<Directio
     });
 
     if (!directions.length) {
-      const signals = await getSignals();
-      return deriveFallbackDirections(
-        {
-          id: profile.id,
-          name: profile.name,
-          positioning: profile.positioning ?? "",
-          persona: profile.persona ?? "",
-          audience: profile.audience ?? "",
-          coreThemes: profile.coreThemes ?? "",
-          voiceStyle: profile.voiceStyle ?? "",
-          growthGoal: profile.growthGoal ?? "",
-          contentBoundaries: profile.contentBoundaries ?? "",
-          currentStage: profile.currentStage,
-          isActive: profile.isActive,
-          directionsCount: 0,
-          topicsCount: 0,
-          pendingSuggestionsCount: 0,
-        },
-        signals.map((signal) => signal.title),
-      );
+      return deriveFallbackDirections({
+        id: profile.id,
+        name: profile.name,
+        positioning: profile.positioning ?? "",
+        persona: profile.persona ?? "",
+        audience: profile.audience ?? "",
+        coreThemes: profile.coreThemes ?? "",
+        voiceStyle: profile.voiceStyle ?? "",
+        growthGoal: profile.growthGoal ?? "",
+        contentBoundaries: profile.contentBoundaries ?? "",
+        currentStage: profile.currentStage,
+        isActive: profile.isActive,
+        directionsCount: 0,
+        topicsCount: 0,
+        pendingSuggestionsCount: 0,
+      }, []);
     }
 
     return directions.map((direction) => ({
@@ -174,4 +169,3 @@ export async function getDirections(creatorProfileId?: string): Promise<Directio
     return [];
   }
 }
-

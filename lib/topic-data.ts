@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import { getDirections, mockDirections, type DirectionRow } from "@/lib/direction-data";
-import { getSignals } from "@/lib/data";
 import { getObservationClusterLabel } from "@/lib/observation-clusters";
 import { generateTopicsForProfile } from "@/lib/topic-generation";
 import { getActiveCreatorProfile, mockCreatorProfile, type CreatorProfileRow } from "@/lib/profile-data";
@@ -41,23 +40,7 @@ const mockTopics: TopicRow[] = [
   },
 ];
 
-function buildSampleSignalsForTopic(
-  title: string,
-  sourceSignals: Awaited<ReturnType<typeof getSignals>>,
-  limit = 3,
-) {
-  return sourceSignals
-    .filter((signal) => signal.primaryObservationCluster === title)
-    .sort((left, right) => right.importanceScore - left.importanceScore)
-    .slice(0, limit)
-    .map((signal) => ({
-      id: signal.id,
-      title: signal.title,
-      importanceScore: signal.importanceScore,
-    }));
-}
-
-function shapeFallbackTopics(profile: CreatorProfileRow, directions: DirectionRow[], sourceSignals: Awaited<ReturnType<typeof getSignals>>) {
+function shapeFallbackTopics(profile: CreatorProfileRow, directions: DirectionRow[]) {
   return generateTopicsForProfile(profile, directions).then((drafts) =>
     drafts.map((draft, index) => ({
       id: `topic-fallback-${index + 1}`,
@@ -73,7 +56,7 @@ function shapeFallbackTopics(profile: CreatorProfileRow, directions: DirectionRo
       secondaryObservationCluster: draft.secondaryObservationCluster
         ? getObservationClusterLabel(draft.secondaryObservationCluster)
         : null,
-      sampleSignals: buildSampleSignalsForTopic(draft.title, sourceSignals),
+      sampleSignals: [],
     })),
   );
 }
@@ -103,21 +86,18 @@ export async function getTopics(creatorProfileId?: string): Promise<TopicRow[]> 
       return [];
     }
 
-    const [topics, sourceSignals] = await Promise.all([
-      prisma.topic.findMany({
-        where: {
-          creatorProfileId: profile.id,
-          status: {
-            in: ["ACTIVE", "WATCHING"],
-          },
+    const topics = await prisma.topic.findMany({
+      where: {
+        creatorProfileId: profile.id,
+        status: {
+          in: ["ACTIVE", "WATCHING"],
         },
-        include: {
-          direction: true,
-        },
-        orderBy: [{ heatScore: "desc" }, { updatedAt: "desc" }],
-      }),
-      getSignals(),
-    ]);
+      },
+      include: {
+        direction: true,
+      },
+      orderBy: [{ heatScore: "desc" }, { updatedAt: "desc" }],
+    });
 
     if (!topics.length) {
       const directions = await getDirections(profile.id);
@@ -139,7 +119,6 @@ export async function getTopics(creatorProfileId?: string): Promise<TopicRow[]> 
           pendingSuggestionsCount: 0,
         },
         directions,
-        sourceSignals,
       );
     }
 
@@ -159,7 +138,7 @@ export async function getTopics(creatorProfileId?: string): Promise<TopicRow[]> 
       secondaryObservationCluster: topic.secondaryObservationCluster
         ? getObservationClusterLabel(topic.secondaryObservationCluster)
         : null,
-      sampleSignals: buildSampleSignalsForTopic(topic.title, sourceSignals),
+      sampleSignals: [],
     }));
   } catch {
     return [];
