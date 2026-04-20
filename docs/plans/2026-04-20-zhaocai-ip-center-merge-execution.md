@@ -136,6 +136,8 @@ Practical note from an actual dry-run:
 - the earlier “style + content” group was not sufficiently independent
 - `content-project-detail`, project export, and review linking all depend on review-layer services
 - because of that, Group 2 is now defined as one coherent creator-workflow slice instead of two smaller slices
+- an actual `Creator Workflow` integration branch did pass `tsc` and `gateway-cutover`, but only after carrying forward one tiny TSX-safe wording fix in `components/review/review-metrics-form.tsx`
+- in practice, that means `Creator Workflow` is mergeable as a grouped slice, but it is not literally “cherry-pick only with zero follow-up”
 
 ### 4.4 Create integration branch for Group 3
 

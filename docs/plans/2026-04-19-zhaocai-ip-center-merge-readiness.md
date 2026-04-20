@@ -118,6 +118,9 @@ Current more precise reading:
 - type-check is no longer the blocker
 - lightweight smoke is no longer the blocker
 - the remaining merge caution is mainly the still-unstable full `build`
+- grouped merge execution has now also shown that:
+  - `Center Shell` can be validated independently
+  - `Creator Workflow` can be validated independently, with one very small follow-up fix
 
 ## Recommended Merge Path
 
