@@ -1,5 +1,5 @@
 {
-  "name": "content-ip-research-workbench",
+  "name": "zhaocai-ip-center",
   "version": "2.0.0",
   "private": true,
   "scripts": {
@@ -10,6 +10,10 @@
     "bootstrap:gateway-alias-routing": "node --experimental-strip-types scripts/bootstrap-gateway-alias-routing.ts",
     "bootstrap:gateway-alias-routing:write": "node --experimental-strip-types scripts/bootstrap-gateway-alias-routing.ts --write",
     "test:gateway-cutover": "node --experimental-strip-types tests/model-routing-env.test.mjs",
+    "test:zhaocai-center:content-package": "node --experimental-strip-types tests/content-project-package.test.mjs",
+    "test:zhaocai-center:evolution": "node --experimental-strip-types tests/evolution-decision-logic.test.mjs",
+    "test:zhaocai-center:demo": "node --experimental-strip-types tests/demo-playbook-service.test.mjs",
+    "test:zhaocai-center:smoke": "npm run test:zhaocai-center:evolution && npm run test:zhaocai-center:demo && npm run test:zhaocai-center:content-package",
     "lint": "next lint",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",

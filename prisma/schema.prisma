@@ -193,6 +193,86 @@ enum ModelCapabilityKey {
   draft_generation
 }
 
+enum CenterAgentKey {
+  IP_EXTRACTION
+  CREATOR_PROFILE
+  TOPIC_DIRECTION
+  STYLE_CONTENT
+  DAILY_REVIEW
+  EVOLUTION
+}
+
+enum AgentThreadStatus {
+  IDLE
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum SharedMemoryCategory {
+  PROFILE_SNAPSHOT
+  PROFILE_EVOLUTION_NOTE
+  STYLE_SNAPSHOT
+  STYLE_EVOLUTION_NOTE
+  KEY_CONCLUSION
+  REVIEW_TREND
+  LEARNING_INSIGHT
+}
+
+enum StyleSkillStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum ContentProjectStatus {
+  DRAFT
+  ACTIVE
+  READY
+  ARCHIVED
+}
+
+enum ContentAssetType {
+  XHS_POST
+  SHORT_VIDEO_SCRIPT
+  WECHAT_ARTICLE
+  LIVESTREAM_SCRIPT
+}
+
+enum ContentAssetStatus {
+  DRAFT
+  READY
+  APPROVED
+  ARCHIVED
+}
+
+enum PublishMode {
+  EXPORT
+  DIRECT
+}
+
+enum PublishStatus {
+  DRAFT
+  READY
+  EXPORTED
+  QUEUED
+  PUBLISHED
+  FAILED
+}
+
+enum EvolutionTargetType {
+  PROFILE
+  STYLE
+  DIRECTION
+  PLATFORM_STRATEGY
+}
+
+enum EvolutionDecisionStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
 model CreatorProfile {
   id                String                    @id @default(cuid())
   name              String
@@ -212,6 +292,9 @@ model CreatorProfile {
   topics            Topic[]
   profileUpdates    ProfileUpdateSuggestion[]
   modelUsageLogs    ModelUsageLog[]
+  centerWorkspaces  CenterWorkspace[]
+  styleSkills       StyleSkill[]
+  contentProjects   ContentProject[]
 
   @@index([isActive, updatedAt])
 }
@@ -271,6 +354,7 @@ model TopicCandidate {
 
   topic                Topic                      @relation(fields: [topicId], references: [id], onDelete: Cascade)
   anchorSignal         Signal?                    @relation(fields: [anchorSignalId], references: [id], onDelete: SetNull)
+  contentProjects      ContentProject[]
 
   @@index([topicId, status, updatedAt])
   @@index([anchorSignalId])
@@ -308,6 +392,260 @@ model ProfileExtractionSession {
   updatedAt       DateTime                       @updatedAt
 
   @@index([status, updatedAt])
+}
+
+model CenterWorkspace {
+  id                     String          @id @default(cuid())
+  workspaceKey           String          @unique
+  creatorProfileId       String?         @unique
+  currentAgentKey        CenterAgentKey  @default(IP_EXTRACTION)
+  recommendedActionLabel String?
+  recommendedActionHref  String?
+  lastStageReason        String?
+  lastJudgedAt           DateTime?
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+
+  creatorProfile         CreatorProfile? @relation(fields: [creatorProfileId], references: [id], onDelete: SetNull)
+  agentThreads           AgentThread[]
+  sharedMemoryRecords    SharedMemoryRecord[]
+  styleSkill             StyleSkill?
+  contentProjects        ContentProject[]
+  platformStrategyMemos  PlatformStrategyMemo[]
+  reviewSnapshots        ReviewSnapshot[]
+  evolutionDecisions     EvolutionDecision[]
+
+  @@index([currentAgentKey, updatedAt])
+}
+
+model PlatformStrategyMemo {
+  id          String         @id @default(cuid())
+  workspaceId String
+  channelKey  String
+  headline    String
+  summary     String
+  detail      String?
+  sourceRef   String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  workspace   CenterWorkspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, channelKey])
+  @@index([workspaceId, updatedAt])
+}
+
+model AgentThread {
+  id                    String            @id @default(cuid())
+  workspaceId           String
+  agentKey              CenterAgentKey
+  status                AgentThreadStatus @default(IDLE)
+  transcriptJson        Json              @default("[]")
+  summaryJson           Json?
+  latestSummary         String?
+  nextRecommendedAction String?
+  lastUserMessage       String?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  workspace             CenterWorkspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, agentKey])
+  @@index([workspaceId, updatedAt])
+  @@index([status, updatedAt])
+}
+
+model SharedMemoryRecord {
+  id           String               @id @default(cuid())
+  workspaceId  String
+  agentKey     CenterAgentKey?
+  category     SharedMemoryCategory
+  title        String
+  summary      String
+  detail       String?
+  sourceRef    String?
+  payloadJson  Json?
+  isActive     Boolean              @default(true)
+  effectiveAt  DateTime             @default(now())
+  supersededAt DateTime?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  workspace    CenterWorkspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, category, isActive, effectiveAt])
+  @@index([workspaceId, createdAt])
+  @@index([agentKey, createdAt])
+}
+
+model StyleSkill {
+  id             String           @id @default(cuid())
+  workspaceId    String           @unique
+  creatorProfileId String?
+  status         StyleSkillStatus @default(DRAFT)
+  title          String           @default("个人风格 Skill")
+  summary        String
+  rulesMarkdown  String
+  version        Int              @default(1)
+  revisionCount  Int              @default(0)
+  sampleCount    Int              @default(0)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  workspace      CenterWorkspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  creatorProfile CreatorProfile?  @relation(fields: [creatorProfileId], references: [id], onDelete: SetNull)
+  samples        StyleSample[]
+  revisions      StyleRevision[]
+  contentProjects ContentProject[]
+
+  @@index([creatorProfileId, updatedAt])
+  @@index([status, updatedAt])
+}
+
+model StyleSample {
+  id          String      @id @default(cuid())
+  styleSkillId String
+  title       String
+  sourceLabel String?
+  sampleText  String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  styleSkill  StyleSkill  @relation(fields: [styleSkillId], references: [id], onDelete: Cascade)
+  revisions   StyleRevision[]
+
+  @@index([styleSkillId, createdAt])
+}
+
+model StyleRevision {
+  id          String      @id @default(cuid())
+  styleSkillId String
+  sampleId    String?
+  draftText   String
+  revisedText String
+  ruleDelta   String?
+  createdAt   DateTime    @default(now())
+
+  styleSkill  StyleSkill  @relation(fields: [styleSkillId], references: [id], onDelete: Cascade)
+  sample      StyleSample? @relation(fields: [sampleId], references: [id], onDelete: SetNull)
+
+  @@index([styleSkillId, createdAt])
+  @@index([sampleId])
+}
+
+model ContentProject {
+  id               String               @id @default(cuid())
+  workspaceId      String
+  creatorProfileId String?
+  topicCandidateId String?
+  styleSkillId     String?
+  status           ContentProjectStatus @default(DRAFT)
+  title            String
+  summary          String?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  workspace        CenterWorkspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  creatorProfile   CreatorProfile?      @relation(fields: [creatorProfileId], references: [id], onDelete: SetNull)
+  topicCandidate   TopicCandidate?      @relation(fields: [topicCandidateId], references: [id], onDelete: SetNull)
+  styleSkill       StyleSkill?          @relation(fields: [styleSkillId], references: [id], onDelete: SetNull)
+  assets           ContentAsset[]
+  publishRecords   PublishRecord[]
+  reviewSnapshots  ReviewSnapshot[]
+
+  @@index([workspaceId, status, updatedAt])
+  @@index([creatorProfileId, updatedAt])
+  @@index([topicCandidateId])
+}
+
+model ContentAsset {
+  id             String             @id @default(cuid())
+  projectId      String
+  assetType      ContentAssetType
+  title          String?
+  content        String
+  targetPlatform String
+  status         ContentAssetStatus @default(DRAFT)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  project        ContentProject     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  publishRecords PublishRecord[]
+  reviewSnapshots ReviewSnapshot[]
+
+  @@unique([projectId, assetType])
+  @@index([targetPlatform, status, updatedAt])
+}
+
+model PublishRecord {
+  id             String        @id @default(cuid())
+  projectId      String
+  assetId        String?
+  channelKey     String
+  mode           PublishMode   @default(EXPORT)
+  status         PublishStatus @default(DRAFT)
+  packageJson    Json?
+  publishedAt    DateTime?
+  failureReason  String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  project        ContentProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  asset          ContentAsset?  @relation(fields: [assetId], references: [id], onDelete: SetNull)
+
+  @@index([projectId, createdAt])
+  @@index([channelKey, status, createdAt])
+  @@index([assetId])
+}
+
+model ReviewSnapshot {
+  id             String        @id @default(cuid())
+  workspaceId     String
+  projectId       String
+  assetId         String?
+  channelKey      String
+  views           Int?
+  likes           Int?
+  comments        Int?
+  shares          Int?
+  saves           Int?
+  inquiries       Int?
+  leads           Int?
+  conversions     Int?
+  reviewNote      String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  workspace       CenterWorkspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project         ContentProject  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  asset           ContentAsset?   @relation(fields: [assetId], references: [id], onDelete: SetNull)
+  evolutionDecisions EvolutionDecision[]
+
+  @@index([workspaceId, createdAt])
+  @@index([projectId, createdAt])
+  @@index([channelKey, createdAt])
+  @@index([assetId])
+}
+
+model EvolutionDecision {
+  id               String                  @id @default(cuid())
+  workspaceId      String
+  reviewSnapshotId String?
+  targetType       EvolutionTargetType
+  status           EvolutionDecisionStatus @default(PENDING)
+  headline         String
+  rationale        String
+  suggestedAction  String
+  actionPayloadJson Json?
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+
+  workspace        CenterWorkspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  reviewSnapshot   ReviewSnapshot?         @relation(fields: [reviewSnapshotId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, status, updatedAt])
+  @@index([targetType, createdAt])
+  @@index([reviewSnapshotId])
 }
 
 model GatewayConnection {

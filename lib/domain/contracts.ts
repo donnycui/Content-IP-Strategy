@@ -5,6 +5,8 @@ import type { ProfileUpdateSuggestionRow } from "@/lib/profile-update-suggestion
 import type { TopicCandidateRow } from "@/lib/topic-candidate-data";
 import type { TopicRow } from "@/lib/topic-data";
 
+export type { TopicCandidateRow };
+
 export type ApiSuccess<T> = {
   ok: true;
   data: T;
@@ -153,6 +155,419 @@ export type ProfileUpdateStatusRequest = {
 export type ProfileUpdateStatusResponse = ApiResponse<{
   updated: true;
 }>;
+
+export type CenterAgentKeyValue =
+  | "IP_EXTRACTION"
+  | "CREATOR_PROFILE"
+  | "TOPIC_DIRECTION"
+  | "STYLE_CONTENT"
+  | "DAILY_REVIEW"
+  | "EVOLUTION";
+
+export type CenterAgentStatusValue = "CURRENT" | "LOCKED" | "REVISIT";
+export type AgentThreadStatusValue = "IDLE" | "ACTIVE" | "PAUSED" | "ARCHIVED";
+
+export type CenterJudgmentPayload = {
+  stageLabel: string;
+  title: string;
+  description: string;
+  reason: string;
+  primaryAction: {
+    label: string;
+    href: string;
+  };
+  secondaryAction: {
+    label: string;
+    href: string;
+  };
+};
+
+export type CenterMetricPayload = {
+  label: string;
+  value: string;
+  detail: string;
+};
+
+export type CenterAgentSummaryPayload = {
+  key: CenterAgentKeyValue;
+  label: string;
+  status: CenterAgentStatusValue;
+  summary: string;
+  detail: string;
+  href: string;
+  actionLabel: string;
+  note?: string;
+};
+
+export type CenterCoordinatorPayload = {
+  title: string;
+  summary: string;
+  bullets: string[];
+};
+
+export type CenterMemorySnapshotPayload = {
+  label: string;
+  value: string;
+  detail: string;
+};
+
+export type SharedMemoryCategoryValue =
+  | "PROFILE_SNAPSHOT"
+  | "PROFILE_EVOLUTION_NOTE"
+  | "STYLE_SNAPSHOT"
+  | "STYLE_EVOLUTION_NOTE"
+  | "KEY_CONCLUSION"
+  | "REVIEW_TREND"
+  | "LEARNING_INSIGHT";
+
+export type SharedMemoryRecordPayload = {
+  id: string;
+  workspaceId: string;
+  agentKey: CenterAgentKeyValue | null;
+  category: SharedMemoryCategoryValue;
+  title: string;
+  summary: string;
+  detail: string | null;
+  sourceRef: string | null;
+  isActive: boolean;
+  effectiveAt: string;
+  supersededAt: string | null;
+};
+
+export type StyleSkillStatusValue = "DRAFT" | "ACTIVE" | "ARCHIVED";
+
+export type StyleSkillPayload = {
+  id: string;
+  workspaceId: string;
+  creatorProfileId: string | null;
+  status: StyleSkillStatusValue;
+  title: string;
+  summary: string;
+  rulesMarkdown: string;
+  version: number;
+  revisionCount: number;
+  sampleCount: number;
+  updatedAt: string;
+};
+
+export type StyleSamplePayload = {
+  id: string;
+  styleSkillId: string;
+  title: string;
+  sourceLabel: string | null;
+  sampleText: string;
+  updatedAt: string;
+};
+
+export type StyleRevisionPayload = {
+  id: string;
+  styleSkillId: string;
+  sampleId: string | null;
+  draftText: string;
+  revisedText: string;
+  ruleDelta: string | null;
+  createdAt: string;
+};
+
+export type StyleSkillDashboardPayload = {
+  skill: StyleSkillPayload;
+  samples: StyleSamplePayload[];
+  revisions: StyleRevisionPayload[];
+};
+
+export type ContentProjectStatusValue = "DRAFT" | "ACTIVE" | "READY" | "ARCHIVED";
+export type ContentAssetTypeValue = "XHS_POST" | "SHORT_VIDEO_SCRIPT" | "WECHAT_ARTICLE" | "LIVESTREAM_SCRIPT";
+export type ContentAssetStatusValue = "DRAFT" | "READY" | "APPROVED" | "ARCHIVED";
+export type PublishModeValue = "EXPORT" | "DIRECT";
+export type PublishStatusValue = "DRAFT" | "READY" | "EXPORTED" | "QUEUED" | "PUBLISHED" | "FAILED";
+
+export type ContentProjectPayload = {
+  id: string;
+  workspaceId: string;
+  creatorProfileId: string | null;
+  topicCandidateId: string | null;
+  styleSkillId: string | null;
+  status: ContentProjectStatusValue;
+  title: string;
+  summary: string | null;
+  updatedAt: string;
+};
+
+export type ContentProjectUpdateRequest = {
+  title?: string;
+  summary?: string | null;
+  status?: ContentProjectStatusValue;
+};
+
+export type ContentProjectUpdateResponse = ApiResponse<{
+  project: ContentProjectPayload;
+}>;
+
+export type ContentAssetPayload = {
+  id: string;
+  projectId: string;
+  assetType: ContentAssetTypeValue;
+  title: string | null;
+  content: string;
+  targetPlatform: string;
+  status: ContentAssetStatusValue;
+  updatedAt: string;
+};
+
+export type PublishRecordPayload = {
+  id: string;
+  projectId: string;
+  assetId: string | null;
+  channelKey: string;
+  mode: PublishModeValue;
+  status: PublishStatusValue;
+  failureReason: string | null;
+  packageJson: Record<string, string | number | boolean | null> | null;
+  updatedAt: string;
+};
+
+export type ContentAssetUpdateRequest = {
+  title?: string | null;
+  content?: string;
+  status?: ContentAssetStatusValue;
+};
+
+export type ContentAssetUpdateResponse = ApiResponse<{
+  asset: ContentAssetPayload;
+}>;
+
+export type PublishRecordUpdateRequest = {
+  status?: PublishStatusValue;
+  failureReason?: string | null;
+};
+
+export type PublishRecordUpdateResponse = ApiResponse<{
+  updated: true;
+}>;
+
+export type StyleContentDashboardPayload = {
+  recommendedCandidates: TopicCandidateRow[];
+  projects: Array<{
+    project: ContentProjectPayload;
+    assets: ContentAssetPayload[];
+    publishRecords: PublishRecordPayload[];
+  }>;
+};
+
+export type StyleContentDashboardResponse = ApiResponse<{
+  dashboard: StyleContentDashboardPayload;
+}>;
+
+export type ContentProjectCreateRequest = {
+  topicCandidateId?: string;
+};
+
+export type ContentProjectCreateResponse = ApiResponse<{
+  project: ContentProjectPayload;
+  assets: ContentAssetPayload[];
+}>;
+
+export type ReviewSnapshotPayload = {
+  id: string;
+  workspaceId: string;
+  projectId: string;
+  assetId: string | null;
+  channelKey: string;
+  views: number | null;
+  likes: number | null;
+  comments: number | null;
+  shares: number | null;
+  saves: number | null;
+  inquiries: number | null;
+  leads: number | null;
+  conversions: number | null;
+  reviewNote: string | null;
+  updatedAt: string;
+};
+
+export type EvolutionTargetTypeValue = "PROFILE" | "STYLE" | "DIRECTION" | "PLATFORM_STRATEGY";
+export type EvolutionDecisionStatusValue = "PENDING" | "ACCEPTED" | "REJECTED";
+
+export type EvolutionDecisionPayload = {
+  id: string;
+  workspaceId: string;
+  reviewSnapshotId: string | null;
+  targetType: EvolutionTargetTypeValue;
+  status: EvolutionDecisionStatusValue;
+  headline: string;
+  rationale: string;
+  suggestedAction: string;
+  actionPayload: Record<string, string | number | boolean | null> | null;
+  updatedAt: string;
+};
+
+export type ReviewDashboardPayload = {
+  projects: Array<{
+    project: ContentProjectPayload;
+    assets: ContentAssetPayload[];
+    publishRecords: PublishRecordPayload[];
+  }>;
+  reviews: ReviewSnapshotPayload[];
+};
+
+export type ReviewDashboardResponse = ApiResponse<{
+  dashboard: ReviewDashboardPayload;
+}>;
+
+export type ReviewSnapshotCreateRequest = {
+  projectId?: string;
+  assetId?: string | null;
+  channelKey?: string;
+  views?: number | null;
+  likes?: number | null;
+  comments?: number | null;
+  shares?: number | null;
+  saves?: number | null;
+  inquiries?: number | null;
+  leads?: number | null;
+  conversions?: number | null;
+  reviewNote?: string;
+};
+
+export type ReviewSnapshotCreateResponse = ApiResponse<{
+  review: ReviewSnapshotPayload;
+}>;
+
+export type EvolutionDashboardPayload = {
+  decisions: EvolutionDecisionPayload[];
+  latestReviews: ReviewSnapshotPayload[];
+};
+
+export type EvolutionDashboardResponse = ApiResponse<{
+  dashboard: EvolutionDashboardPayload;
+}>;
+
+export type EvolutionDecisionGenerateResponse = ApiResponse<{
+  createdCount: number;
+}>;
+
+export type EvolutionDecisionStatusRequest = {
+  status?: EvolutionDecisionStatusValue;
+};
+
+export type EvolutionDecisionStatusResponse = ApiResponse<{
+  updated: true;
+}>;
+
+export type LearningInsightPayload = {
+  kind: "STYLE" | "MARKET_HOTSPOT" | "FUTURE_TRACK";
+  title: string;
+  summary: string;
+  detail: string;
+};
+
+export type LearningInsightsDashboardPayload = {
+  insights: LearningInsightPayload[];
+  activeMemorySummary: string | null;
+  activeMemoryDetail: string | null;
+};
+
+export type LearningInsightsDashboardResponse = ApiResponse<{
+  dashboard: LearningInsightsDashboardPayload;
+}>;
+
+export type LearningInsightsGenerateResponse = ApiResponse<{
+  createdCount: number;
+}>;
+
+export type PlatformStrategyMemoPayload = {
+  id: string;
+  workspaceId: string;
+  channelKey: string;
+  headline: string;
+  summary: string;
+  detail: string | null;
+  sourceRef: string | null;
+  updatedAt: string;
+};
+
+export type StyleSkillDashboardResponse = ApiResponse<{
+  dashboard: StyleSkillDashboardPayload;
+}>;
+
+export type StyleSampleCreateRequest = {
+  title?: string;
+  sourceLabel?: string;
+  sampleText?: string;
+};
+
+export type StyleSampleCreateResponse = ApiResponse<{
+  sample: StyleSamplePayload;
+  skill: StyleSkillPayload;
+}>;
+
+export type StyleRevisionCreateRequest = {
+  sampleId?: string | null;
+  draftText?: string;
+  revisedText?: string;
+  ruleDelta?: string;
+};
+
+export type StyleRevisionCreateResponse = ApiResponse<{
+  revision: StyleRevisionPayload;
+  skill: StyleSkillPayload;
+}>;
+
+export type CenterQuickActionPayload = {
+  label: string;
+  description: string;
+  href: string;
+};
+
+export type CenterHomePayload = {
+  judgment: CenterJudgmentPayload;
+  metrics: CenterMetricPayload[];
+  agents: CenterAgentSummaryPayload[];
+  coordinator: CenterCoordinatorPayload;
+  memory: CenterMemorySnapshotPayload[];
+  quickActions: CenterQuickActionPayload[];
+};
+
+export type CenterHomeResponse = ApiResponse<{
+  center: CenterHomePayload;
+}>;
+
+export type CenterWorkspaceRecord = {
+  id: string;
+  workspaceKey: string;
+  creatorProfileId: string | null;
+  currentAgentKey: CenterAgentKeyValue;
+  recommendedActionLabel: string | null;
+  recommendedActionHref: string | null;
+  lastStageReason: string | null;
+  lastJudgedAt: string | null;
+};
+
+export type CenterAgentThreadMessage = {
+  role: "assistant" | "user" | "system";
+  content: string;
+  createdAt: string;
+  meta?: Record<string, string | number | boolean | null>;
+};
+
+export type AgentThreadSummaryRecord = {
+  headline?: string;
+  blockers?: string[];
+  assets?: string[];
+};
+
+export type AgentThreadRecord = {
+  id: string;
+  workspaceId: string;
+  agentKey: CenterAgentKeyValue;
+  status: AgentThreadStatusValue;
+  transcript: CenterAgentThreadMessage[];
+  summary: AgentThreadSummaryRecord | null;
+  latestSummary: string | null;
+  nextRecommendedAction: string | null;
+  lastUserMessage: string | null;
+  updatedAt: string;
+};
 
 export type GatewayAuthTypeValue = "NONE" | "BEARER" | "API_KEY" | "PASSCODE";
 export type ModelTierValue = "FAST" | "BALANCED" | "DEEP";

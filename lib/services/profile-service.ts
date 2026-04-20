@@ -195,3 +195,35 @@ export async function updateCreatorProfile(input: UpdateCreatorProfileInput) {
 
   return { ok: true };
 }
+
+export async function appendProfileEvolutionNote(note: string) {
+  assertDatabaseConfigured();
+
+  const profile = await requireCreatorProfile();
+  const normalizedNote = note.trim();
+
+  if (!normalizedNote) {
+    throw new ServiceError("画像更新备注不能为空。", 400, "PROFILE_EVOLUTION_NOTE_REQUIRED");
+  }
+
+  const currentBoundaries = profile.contentBoundaries?.trim() || "";
+
+  if (currentBoundaries.includes(normalizedNote)) {
+    return { ok: true };
+  }
+
+  const nextBoundaries = currentBoundaries
+    ? `${currentBoundaries}\n- 复盘更新：${normalizedNote}`
+    : `- 复盘更新：${normalizedNote}`;
+
+  await prisma.creatorProfile.update({
+    where: {
+      id: profile.id,
+    },
+    data: {
+      contentBoundaries: nextBoundaries,
+    },
+  });
+
+  return { ok: true };
+}
