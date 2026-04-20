@@ -294,6 +294,7 @@ model CreatorProfile {
   modelUsageLogs    ModelUsageLog[]
   centerWorkspaces  CenterWorkspace[]
   styleSkills       StyleSkill[]
+  contentProjects   ContentProject[]
 
   @@index([isActive, updatedAt])
 }
@@ -353,6 +354,7 @@ model TopicCandidate {
 
   topic                Topic                      @relation(fields: [topicId], references: [id], onDelete: Cascade)
   anchorSignal         Signal?                    @relation(fields: [anchorSignalId], references: [id], onDelete: SetNull)
+  contentProjects      ContentProject[]
 
   @@index([topicId, status, updatedAt])
   @@index([anchorSignalId])
@@ -410,6 +412,8 @@ model CenterWorkspace {
   styleSkill             StyleSkill?
   contentProjects        ContentProject[]
   platformStrategyMemos  PlatformStrategyMemo[]
+  reviewSnapshots        ReviewSnapshot[]
+  evolutionDecisions     EvolutionDecision[]
 
   @@index([currentAgentKey, updatedAt])
 }
@@ -492,6 +496,7 @@ model StyleSkill {
   creatorProfile CreatorProfile?  @relation(fields: [creatorProfileId], references: [id], onDelete: SetNull)
   samples        StyleSample[]
   revisions      StyleRevision[]
+  contentProjects ContentProject[]
 
   @@index([creatorProfileId, updatedAt])
   @@index([status, updatedAt])
@@ -566,6 +571,7 @@ model ContentAsset {
 
   project        ContentProject     @relation(fields: [projectId], references: [id], onDelete: Cascade)
   publishRecords PublishRecord[]
+  reviewSnapshots ReviewSnapshot[]
 
   @@unique([projectId, assetType])
   @@index([targetPlatform, status, updatedAt])
