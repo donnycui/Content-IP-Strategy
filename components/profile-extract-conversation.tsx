@@ -16,7 +16,7 @@ import { ProfileExtractDraftPreview } from "@/components/profile-extract-draft-p
 export function ProfileExtractConversation() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [requestedTier, setRequestedTier] = useState<ModelTierValue>("DEEP");
+  const [requestedTier, setRequestedTier] = useState<ModelTierValue>("BALANCED");
   const [brainstormingMode, setBrainstormingMode] = useState<BrainstormingModeValue>("AUTO");
   const [session, setSession] = useState<ProfileExtractionConversationSession | null>(null);
   const [answer, setAnswer] = useState("");
