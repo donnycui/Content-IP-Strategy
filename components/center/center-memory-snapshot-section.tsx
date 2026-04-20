@@ -4,15 +4,13 @@ export function CenterMemorySnapshotSection({ items }: { items: CenterMemorySnap
   return (
     <section className="panel px-6 py-6">
       <div className="space-y-2">
-        <p className="section-kicker">Long-Term Assets</p>
-        <h2 className="section-title">系统现在记住了什么，正在学什么，还缺什么。</h2>
-        <p className="section-desc">
-          这不是所有历史记录的堆放区，而是跨阶段共享的长期资产快照。后续的共享记忆层会把画像、风格、关键结论、主动学习和长期曲线正式固化下来。
-        </p>
+        <p className="section-kicker">System Snapshot</p>
+        <h2 className="section-title">系统当前记住的重点。</h2>
+        <p className="section-desc">首页只展示最关键的长期信息，不在这里展开全部历史记录。</p>
       </div>
 
-      <div className="mt-6 grid gap-4 xl:grid-cols-5">
-        {items.map((item) => (
+      <div className="mt-6 grid gap-4 xl:grid-cols-2">
+        {items.slice(0, 4).map((item) => (
           <div className="metric-card" key={item.label}>
             <p className="metric-label">{item.label}</p>
             <p className="mt-3 text-base font-semibold leading-7 text-slate-800">{item.value}</p>

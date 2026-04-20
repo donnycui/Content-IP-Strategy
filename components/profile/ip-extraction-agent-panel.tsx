@@ -6,10 +6,8 @@ export function IpExtractionAgentPanel() {
       <section className="panel px-6 py-6">
         <div className="space-y-2">
           <p className="section-kicker">Agent Workspace</p>
-          <h2 className="section-title">在这里直接完成真实对话式 IP 提炼</h2>
-          <p className="section-desc">
-            当前阶段只保留对话式提炼主路径，不再暴露旧的快捷提炼壳层，避免模板化流程继续影响新版判断。
-          </p>
+          <h2 className="section-title">先把你是谁、你想做什么讲清楚。</h2>
+          <p className="section-desc">这一页只保留对话式提炼。先不要追求一次填完整，而是通过多轮对话把定位、目标和边界收敛出来。</p>
         </div>
       </section>
       <ProfileExtractWorkbench />

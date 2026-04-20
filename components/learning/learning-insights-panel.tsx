@@ -3,17 +3,16 @@ import { getLearningInsightsDashboard } from "@/lib/services/proactive-learning-
 
 export async function LearningInsightsPanel() {
   const dashboard = await getLearningInsightsDashboard();
+  const visibleInsights = dashboard.insights.slice(0, 3);
 
   return (
     <section className="panel px-6 py-6">
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-2">
-            <p className="section-kicker">Proactive Learning</p>
-            <h2 className="section-title">系统正在自己学什么，接下来又想追什么。</h2>
-            <p className="section-desc">
-              这层会把热点、风格观察和未来跟踪方向沉淀成长期洞察。第一版先用现有信号、主题、复盘和 style skill 推出基础结论，后续再接更完整的外部研究能力。
-            </p>
+            <p className="section-kicker">System Observations</p>
+            <h2 className="section-title">系统最近关注的热点和趋势。</h2>
+            <p className="section-desc">首页只给结论，不给一堆搜索结果。详细研究放到“方向与选题”和“升级进化”里。</p>
           </div>
           <LearningGenerateButton />
         </div>
@@ -27,7 +26,7 @@ export async function LearningInsightsPanel() {
         ) : null}
 
         <div className="grid gap-4 xl:grid-cols-3">
-          {dashboard.insights.map((insight) => (
+          {visibleInsights.map((insight) => (
             <div className="subpanel px-4 py-4" key={insight.title}>
               <div className="flex flex-wrap gap-2">
                 <span className="pill">{insight.kind}</span>

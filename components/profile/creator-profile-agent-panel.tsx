@@ -16,10 +16,8 @@ export async function CreatorProfileAgentPanel() {
       <section className="panel px-6 py-5">
         <div className="space-y-2">
           <p className="section-kicker">Agent Workspace</p>
-          <h2 className="section-title mt-2">直接维护长期有效画像</h2>
-          <p className="section-desc mt-3">
-            这里承接提炼结果，并作为方向、风格、内容和进化回写时的共享主档，不再单独暴露旧画像页外壳。
-          </p>
+          <h2 className="section-title mt-2">把提炼结果固化成长期画像。</h2>
+          <p className="section-desc mt-3">后面的方向、风格、内容和进化都会参考这里，所以这里只做一件事：把画像改准确。</p>
         </div>
         <div className="mt-6 grid gap-4 md:grid-cols-4">
           <div className="metric-card">

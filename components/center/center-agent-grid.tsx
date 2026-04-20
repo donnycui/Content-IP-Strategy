@@ -31,14 +31,12 @@ export function CenterAgentGrid({ agents }: { agents: CenterAgentSummaryPayload[
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-2">
           <p className="section-kicker">Stage Agents</p>
-          <h2 className="section-title">把整个创作者周期展开给你看，而不是把下一步藏起来。</h2>
-          <p className="section-desc">
-            这里展示全部阶段 Agent。当前阶段会被主动推到你面前，待解锁阶段保留可见性，已经跑过的阶段则会提示你是否值得回看。
-          </p>
+          <h2 className="section-title">主流程一共 6 步。</h2>
+          <p className="section-desc">你只需要知道现在在哪一步、下一步去哪一步，不需要理解后台所有结构。</p>
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 xl:grid-cols-3">
+      <div className="mt-6 grid gap-4 xl:grid-cols-2">
         {agents.map((agent) => (
           <section className="subpanel flex h-full flex-col px-5 py-5" key={agent.key}>
             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -49,7 +47,6 @@ export function CenterAgentGrid({ agents }: { agents: CenterAgentSummaryPayload[
             </div>
             <p className="mt-4 text-sm leading-7 text-slate-700">{agent.summary}</p>
             <p className="muted mt-3 text-sm leading-7">{agent.detail}</p>
-            {agent.note ? <p className="muted mt-3 text-xs leading-6">{agent.note}</p> : null}
             <div className="mt-5">
               <Link
                 className="inline-flex rounded-2xl border border-slate-300/70 bg-white/70 px-4 py-2.5 text-sm text-slate-700 transition hover:border-slate-400 hover:bg-white"

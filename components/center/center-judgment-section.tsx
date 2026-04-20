@@ -10,17 +10,17 @@ export function CenterJudgmentSection({
 }) {
   return (
     <section className="panel px-6 py-6">
-      <div className="grid gap-6 xl:grid-cols-[1.3fr,0.7fr]">
+      <div className="grid gap-6 xl:grid-cols-[1.4fr,0.6fr]">
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
             <span className="pill pill-active">当前阶段 · {data.stageLabel}</span>
-            <span className="pill">中枢判断</span>
+            <span className="pill">今天先做这一件事</span>
           </div>
           <div className="space-y-3">
-            <p className="section-kicker">Creator Operating Center</p>
+            <p className="section-kicker">Creator Workflow</p>
             <h2 className="section-title max-w-4xl">{data.title}</h2>
             <p className="section-desc">{data.description}</p>
-            <p className="muted max-w-3xl text-sm leading-7">为什么先做这一步：{data.reason}</p>
+            <p className="muted max-w-3xl text-sm leading-7">原因：{data.reason}</p>
           </div>
           <div className="flex flex-wrap gap-3">
             <Link
@@ -38,7 +38,7 @@ export function CenterJudgmentSection({
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
+        <div className="grid gap-4">
           {metrics.map((metric) => (
             <div className="metric-card" key={metric.label}>
               <p className="metric-label">{metric.label}</p>

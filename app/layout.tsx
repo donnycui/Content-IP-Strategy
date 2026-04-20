@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 const navItems = [
-  { href: "/", label: "中枢首页", matchers: ["/", "/agents"] },
+  { href: "/", label: "首页", matchers: ["/", "/agents"] },
   { href: "/agents/ip-extraction", label: "IP 提炼" },
   { href: "/agents/creator-profile", label: "创作者画像" },
   {
@@ -21,10 +21,9 @@ const navItems = [
   { href: "/agents/evolution", label: "升级进化" },
   {
     href: "/admin/gateways",
-    label: "模型路由",
-    matchers: ["/admin/gateways", "/admin/models", "/admin/routing"],
+    label: "系统设置",
+    matchers: ["/admin/gateways", "/admin/models", "/admin/routing", "/admin/plans"],
   },
-  { href: "/admin/plans", label: "套餐权限" },
 ];
 
 export default function RootLayout({
@@ -41,9 +40,9 @@ export default function RootLayout({
               <div className="space-y-2">
                 <p className="section-kicker">zhaocai-IP-center</p>
                 <div>
-                  <h1 className="text-[28px] font-semibold leading-tight">先判断你在哪，再把你推到下一步。</h1>
+                  <h1 className="text-[30px] font-semibold leading-tight">帮创作者从定位走到持续输出。</h1>
                   <p className="muted mt-2 max-w-2xl text-sm leading-7">
-                    一个以创作者本人为核心的多 Agent 中枢，把 IP 提炼、画像、选题、风格、内容、复盘和进化串成同一条持续运行的路径。
+                    只保留创作者真正会走的主流程。模型、网关和套餐配置统一收进设置区，不再和主流程混在一起。
                   </p>
                 </div>
               </div>
