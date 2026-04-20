@@ -21,6 +21,12 @@ It already contains a substantial product-shell upgrade from the current `conten
 
 This is still an in-progress branch, but it has already crossed from “design branch” into “working product branch”.
 
+Current shape note:
+
+- the stage-agent shell is the primary runtime surface
+- legacy workbench shells have been silenced or redirected
+- IP extraction is being refactored away from template-like field collection toward `Brainstorming OFF / AUTO / ON`
+
 ## 2. Current Product Shape
 
 The branch currently supports these visible product layers:

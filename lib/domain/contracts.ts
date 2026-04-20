@@ -29,12 +29,19 @@ export type ProfileExtractResponse = ApiResponse<{
 }>;
 
 export type ProfileExtractionConversationMessage = {
-  role: "assistant" | "user";
+  role: "assistant" | "user" | "system";
   content: string;
   createdAt: string;
   questionType?: string | null;
   skipped?: boolean;
+  meta?: {
+    brainstormingMode?: BrainstormingModeValue;
+    responseMode?: "BRAINSTORMING" | "EXTRACTION";
+    usedModel?: boolean;
+  };
 };
+
+export type BrainstormingModeValue = "OFF" | "AUTO" | "ON";
 
 export type ProfileExtractionConversationDraft = {
   name: string;
@@ -52,6 +59,8 @@ export type ProfileExtractionConversationSession = {
   id: string;
   status: "ACTIVE" | "COMPLETED" | "ABANDONED";
   sourceMode: "CONVERSATIONAL" | "QUICK";
+  brainstormingMode: BrainstormingModeValue;
+  responseMode: "BRAINSTORMING" | "EXTRACTION";
   draftProfile: ProfileExtractionConversationDraft;
   transcript: ProfileExtractionConversationMessage[];
   currentQuestion: string | null;
@@ -62,12 +71,14 @@ export type ProfileExtractionConversationSession = {
 
 export type ProfileExtractConversationStartRequest = {
   requestedTier?: ModelTierValue;
+  brainstormingMode?: BrainstormingModeValue;
 };
 
 export type ProfileExtractConversationReplyRequest = {
   message?: string;
   skip?: boolean;
   requestedTier?: ModelTierValue;
+  brainstormingMode?: BrainstormingModeValue;
 };
 
 export type ProfileExtractConversationStartResponse = ApiResponse<{

@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type {
+  BrainstormingModeValue,
   ModelTierValue,
   ProfileExtractConversationFinalizeResponse,
   ProfileExtractConversationReplyResponse,
@@ -16,6 +17,7 @@ export function ProfileExtractConversation() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [requestedTier, setRequestedTier] = useState<ModelTierValue>("DEEP");
+  const [brainstormingMode, setBrainstormingMode] = useState<BrainstormingModeValue>("AUTO");
   const [session, setSession] = useState<ProfileExtractionConversationSession | null>(null);
   const [answer, setAnswer] = useState("");
   const [feedback, setFeedback] = useState("");
@@ -43,6 +45,7 @@ export function ProfileExtractConversation() {
           },
           body: JSON.stringify({
             requestedTier,
+            brainstormingMode,
           }),
         });
 
@@ -58,7 +61,7 @@ export function ProfileExtractConversation() {
       }
     });
     // Only create the initial conversation once on mount.
-    // Tier changes affect subsequent turns, not automatic session recreation.
+    // Tier and brainstorming mode changes affect subsequent turns, not automatic session recreation.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -81,6 +84,7 @@ export function ProfileExtractConversation() {
             message: answer,
             skip,
             requestedTier,
+            brainstormingMode,
           }),
         });
 
@@ -119,7 +123,7 @@ export function ProfileExtractConversation() {
         }
 
         setFeedback("对话式提炼完成，已生成创作者画像。");
-        router.push(`/profile?id=${result.data.profileId}`);
+        router.push("/agents/creator-profile");
         router.refresh();
       } catch (finalizeError) {
         setError(finalizeError instanceof Error ? finalizeError.message : "生成最终画像失败。");
@@ -138,13 +142,39 @@ export function ProfileExtractConversation() {
 
         <div className="mt-6 flex flex-wrap items-end gap-3">
           <ModelTierPicker onChange={setRequestedTier} value={requestedTier} />
+          <div className="grid gap-2">
+            <span className="text-sm font-medium text-slate-700">Brainstorming</span>
+            <div className="flex flex-wrap gap-2">
+              {(["OFF", "AUTO", "ON"] as BrainstormingModeValue[]).map((mode) => (
+                <button
+                  className={`pill transition ${brainstormingMode === mode ? "pill-active" : "hover:border-sky-400 hover:text-slate-800"}`}
+                  key={mode}
+                  onClick={() => setBrainstormingMode(mode)}
+                  type="button"
+                >
+                  {mode}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
+        <p className="muted mt-3 text-sm leading-7">
+          `OFF` 直接提炼，`AUTO` 系统自动判断是否先共创，`ON` 先发散再收敛。
+        </p>
+
         <div className="mt-6 space-y-4">
-          {session?.transcript.map((item: ProfileExtractionConversationSession["transcript"][number], index: number) => (
+          {session?.transcript
+            .filter((item: ProfileExtractionConversationSession["transcript"][number]) => item.role !== "system")
+            .map((item: ProfileExtractionConversationSession["transcript"][number], index: number) => (
             <div className="subpanel px-4 py-4" key={`${item.role}-${index}-${item.createdAt}`}>
               <p className="text-sm font-semibold text-slate-700">{item.role === "assistant" ? "系统" : "你"}</p>
               <p className="muted mt-2 text-sm leading-7">{item.content}</p>
+              {item.meta?.responseMode ? (
+                <p className="muted mt-2 text-xs leading-6">
+                  当前模式：{item.meta.responseMode === "BRAINSTORMING" ? "共创发散" : "提炼收敛"}
+                </p>
+              ) : null}
             </div>
           ))}
         </div>

@@ -4,6 +4,7 @@ import {
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { CreatorProfileDraft } from "@/lib/profile-data";
+import type { BrainstormingModeValue } from "@/lib/domain/contracts";
 import { activateCreatorProfileDraft, assertDatabaseConfigured } from "@/lib/services/profile-service";
 import { executeStructuredGeneration } from "@/lib/services/structured-generation-service";
 import { ServiceError } from "@/lib/services/service-error";
@@ -20,17 +21,24 @@ export type ConversationQuestionType =
   | "CONFIRMATION";
 
 export type ConversationTranscriptMessage = {
-  role: "assistant" | "user";
+  role: "assistant" | "user" | "system";
   content: string;
   createdAt: string;
   questionType?: ConversationQuestionType | null;
   skipped?: boolean;
+  meta?: {
+    brainstormingMode?: BrainstormingModeValue;
+    responseMode?: "BRAINSTORMING" | "EXTRACTION";
+    usedModel?: boolean;
+  };
 };
 
 export type ConversationSessionState = {
   id: string;
   status: "ACTIVE" | "COMPLETED" | "ABANDONED";
   sourceMode: "CONVERSATIONAL" | "QUICK";
+  brainstormingMode: BrainstormingModeValue;
+  responseMode: "BRAINSTORMING" | "EXTRACTION";
   draftProfile: CreatorProfileDraft;
   transcript: ConversationTranscriptMessage[];
   currentQuestion: string | null;
@@ -45,6 +53,7 @@ type ConversationTurnModelOutput = {
   questionType?: ConversationQuestionType;
   readyToFinalize?: boolean;
   reasoningSummary?: string;
+  responseMode?: "BRAINSTORMING" | "EXTRACTION";
 };
 
 const EMPTY_DRAFT: CreatorProfileDraft = {
@@ -65,9 +74,45 @@ function nowIso() {
 
 function firstQuestion() {
   return {
-    question: "先用两三句话说说：你现在最想成为一个什么样的创作者？你最希望别人因为什么内容来认识你？",
+    question: "先别急着给自己下定义。你现在最想把哪一类经验、判断或能力，慢慢变成别人会主动来找你的内容？",
     questionType: "OPENING" as const,
   };
+}
+
+function getLatestBrainstormingMode(transcript: ConversationTranscriptMessage[]) {
+  const systemEntries = [...transcript].reverse().find((item) => item.role === "system" && item.meta?.brainstormingMode);
+  return systemEntries?.meta?.brainstormingMode ?? "AUTO";
+}
+
+function inferResponseMode({
+  brainstormingMode,
+  draft,
+  lastUserMessage,
+  turnCount,
+}: {
+  brainstormingMode: BrainstormingModeValue;
+  draft: CreatorProfileDraft;
+  lastUserMessage: string | null;
+  turnCount: number;
+}): "BRAINSTORMING" | "EXTRACTION" {
+  if (brainstormingMode === "OFF") {
+    return "EXTRACTION";
+  }
+
+  if (brainstormingMode === "ON") {
+    return "BRAINSTORMING";
+  }
+
+  const text = (lastUserMessage ?? "").trim();
+  const ambiguitySignals = ["不知道", "不确定", "还没想清楚", "有点乱", "不好说", "模糊", "纠结", "怕", "但是", "又"];
+  const hasAmbiguity = ambiguitySignals.some((signal) => text.includes(signal));
+  const structuredFields = [draft.positioning, draft.audience, draft.coreThemes].filter(Boolean).length;
+
+  if (hasAmbiguity || (turnCount < 3 && structuredFields < 2)) {
+    return "BRAINSTORMING";
+  }
+
+  return "EXTRACTION";
 }
 
 function normalizeDraftPatch(patch?: Partial<CreatorProfileDraft> | null) {
@@ -113,12 +158,65 @@ function quoteSnippet(text: string) {
   return compact.length > 28 ? `${compact.slice(0, 28)}...` : compact;
 }
 
-function chooseHeuristicQuestion(draft: CreatorProfileDraft, lastUserMessage: string | null): {
+function chooseHeuristicQuestion(args: {
+  draft: CreatorProfileDraft;
+  lastUserMessage: string | null;
+  brainstormingMode: BrainstormingModeValue;
+  turnCount: number;
+}): {
   nextQuestion: string;
   questionType: ConversationQuestionType;
   readyToFinalize: boolean;
+  responseMode: "BRAINSTORMING" | "EXTRACTION";
 } {
+  const { draft, lastUserMessage, brainstormingMode, turnCount } = args;
   const snippet = lastUserMessage ? quoteSnippet(lastUserMessage) : "";
+  const responseMode = inferResponseMode({
+    brainstormingMode,
+    draft,
+    lastUserMessage,
+    turnCount,
+  });
+
+  if (responseMode === "BRAINSTORMING") {
+    if (!lastUserMessage) {
+      return {
+        nextQuestion: "先不要追求标准答案。你过去做过的事里，哪三类经历或能力最有可能变成你的长期内容资产？先随便说。",
+        questionType: "OPENING",
+        readyToFinalize: false,
+        responseMode,
+      };
+    }
+
+    if (!draft.positioning) {
+      return {
+        nextQuestion: snippet
+          ? `你刚才提到“${snippet}”。如果只能保留一条线长期讲下去，你更想把它做成哪种价值：观点判断、经验方法，还是陪伴式成长？为什么？`
+          : "如果只能保留一条线长期讲下去，你更想把它做成哪种价值：观点判断、经验方法，还是陪伴式成长？为什么？",
+        questionType: "POSITIONING",
+        readyToFinalize: false,
+        responseMode,
+      };
+    }
+
+    if (!draft.audience) {
+      return {
+        nextQuestion: "听起来方向开始有了。那你最想先帮哪一类人？他们现在最卡的一件事是什么？",
+        questionType: "AUDIENCE",
+        readyToFinalize: false,
+        responseMode,
+      };
+    }
+
+    if (!draft.coreThemes) {
+      return {
+        nextQuestion: "如果接下来连续输出一个月，你最愿意反复讲哪两三个主题？先说你真的想长期讲的，不用管热点。",
+        questionType: "THEMES",
+        readyToFinalize: false,
+        responseMode,
+      };
+    }
+  }
 
   if (!draft.audience) {
     return {
@@ -127,6 +225,7 @@ function chooseHeuristicQuestion(draft: CreatorProfileDraft, lastUserMessage: st
         : "你最想服务的是哪一类人？他们现在最困扰的问题是什么？",
       questionType: "AUDIENCE",
       readyToFinalize: false,
+      responseMode,
     };
   }
 
@@ -135,6 +234,7 @@ function chooseHeuristicQuestion(draft: CreatorProfileDraft, lastUserMessage: st
       nextQuestion: "如果只能用一句话定义你的账号角色，你希望别人把你当成什么样的创作者或顾问？",
       questionType: "POSITIONING",
       readyToFinalize: false,
+      responseMode,
     };
   }
 
@@ -143,6 +243,7 @@ function chooseHeuristicQuestion(draft: CreatorProfileDraft, lastUserMessage: st
       nextQuestion: "相比资讯搬运，你更希望别人记住你哪种能力：判断、解释、规划，还是陪伴决策？为什么？",
       questionType: "CAPABILITY",
       readyToFinalize: false,
+      responseMode,
     };
   }
 
@@ -151,6 +252,7 @@ function chooseHeuristicQuestion(draft: CreatorProfileDraft, lastUserMessage: st
       nextQuestion: "如果连续输出三个月，你最想反复围绕哪几个议题展开？",
       questionType: "THEMES",
       readyToFinalize: false,
+      responseMode,
     };
   }
 
@@ -159,6 +261,7 @@ function chooseHeuristicQuestion(draft: CreatorProfileDraft, lastUserMessage: st
       nextQuestion: "未来 6 到 12 个月，你希望这个账号优先给你带来什么：信任、获客、影响力，还是转化？",
       questionType: "GOAL",
       readyToFinalize: false,
+      responseMode,
     };
   }
 
@@ -167,6 +270,7 @@ function chooseHeuristicQuestion(draft: CreatorProfileDraft, lastUserMessage: st
       nextQuestion: "有哪些内容虽然可能有流量，但你明确不想做？",
       questionType: "BOUNDARY",
       readyToFinalize: false,
+      responseMode,
     };
   }
 
@@ -175,13 +279,15 @@ function chooseHeuristicQuestion(draft: CreatorProfileDraft, lastUserMessage: st
       nextQuestion: "你希望自己的表达给人什么感觉？克制、锋利、陪伴感、结论先行，还是别的？",
       questionType: "STYLE",
       readyToFinalize: false,
+      responseMode,
     };
   }
 
   return {
-    nextQuestion: "当前草案已经比较完整了。如果你觉得基本准确，可以直接生成画像；如果还有最重要的一点，请再补充一句。",
+    nextQuestion: "目前已经抓到一版方向了。如果你觉得基本准确，可以直接生成画像；如果还有最重要的一点，请再补充一句真正决定你定位的话。",
     questionType: "CONFIRMATION",
     readyToFinalize: true,
+    responseMode,
   };
 }
 
@@ -240,15 +346,13 @@ function ensureCompleteDraft(draft: CreatorProfileDraft, transcript: Conversatio
 
   return {
     name: draft.name || "未命名创作者",
-    positioning:
-      draft.positioning ||
-      `基于当前访谈，系统判断你适合成为一个以知识提炼和判断输出为核心的创作者。${summary ? ` 当前重点是：${summary}` : ""}`,
-    persona: draft.persona || "结构化、重判断、强调长期方向与行动建议的知识型创作者。",
-    audience: draft.audience || "希望提升认知密度、判断质量和内容持续性的高认知受众。",
-    coreThemes: draft.coreThemes || "长期议题、结构性变化、方向判断、主题积累、个人品牌增长。",
-    voiceStyle: draft.voiceStyle || "清晰、克制、结论先行，强调因果链和行动方向。",
-    growthGoal: draft.growthGoal || "建立稳定的知识型个人品牌内容系统。",
-    contentBoundaries: draft.contentBoundaries || "不做纯热点搬运，不做情绪驱动表达，不做与长期定位无关的泛内容。",
+    positioning: draft.positioning || (summary ? `待继续明确。当前提炼重点：${summary}` : "待继续明确。"),
+    persona: draft.persona || "待继续明确。",
+    audience: draft.audience || "待继续明确。",
+    coreThemes: draft.coreThemes || "待继续明确。",
+    voiceStyle: draft.voiceStyle || "待继续明确。",
+    growthGoal: draft.growthGoal || "待继续明确。",
+    contentBoundaries: draft.contentBoundaries || "待继续明确。",
     currentStage: draft.currentStage || "EXPLORING",
   };
 }
@@ -267,17 +371,26 @@ function mapSessionState(session: {
   const transcript = Array.isArray(session.transcriptJson)
     ? (session.transcriptJson as ConversationTranscriptMessage[])
     : [];
+  const brainstormingMode = getLatestBrainstormingMode(transcript);
+  const inferred = chooseHeuristicQuestion({
+    draft: draftProfile,
+    lastUserMessage: session.currentQuestion,
+    brainstormingMode,
+    turnCount: session.turnCount,
+  });
 
   return {
     id: session.id,
     status: session.status,
     sourceMode: session.sourceMode,
+    brainstormingMode,
+    responseMode: inferred.responseMode,
     draftProfile,
     transcript,
     currentQuestion: session.currentQuestion,
     questionType: (session.questionType as ConversationQuestionType | null) ?? null,
     turnCount: session.turnCount,
-    readyToFinalize: chooseHeuristicQuestion(draftProfile, session.currentQuestion).readyToFinalize,
+    readyToFinalize: inferred.readyToFinalize,
   };
 }
 
@@ -285,15 +398,19 @@ async function generateConversationTurn(args: {
   transcript: ConversationTranscriptMessage[];
   draftProfile: CreatorProfileDraft;
   requestedTier?: "FAST" | "BALANCED" | "DEEP";
+  brainstormingMode: BrainstormingModeValue;
+  responseMode: "BRAINSTORMING" | "EXTRACTION";
 }) {
   const payload = await executeStructuredGeneration<ConversationTurnModelOutput>({
     capabilityKey: "ip_extraction_interview",
     systemInstruction:
-      "你是创作者画像访谈助手。请基于已有对话和当前草案，更新画像草案，并且只生成下一条最有价值的问题。问题必须自然、具体、引用上下文，不要像问卷。返回严格 JSON：{\"draftProfile\":{...},\"nextQuestion\":\"...\",\"questionType\":\"AUDIENCE|CAPABILITY|POSITIONING|BOUNDARY|GOAL|STYLE|CONFIRMATION\",\"readyToFinalize\":true|false,\"reasoningSummary\":\"...\"}。未知字段保留空字符串，不要编造。",
+      `你是创作者画像访谈助手。当前 brainstormingMode=${args.brainstormingMode}，当前 responseMode=${args.responseMode}。如果 responseMode=BRAINSTORMING，请先帮助用户发散、比较、收敛，不要像问卷一样补字段；如果 responseMode=EXTRACTION，请把已有理解压成更明确的定位、受众、主题、边界和目标。无论哪种模式，都只生成下一条最有价值的问题，问题必须自然、具体、引用上下文。返回严格 JSON：{"draftProfile":{...},"nextQuestion":"...","questionType":"AUDIENCE|CAPABILITY|POSITIONING|BOUNDARY|GOAL|STYLE|THEMES|CONFIRMATION","readyToFinalize":true|false,"reasoningSummary":"...","responseMode":"BRAINSTORMING|EXTRACTION"}。未知字段保留空字符串，不要编造。`,
     userPrompt: JSON.stringify(
       {
         transcript: args.transcript,
         currentDraft: args.draftProfile,
+        brainstormingMode: args.brainstormingMode,
+        responseMode: args.responseMode,
       },
       null,
       2,
@@ -304,16 +421,32 @@ async function generateConversationTurn(args: {
   return payload;
 }
 
-export async function createProfileExtractionConversationSession(requestedTier?: "FAST" | "BALANCED" | "DEEP") {
+export async function createProfileExtractionConversationSession(
+  requestedTier?: "FAST" | "BALANCED" | "DEEP",
+  brainstormingMode: BrainstormingModeValue = "AUTO",
+) {
   assertDatabaseConfigured();
 
   const opening = firstQuestion();
   const transcript: ConversationTranscriptMessage[] = [
     {
+      role: "system",
+      content: "Session config",
+      createdAt: nowIso(),
+      meta: {
+        brainstormingMode,
+        responseMode: brainstormingMode === "OFF" ? "EXTRACTION" : "BRAINSTORMING",
+      },
+    },
+    {
       role: "assistant",
       content: opening.question,
       createdAt: nowIso(),
       questionType: opening.questionType,
+      meta: {
+        brainstormingMode,
+        responseMode: brainstormingMode === "OFF" ? "EXTRACTION" : "BRAINSTORMING",
+      },
     },
   ];
 
@@ -343,6 +476,7 @@ export async function replyToProfileExtractionConversationSession(input: {
   message?: string;
   skip?: boolean;
   requestedTier?: "FAST" | "BALANCED" | "DEEP";
+  brainstormingMode?: BrainstormingModeValue;
 }) {
   assertDatabaseConfigured();
 
@@ -360,6 +494,7 @@ export async function replyToProfileExtractionConversationSession(input: {
   const transcript = Array.isArray(session.transcriptJson)
     ? ([...(session.transcriptJson as ConversationTranscriptMessage[])] as ConversationTranscriptMessage[])
     : [];
+  const activeBrainstormingMode = input.brainstormingMode ?? getLatestBrainstormingMode(transcript);
 
   const userMessage = input.message?.trim() ?? "";
 
@@ -372,19 +507,29 @@ export async function replyToProfileExtractionConversationSession(input: {
     content: userMessage || "跳过当前问题",
     createdAt: nowIso(),
     skipped: Boolean(input.skip),
+    meta: {
+      brainstormingMode: activeBrainstormingMode,
+    },
   });
 
   let nextDraft = mergeDraft(
     draftProfile,
     input.skip ? null : deriveHeuristicDraftPatch((session.questionType as ConversationQuestionType | null) ?? null, userMessage),
   );
-  let nextQuestionResult = chooseHeuristicQuestion(nextDraft, userMessage || session.lastUserMessage);
+  let nextQuestionResult = chooseHeuristicQuestion({
+    draft: nextDraft,
+    lastUserMessage: userMessage || session.lastUserMessage,
+    brainstormingMode: activeBrainstormingMode,
+    turnCount: session.turnCount + 1,
+  });
 
   if (!input.skip) {
     const modelResult = await generateConversationTurn({
       transcript,
       draftProfile: nextDraft,
       requestedTier: input.requestedTier,
+      brainstormingMode: activeBrainstormingMode,
+      responseMode: nextQuestionResult.responseMode,
     }).catch(() => null);
 
     if (modelResult) {
@@ -395,12 +540,23 @@ export async function replyToProfileExtractionConversationSession(input: {
           nextQuestion: modelResult.nextQuestion.trim(),
           questionType: modelResult.questionType ?? nextQuestionResult.questionType,
           readyToFinalize: Boolean(modelResult.readyToFinalize),
+          responseMode: modelResult.responseMode ?? nextQuestionResult.responseMode,
         };
       } else {
-        nextQuestionResult = chooseHeuristicQuestion(nextDraft, userMessage);
+        nextQuestionResult = chooseHeuristicQuestion({
+          draft: nextDraft,
+          lastUserMessage: userMessage,
+          brainstormingMode: activeBrainstormingMode,
+          turnCount: session.turnCount + 1,
+        });
       }
     } else {
-      nextQuestionResult = chooseHeuristicQuestion(nextDraft, userMessage);
+      nextQuestionResult = chooseHeuristicQuestion({
+        draft: nextDraft,
+        lastUserMessage: userMessage,
+        brainstormingMode: activeBrainstormingMode,
+        turnCount: session.turnCount + 1,
+      });
     }
   }
 
@@ -409,6 +565,11 @@ export async function replyToProfileExtractionConversationSession(input: {
     content: nextQuestionResult.nextQuestion,
     createdAt: nowIso(),
     questionType: nextQuestionResult.questionType,
+    meta: {
+      brainstormingMode: activeBrainstormingMode,
+      responseMode: nextQuestionResult.responseMode,
+      usedModel: !input.skip,
+    },
   });
 
   const updated = await prisma.profileExtractionSession.update({

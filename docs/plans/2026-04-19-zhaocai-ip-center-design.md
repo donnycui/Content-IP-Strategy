@@ -63,7 +63,7 @@ The creator lifecycle is represented through explicit stage agents:
 Purpose:
 
 - guide first-time creators through conversational IP extraction
-- allow brainstorming-style probing instead of rigid forms
+- allow `Brainstorming: OFF / AUTO / ON` control instead of rigid forms
 - produce an initial extraction report
 
 Outputs:
@@ -71,6 +71,12 @@ Outputs:
 - extraction report
 - first-pass positioning ideas
 - initial boundary/goal signals
+
+Interaction rule:
+
+- `AUTO` is the default
+- the agent may switch between brainstorming-style exploration and extraction-style clarification
+- the final draft should not auto-fill one generic creator archetype just to look complete
 
 ### 4.2 创作者画像 Agent
 
@@ -440,4 +446,3 @@ Recommended implementation sequence:
 3. style skill + content layer
 4. review + evolution base loop
 5. direct-publishing feasibility work
-
