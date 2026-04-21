@@ -133,7 +133,7 @@ export function ProfileExtractConversation() {
 
   return (
     <section className="grid gap-5 xl:grid-cols-[1.05fr,0.95fr]">
-      <section className="panel flex h-[78vh] min-h-[720px] flex-col px-6 py-5">
+      <section className="panel flex flex-col px-6 py-5 xl:max-h-[80vh] xl:overflow-hidden">
         <p className="section-kicker">对话式提炼</p>
         <h2 className="section-title mt-2">通过追问逐步收敛，而不是一次性压缩成模板</h2>
         <p className="section-desc mt-3">
@@ -163,7 +163,7 @@ export function ProfileExtractConversation() {
           `OFF` 直接提炼，`AUTO` 系统自动判断是否先共创，`ON` 先发散再收敛。
         </p>
 
-        <div className="mt-6 min-h-0 flex-1 overflow-y-auto pr-2">
+        <div className="mt-6 xl:min-h-0 xl:flex-1 xl:overflow-y-auto xl:pr-2">
           <div className="space-y-4">
           {session?.transcript
             .filter((item: ProfileExtractionConversationSession["transcript"][number]) => item.role !== "system")
