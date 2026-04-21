@@ -12,11 +12,19 @@ import { getAgentRoutePath } from "@/lib/center/agent-stage-config";
 import { getDirections } from "@/lib/direction-data";
 import { getActiveCreatorProfile } from "@/lib/profile-data";
 import { getProfileUpdateSuggestions } from "@/lib/profile-update-suggestion-data";
-import { syncCenterAgentThreads } from "@/lib/services/agent-thread-service";
-import { ensureActiveCenterWorkspace } from "@/lib/services/center-workspace-service";
-import { getSharedMemorySnapshotProjection, syncHomepageMemorySnapshot } from "@/lib/services/shared-memory-service";
 import { getTopicCandidates } from "@/lib/topic-candidate-data";
 import { getTopics } from "@/lib/topic-data";
+
+export type CenterStageSnapshot = {
+  profile: Awaited<ReturnType<typeof getActiveCreatorProfile>>;
+  directions: Awaited<ReturnType<typeof getDirections>>;
+  topics: Awaited<ReturnType<typeof getTopics>>;
+  topicCandidates: Awaited<ReturnType<typeof getTopicCandidates>>;
+  suggestions: Awaited<ReturnType<typeof getProfileUpdateSuggestions>>;
+  hasStructuredProfile: boolean;
+  pendingSuggestionsCount: number;
+  currentAgent: CenterAgentKeyValue;
+};
 
 function hasProfile(profile: Awaited<ReturnType<typeof getActiveCreatorProfile>>) {
   if (!profile) {
@@ -103,7 +111,7 @@ function createJudgment(input: {
   };
 }
 
-function buildAgentCards(input: {
+export function buildAgentCards(input: {
   hasProfile: boolean;
   currentAgent: CenterAgentKeyValue;
   directionsCount: number;
@@ -305,7 +313,7 @@ function buildQuickActions(input: { hasProfile: boolean }): CenterQuickActionPay
   ];
 }
 
-export async function getCenterHomeData(): Promise<CenterHomePayload> {
+export async function getCenterStageSnapshot(): Promise<CenterStageSnapshot> {
   const profile = await getActiveCreatorProfile();
 
   let directions: Awaited<ReturnType<typeof getDirections>> = [];
@@ -322,95 +330,84 @@ export async function getCenterHomeData(): Promise<CenterHomePayload> {
     ]);
   }
 
-  const structuredProfileExists = hasProfile(profile);
+  const hasStructuredProfile = hasProfile(profile);
   const pendingSuggestionsCount = suggestions.filter((item) => item.status === "PENDING").length;
   const currentAgent = determineCurrentAgent({
-    hasProfile: structuredProfileExists,
+    hasProfile: hasStructuredProfile,
     directionsCount: directions.length,
     topicsCount: topics.length,
     topicCandidatesCount: topicCandidates.length,
   });
 
+  return {
+    profile,
+    directions,
+    topics,
+    topicCandidates,
+    suggestions,
+    hasStructuredProfile,
+    pendingSuggestionsCount,
+    currentAgent,
+  };
+}
+
+export async function getCenterHomeData(): Promise<CenterHomePayload> {
+  const snapshot = await getCenterStageSnapshot();
+
   const center = {
     judgment: createJudgment({
-      hasProfile: structuredProfileExists,
-      directionsCount: directions.length,
-      topicsCount: topics.length,
-      topicCandidatesCount: topicCandidates.length,
-      pendingSuggestionsCount,
+      hasProfile: snapshot.hasStructuredProfile,
+      directionsCount: snapshot.directions.length,
+      topicsCount: snapshot.topics.length,
+      topicCandidatesCount: snapshot.topicCandidates.length,
+      pendingSuggestionsCount: snapshot.pendingSuggestionsCount,
     }),
     metrics: [
       {
         label: "当前方向",
-        value: String(directions.length),
+        value: String(snapshot.directions.length),
         detail: "方向层是否已经稳定跑起来。",
       },
       {
         label: "主题线",
-        value: String(topics.length),
+        value: String(snapshot.topics.length),
         detail: "从方向往下沉淀出的可持续主题。",
       },
       {
         label: "今日选题",
-        value: String(topicCandidates.length),
+        value: String(snapshot.topicCandidates.length),
         detail: "能直接推进到内容生产的候选题。",
       },
       {
         label: "待处理进化",
-        value: String(pendingSuggestionsCount),
+        value: String(snapshot.pendingSuggestionsCount),
         detail: "值得写回画像、风格或策略的建议。",
       },
     ],
     agents: buildAgentCards({
-      hasProfile: structuredProfileExists,
-      currentAgent,
-      directionsCount: directions.length,
-      topicsCount: topics.length,
-      topicCandidatesCount: topicCandidates.length,
-      pendingSuggestionsCount,
+      hasProfile: snapshot.hasStructuredProfile,
+      currentAgent: snapshot.currentAgent,
+      directionsCount: snapshot.directions.length,
+      topicsCount: snapshot.topics.length,
+      topicCandidatesCount: snapshot.topicCandidates.length,
+      pendingSuggestionsCount: snapshot.pendingSuggestionsCount,
     }),
     coordinator: buildCoordinator({
-      hasProfile: structuredProfileExists,
-      currentAgent,
-      topicCandidatesCount: topicCandidates.length,
-      pendingSuggestionsCount,
+      hasProfile: snapshot.hasStructuredProfile,
+      currentAgent: snapshot.currentAgent,
+      topicCandidatesCount: snapshot.topicCandidates.length,
+      pendingSuggestionsCount: snapshot.pendingSuggestionsCount,
     }),
     memory: buildMemory({
-      profile,
-      directions,
-      topics,
-      pendingSuggestionsCount,
+      profile: snapshot.profile,
+      directions: snapshot.directions,
+      topics: snapshot.topics,
+      pendingSuggestionsCount: snapshot.pendingSuggestionsCount,
     }),
     quickActions: buildQuickActions({
-      hasProfile: structuredProfileExists,
+      hasProfile: snapshot.hasStructuredProfile,
     }),
   } satisfies CenterHomePayload;
-
-  try {
-    const workspace = await ensureActiveCenterWorkspace({
-      creatorProfileId: profile?.id ?? null,
-      currentAgentKey: currentAgent,
-      recommendedActionLabel: center.judgment.primaryAction.label,
-      recommendedActionHref: center.judgment.primaryAction.href,
-      lastStageReason: center.judgment.reason,
-    });
-
-    await syncCenterAgentThreads({
-      workspace,
-      currentAgentKey: currentAgent,
-      agentSummaries: center.agents,
-    });
-
-    await syncHomepageMemorySnapshot({
-      workspaceId: workspace.id,
-      agentKey: currentAgent,
-      items: center.memory,
-    });
-
-    center.memory = await getSharedMemorySnapshotProjection(workspace.id, center.memory);
-  } catch {
-    // Homepage should keep rendering even before migrations are applied.
-  }
 
   return center;
 }

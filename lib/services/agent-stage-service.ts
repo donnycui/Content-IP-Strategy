@@ -3,11 +3,10 @@ import type {
   AgentThreadRecord,
   CenterAgentStatusValue,
   CenterAgentSummaryPayload,
-  CenterHomePayload,
   CenterWorkspaceRecord,
 } from "@/lib/domain/contracts";
 import { getAgentThreadsForWorkspace } from "@/lib/services/agent-thread-service";
-import { getCenterHomeData } from "@/lib/services/center-home-service";
+import { buildAgentCards, getCenterStageSnapshot } from "@/lib/services/center-home-service";
 import { ensureActiveCenterWorkspace } from "@/lib/services/center-workspace-service";
 
 type AgentLegacyLink = {
@@ -28,7 +27,6 @@ type AgentStageDefinition = {
 };
 
 export type AgentStageShellData = {
-  center: CenterHomePayload;
   workspace: CenterWorkspaceRecord;
   agent: CenterAgentSummaryPayload;
   thread: AgentThreadRecord | null;
@@ -176,11 +174,19 @@ export function getAgentStageDefinition(routeKey: AgentRouteKey) {
 
 export async function getAgentStageShellData(routeKey: AgentRouteKey): Promise<AgentStageShellData> {
   const definition = getAgentStageDefinition(routeKey);
-  const center = await getCenterHomeData();
+  const snapshot = await getCenterStageSnapshot();
   const workspace = await ensureActiveCenterWorkspace();
   const threads = await getAgentThreadsForWorkspace(workspace.id);
   const agentKey = CENTER_AGENT_KEY_BY_ROUTE[routeKey];
-  const agent = center.agents.find((item) => item.key === agentKey);
+  const agents = buildAgentCards({
+    hasProfile: snapshot.hasStructuredProfile,
+    currentAgent: snapshot.currentAgent,
+    directionsCount: snapshot.directions.length,
+    topicsCount: snapshot.topics.length,
+    topicCandidatesCount: snapshot.topicCandidates.length,
+    pendingSuggestionsCount: snapshot.pendingSuggestionsCount,
+  });
+  const agent = agents.find((item) => item.key === agentKey);
 
   if (!agent) {
     throw new Error(`Agent summary missing for ${routeKey}.`);
@@ -189,7 +195,6 @@ export async function getAgentStageShellData(routeKey: AgentRouteKey): Promise<A
   const thread = threads.find((item) => item.agentKey === agentKey) ?? null;
 
   return {
-    center,
     workspace,
     agent,
     thread,

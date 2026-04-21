@@ -1,9 +1,38 @@
-import { LearningGenerateButton } from "@/components/learning/learning-generate-button";
-import { getLearningInsightsDashboard } from "@/lib/services/proactive-learning-service";
+"use client";
 
-export async function LearningInsightsPanel() {
-  const dashboard = await getLearningInsightsDashboard();
-  const visibleInsights = dashboard.insights.slice(0, 3);
+import { useEffect, useState } from "react";
+import { LearningGenerateButton } from "@/components/learning/learning-generate-button";
+import type { LearningInsightsDashboardPayload, LearningInsightsDashboardResponse } from "@/lib/domain/contracts";
+
+export function LearningInsightsPanel() {
+  const [dashboard, setDashboard] = useState<LearningInsightsDashboardPayload | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const response = await fetch("/api/learning-insights");
+        const result = (await response.json()) as LearningInsightsDashboardResponse;
+
+        if (!response.ok || !result.ok || !result.data?.dashboard || cancelled) {
+          return;
+        }
+
+        setDashboard(result.data.dashboard);
+      } catch {
+        // Keep panel lightweight. Fail silently if the background load misses.
+      }
+    }
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const visibleInsights = dashboard?.insights.slice(0, 3) ?? [];
 
   return (
     <section className="panel px-6 py-6">
@@ -17,7 +46,7 @@ export async function LearningInsightsPanel() {
           <LearningGenerateButton />
         </div>
 
-        {dashboard.activeMemorySummary ? (
+        {dashboard?.activeMemorySummary ? (
           <div className="subpanel px-4 py-4">
             <p className="text-sm font-semibold text-slate-800">当前已写入长期记忆的学习摘要</p>
             <p className="mt-3 text-sm leading-7 text-slate-700">{dashboard.activeMemorySummary}</p>
@@ -26,16 +55,22 @@ export async function LearningInsightsPanel() {
         ) : null}
 
         <div className="grid gap-4 xl:grid-cols-3">
-          {visibleInsights.map((insight) => (
-            <div className="subpanel px-4 py-4" key={insight.title}>
-              <div className="flex flex-wrap gap-2">
-                <span className="pill">{insight.kind}</span>
+          {visibleInsights.length ? (
+            visibleInsights.map((insight) => (
+              <div className="subpanel px-4 py-4" key={insight.title}>
+                <div className="flex flex-wrap gap-2">
+                  <span className="pill">{insight.kind}</span>
+                </div>
+                <p className="mt-3 text-base font-semibold text-slate-800">{insight.title}</p>
+                <p className="mt-2 text-sm leading-7 text-slate-700">{insight.summary}</p>
+                <p className="muted mt-3 text-sm leading-7">{insight.detail}</p>
               </div>
-              <p className="mt-3 text-base font-semibold text-slate-800">{insight.title}</p>
-              <p className="mt-2 text-sm leading-7 text-slate-700">{insight.summary}</p>
-              <p className="muted mt-3 text-sm leading-7">{insight.detail}</p>
+            ))
+          ) : (
+            <div className="subpanel px-4 py-4 xl:col-span-3">
+              <p className="muted text-sm leading-7">系统观察正在后台加载，稍后会显示最新热点和趋势摘要。</p>
             </div>
-          ))}
+          )}
         </div>
       </div>
     </section>

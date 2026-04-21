@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { AgentSummaryPanel } from "@/components/agents/agent-summary-panel";
 import { EvolutionAgentPanel } from "@/components/evolution/evolution-agent-panel";
+import { HomeSectionSkeleton } from "@/components/home/home-section-skeleton";
 import { CreatorProfileAgentPanel } from "@/components/profile/creator-profile-agent-panel";
 import { IpExtractionAgentPanel } from "@/components/profile/ip-extraction-agent-panel";
 import { ReviewAgentPanel } from "@/components/review/review-agent-panel";
@@ -25,12 +27,14 @@ export async function AgentShell({ data }: { data: AgentStageShellData }) {
       </section>
 
       <AgentSummaryPanel data={data} />
-      {data.definition.routeKey === "ip-extraction" ? <IpExtractionAgentPanel /> : null}
-      {data.definition.routeKey === "creator-profile" ? <CreatorProfileAgentPanel /> : null}
-      {data.definition.routeKey === "topic-direction" ? <TopicDirectionAgentPanel /> : null}
-      {data.definition.routeKey === "style-content" ? <StyleContentAgentPanel /> : null}
-      {data.definition.routeKey === "daily-review" ? <ReviewAgentPanel /> : null}
-      {data.definition.routeKey === "evolution" ? <EvolutionAgentPanel /> : null}
+      <Suspense fallback={<HomeSectionSkeleton />}>
+        {data.definition.routeKey === "ip-extraction" ? <IpExtractionAgentPanel /> : null}
+        {data.definition.routeKey === "creator-profile" ? <CreatorProfileAgentPanel /> : null}
+        {data.definition.routeKey === "topic-direction" ? <TopicDirectionAgentPanel /> : null}
+        {data.definition.routeKey === "style-content" ? <StyleContentAgentPanel /> : null}
+        {data.definition.routeKey === "daily-review" ? <ReviewAgentPanel /> : null}
+        {data.definition.routeKey === "evolution" ? <EvolutionAgentPanel /> : null}
+      </Suspense>
     </main>
   );
 }
