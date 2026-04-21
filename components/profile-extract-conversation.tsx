@@ -141,7 +141,7 @@ export function ProfileExtractConversation() {
         </p>
 
         <div className="mt-6 flex flex-wrap items-end gap-3">
-          <ModelTierPicker onChange={setRequestedTier} value={requestedTier} />
+          <ModelTierPicker capabilityKey="ip_extraction_interview" onChange={setRequestedTier} value={requestedTier} />
           <div className="grid gap-2">
             <span className="text-sm font-medium text-slate-700">Brainstorming</span>
             <div className="flex flex-wrap gap-2">

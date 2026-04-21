@@ -54,6 +54,13 @@ export type ResolvedCapabilityRoute = {
   notes?: string | null;
 };
 
+export type CapabilityTierAccess = {
+  capabilityKey: ModelCapabilityKey;
+  planKey: string | null;
+  allowedTiers: ModelTier[];
+  canUsePremiumReasoning: boolean;
+};
+
 type ResolvedPlanAccess = {
   planKey: string;
   allowedTiers: Set<ModelTier>;
@@ -194,6 +201,39 @@ async function resolvePlanAccess(planKey: string, capabilityKey: ModelCapability
     allowedTiers: new Set(scopedRows.map((row) => row.allowedTier)),
     canSelectModel: scopedRows.some((row) => row.canSelectModel),
     canUsePremiumReasoning: scopedRows.some((row) => row.canUsePremiumReasoning),
+  };
+}
+
+export async function getCapabilityTierAccess(
+  capabilityKey: ModelCapabilityKey,
+  planKeyOverride?: string | null,
+): Promise<CapabilityTierAccess> {
+  if (!process.env.DATABASE_URL) {
+    return {
+      capabilityKey,
+      planKey: null,
+      allowedTiers: ["FAST", "BALANCED", "DEEP"],
+      canUsePremiumReasoning: true,
+    };
+  }
+
+  const planKey = planKeyOverride?.trim().toUpperCase() || getDefaultPlanKey();
+  const planAccess = await resolvePlanAccess(planKey, capabilityKey);
+
+  if (!planAccess) {
+    return {
+      capabilityKey,
+      planKey,
+      allowedTiers: ["FAST", "BALANCED", "DEEP"],
+      canUsePremiumReasoning: true,
+    };
+  }
+
+  return {
+    capabilityKey,
+    planKey: planAccess.planKey,
+    allowedTiers: [...planAccess.allowedTiers].sort(),
+    canUsePremiumReasoning: planAccess.canUsePremiumReasoning,
   };
 }
 

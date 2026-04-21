@@ -33,6 +33,15 @@ export type ProfileExtractionConversationMessage = {
 };
 
 export type BrainstormingModeValue = "OFF" | "AUTO" | "ON";
+export type ModelCapabilityValue =
+  | "signal_scoring"
+  | "ip_extraction_interview"
+  | "ip_strategy_report"
+  | "direction_generation"
+  | "topic_generation"
+  | "topic_candidate_generation"
+  | "profile_evolution"
+  | "draft_generation";
 
 export type ProfileExtractionConversationDraft = {
   name: string;
@@ -117,6 +126,13 @@ export type DirectionsGenerateResponse = ApiResponse<{
 export type TieredGenerationRequest = {
   requestedTier?: ModelTierValue;
 };
+
+export type ModelTierAccessResponse = ApiResponse<{
+  capabilityKey: ModelCapabilityValue;
+  planKey: string | null;
+  allowedTiers: ModelTierValue[];
+  canUsePremiumReasoning: boolean;
+}>;
 
 export type TopicsListResponse = ApiResponse<{
   topics: TopicRow[];

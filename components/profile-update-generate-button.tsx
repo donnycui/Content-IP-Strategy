@@ -44,7 +44,7 @@ export function ProfileUpdateGenerateButton() {
 
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <ModelTierPicker compact onChange={setRequestedTier} value={requestedTier} />
+      <ModelTierPicker capabilityKey="profile_evolution" compact onChange={setRequestedTier} value={requestedTier} />
       <button
         className="rounded-2xl border border-sky-300/30 bg-sky-400/10 px-4 py-3 text-sm transition hover:border-sky-200 hover:bg-sky-400/20 disabled:cursor-not-allowed disabled:opacity-50"
         disabled={isPending}

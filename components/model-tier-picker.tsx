@@ -1,6 +1,7 @@
 "use client";
 
-import type { ModelTierValue } from "@/lib/domain/contracts";
+import { useEffect, useMemo, useState } from "react";
+import type { ModelCapabilityValue, ModelTierAccessResponse, ModelTierValue } from "@/lib/domain/contracts";
 
 const tierOptions: Array<{
   value: ModelTierValue;
@@ -15,8 +16,56 @@ const tierOptions: Array<{
 export function ModelTierPicker(props: {
   value: ModelTierValue;
   onChange: (value: ModelTierValue) => void;
+  capabilityKey: ModelCapabilityValue;
   compact?: boolean;
 }) {
+  const [allowedTiers, setAllowedTiers] = useState<ModelTierValue[] | null>(null);
+  const [planLabel, setPlanLabel] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadTierAccess() {
+      try {
+        const response = await fetch(`/api/model-tier-access?capabilityKey=${props.capabilityKey}`);
+        const result = (await response.json()) as ModelTierAccessResponse;
+
+        if (!response.ok || !result.ok || !result.data) {
+          return;
+        }
+
+        if (cancelled) {
+          return;
+        }
+
+        setAllowedTiers(result.data.allowedTiers);
+        setPlanLabel(result.data.planKey);
+      } catch {
+        // keep local fallback options
+      }
+    }
+
+    void loadTierAccess();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [props.capabilityKey]);
+
+  const visibleOptions = useMemo(() => {
+    if (!allowedTiers?.length) {
+      return tierOptions;
+    }
+
+    return tierOptions.filter((option) => allowedTiers.includes(option.value));
+  }, [allowedTiers]);
+
+  useEffect(() => {
+    if (!visibleOptions.some((option) => option.value === props.value)) {
+      props.onChange(visibleOptions[0]?.value ?? "BALANCED");
+    }
+  }, [props, visibleOptions]);
+
   return (
     <label className="flex flex-col gap-2">
       {!props.compact ? <span className="text-sm font-medium text-slate-700">生成档位</span> : null}
@@ -25,12 +74,15 @@ export function ModelTierPicker(props: {
         onChange={(event) => props.onChange(event.target.value as ModelTierValue)}
         value={props.value}
       >
-        {tierOptions.map((option) => (
+        {visibleOptions.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label} · {option.description}
           </option>
         ))}
       </select>
+      {!props.compact && planLabel ? (
+        <span className="muted text-xs leading-6">当前按 {planLabel} 套餐显示这个能力可用的档位。</span>
+      ) : null}
     </label>
   );
 }
