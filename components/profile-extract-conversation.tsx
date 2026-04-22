@@ -38,6 +38,45 @@ export function ProfileExtractConversation() {
     currentStage: "EXPLORING" as const,
   };
 
+  function scrollToJudgment() {
+    document.getElementById("ip-extraction-current-judgment")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }
+
+  function startNewConversation() {
+    startTransition(async () => {
+      try {
+        setFeedback("");
+        setError("");
+        setAnswer("");
+
+        const response = await fetch("/api/profile/extract/conversation", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            requestedTier,
+            brainstormingMode,
+            forceNew: true,
+          }),
+        });
+
+        const result = (await response.json()) as ProfileExtractConversationStartResponse;
+
+        if (!response.ok || !result.ok || !result.data?.session) {
+          throw new Error(result.ok ? "开启新会话失败。" : (result.error ?? "开启新会话失败。"));
+        }
+
+        setSession(result.data.session);
+      } catch (startError) {
+        setError(startError instanceof Error ? startError.message : "开启新会话失败。");
+      }
+    });
+  }
+
   useEffect(() => {
     startTransition(async () => {
       try {
@@ -168,6 +207,24 @@ export function ProfileExtractConversation() {
                 </button>
               ))}
             </div>
+          </div>
+          <div className="ml-auto flex flex-wrap gap-2">
+            <button
+              className="rounded-2xl border border-slate-300/70 bg-white/70 px-4 py-2.5 text-sm text-slate-700 transition hover:border-slate-400 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={isPending}
+              onClick={scrollToJudgment}
+              type="button"
+            >
+              回看当前判断
+            </button>
+            <button
+              className="rounded-2xl border border-slate-300/70 bg-white/70 px-4 py-2.5 text-sm text-slate-700 transition hover:border-slate-400 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={isPending}
+              onClick={startNewConversation}
+              type="button"
+            >
+              开启新会话
+            </button>
           </div>
         </div>
 

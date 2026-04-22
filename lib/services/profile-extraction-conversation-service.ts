@@ -299,15 +299,28 @@ async function generateFinalDraft(args: {
 export async function createProfileExtractionConversationSession(
   requestedTier?: "FAST" | "BALANCED" | "DEEP",
   brainstormingMode: BrainstormingModeValue = "AUTO",
+  forceNew = false,
 ) {
   assertDatabaseConfigured();
 
   const existing = await getLatestActiveProfileExtractionConversationSession().catch(() => null);
-  if (existing) {
+  if (existing && !forceNew) {
     return {
       session: existing,
       requestedTier: requestedTier ?? "DEEP",
     };
+  }
+
+  if (forceNew) {
+    await prisma.profileExtractionSession.updateMany({
+      where: {
+        status: ProfileExtractionSessionStatus.ACTIVE,
+        sourceMode: ProfileExtractionSourceMode.CONVERSATIONAL,
+      },
+      data: {
+        status: ProfileExtractionSessionStatus.ABANDONED,
+      },
+    });
   }
 
   const transcript: ConversationTranscriptMessage[] = [

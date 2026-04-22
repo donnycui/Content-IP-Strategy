@@ -34,7 +34,11 @@ export async function POST(request: Request) {
   const payload = (await request.json().catch(() => ({}))) as ProfileExtractConversationStartRequest;
 
   try {
-    const result = await createProfileExtractionConversationSession(payload.requestedTier, payload.brainstormingMode);
+    const result = await createProfileExtractionConversationSession(
+      payload.requestedTier,
+      payload.brainstormingMode,
+      payload.forceNew,
+    );
 
     return NextResponse.json<ProfileExtractConversationStartResponse>({
       ok: true,

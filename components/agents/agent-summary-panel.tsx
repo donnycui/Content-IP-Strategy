@@ -16,6 +16,8 @@ function statusStyle(status: CenterAgentSummaryPayload["status"]) {
 }
 
 export function AgentSummaryPanel({ data }: { data: AgentStageShellData }) {
+  const isIpExtraction = data.definition.routeKey === "ip-extraction";
+
   return (
     <section className="panel px-6 py-6">
       <div className="space-y-4">
@@ -31,8 +33,23 @@ export function AgentSummaryPanel({ data }: { data: AgentStageShellData }) {
             <p className="section-desc">{data.definition.description}</p>
           </div>
 
-          <div className="subpanel px-4 py-4">
-            <p className="text-sm font-semibold text-slate-800">当前判断</p>
+          <div
+            className={`subpanel px-4 py-4 ${
+              isIpExtraction ? "border-sky-300/70 bg-sky-50/80 shadow-[inset_0_0_0_1px_rgba(93,136,178,0.22)]" : ""
+            }`}
+            id={isIpExtraction ? "ip-extraction-current-judgment" : undefined}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm font-semibold text-slate-800">当前判断</p>
+              {isIpExtraction ? (
+                <Link
+                  className="rounded-2xl border border-sky-300/60 bg-white/70 px-3 py-1.5 text-xs text-slate-700 transition hover:border-sky-400 hover:bg-white"
+                  href="#ip-extraction-current-judgment"
+                >
+                  回看当前判断
+                </Link>
+              ) : null}
+            </div>
             <p className="muted mt-2 text-sm leading-7">{data.agent.summary}</p>
             <p className="muted mt-2 text-sm leading-7">{data.agent.detail}</p>
           </div>

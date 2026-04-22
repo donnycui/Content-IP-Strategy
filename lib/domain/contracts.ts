@@ -78,6 +78,7 @@ export type ProfileExtractionConversationSession = {
 export type ProfileExtractConversationStartRequest = {
   requestedTier?: ModelTierValue;
   brainstormingMode?: BrainstormingModeValue;
+  forceNew?: boolean;
 };
 
 export type ProfileExtractConversationReplyRequest = {
