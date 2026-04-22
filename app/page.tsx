@@ -7,7 +7,7 @@ import { getCenterHomeData } from "@/lib/services/center-home-service";
 import { HomeSectionSkeleton } from "@/components/home/home-section-skeleton";
 import { Suspense } from "react";
 
-export const revalidate = 30;
+export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const center = await getCenterHomeData();
