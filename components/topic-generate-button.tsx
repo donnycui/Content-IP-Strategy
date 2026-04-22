@@ -5,12 +5,16 @@ import { useState, useTransition } from "react";
 import type { ModelTierValue, TopicsGenerateResponse } from "@/lib/domain/contracts";
 import { ModelTierPicker } from "@/components/model-tier-picker";
 
-export function TopicGenerateButton() {
+export function TopicGenerateButton({
+  requestedTier: requestedTierProp,
+}: {
+  requestedTier?: ModelTierValue;
+}) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState("");
   const [error, setError] = useState("");
-  const [requestedTier, setRequestedTier] = useState<ModelTierValue>("BALANCED");
+  const [requestedTier, setRequestedTier] = useState<ModelTierValue>(requestedTierProp ?? "BALANCED");
 
   function handleClick() {
     startTransition(async () => {
@@ -24,7 +28,7 @@ export function TopicGenerateButton() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            requestedTier,
+            requestedTier: requestedTierProp ?? requestedTier,
           }),
         });
 
@@ -44,7 +48,9 @@ export function TopicGenerateButton() {
 
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <ModelTierPicker capabilityKey="topic_generation" compact onChange={setRequestedTier} value={requestedTier} />
+      {requestedTierProp === undefined ? (
+        <ModelTierPicker capabilityKey="topic_generation" compact onChange={setRequestedTier} value={requestedTier} />
+      ) : null}
       <button
         className="rounded-2xl border border-sky-300/30 bg-sky-400/10 px-4 py-3 text-sm transition hover:border-sky-200 hover:bg-sky-400/20 disabled:cursor-not-allowed disabled:opacity-50"
         disabled={isPending}

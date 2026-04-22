@@ -29,6 +29,8 @@ export type ProfileExtractionConversationMessage = {
     brainstormingMode?: BrainstormingModeValue;
     responseMode?: "BRAINSTORMING" | "EXTRACTION";
     usedModel?: boolean;
+    userName?: string;
+    agentName?: string;
   };
 };
 
@@ -61,6 +63,10 @@ export type ProfileExtractionConversationSession = {
   sourceMode: "CONVERSATIONAL";
   brainstormingMode: BrainstormingModeValue;
   responseMode: "BRAINSTORMING" | "EXTRACTION";
+  participantNames: {
+    userName: string;
+    agentName: string;
+  };
   draftProfile: ProfileExtractionConversationDraft;
   transcript: ProfileExtractionConversationMessage[];
   currentQuestion: string | null;
@@ -82,7 +88,7 @@ export type ProfileExtractConversationReplyRequest = {
 };
 
 export type ProfileExtractConversationStartResponse = ApiResponse<{
-  session: ProfileExtractionConversationSession;
+  session: ProfileExtractionConversationSession | null;
 }>;
 
 export type ProfileExtractConversationReplyResponse = ApiResponse<{

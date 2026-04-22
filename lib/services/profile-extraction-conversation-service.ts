@@ -31,6 +31,8 @@ export type ConversationTranscriptMessage = {
     brainstormingMode?: BrainstormingModeValue;
     responseMode?: "BRAINSTORMING" | "EXTRACTION";
     usedModel?: boolean;
+    userName?: string;
+    agentName?: string;
   };
 };
 
@@ -40,6 +42,10 @@ export type ConversationSessionState = {
   sourceMode: "CONVERSATIONAL";
   brainstormingMode: BrainstormingModeValue;
   responseMode: "BRAINSTORMING" | "EXTRACTION";
+  participantNames: {
+    userName: string;
+    agentName: string;
+  };
   draftProfile: CreatorProfileDraft;
   transcript: ConversationTranscriptMessage[];
   currentQuestion: string | null;
@@ -55,6 +61,8 @@ type ConversationTurnModelOutput = {
   readyToFinalize?: boolean;
   reasoningSummary?: string;
   responseMode?: "BRAINSTORMING" | "EXTRACTION";
+  userName?: string;
+  agentName?: string;
 };
 
 const EMPTY_DRAFT: CreatorProfileDraft = {
@@ -71,6 +79,10 @@ const EMPTY_DRAFT: CreatorProfileDraft = {
 
 function nowIso() {
   return new Date().toISOString();
+}
+
+function firstQuestion() {
+  return "开始之前先约定一下：我怎么称呼你？你也可以顺手给我起个名字，后面我们就用这两个名字来对话。";
 }
 
 function normalizeDraftPatch(patch?: Partial<CreatorProfileDraft> | null) {
@@ -112,6 +124,17 @@ function getLatestBrainstormingMode(transcript: ConversationTranscriptMessage[])
   return systemEntries?.meta?.brainstormingMode ?? "AUTO";
 }
 
+function getParticipantNames(transcript: ConversationTranscriptMessage[]) {
+  const latest = [...transcript]
+    .reverse()
+    .find((item) => item.meta?.userName || item.meta?.agentName);
+
+  return {
+    userName: latest?.meta?.userName || "你",
+    agentName: latest?.meta?.agentName || "系统",
+  };
+}
+
 function hasEnoughDraftSignal(draft: CreatorProfileDraft) {
   const fields = [draft.positioning, draft.audience, draft.coreThemes, draft.growthGoal, draft.contentBoundaries].filter(
     (item) => item.trim().length > 0,
@@ -134,6 +157,25 @@ function ensureVisibleDraft(draft: CreatorProfileDraft) {
   };
 }
 
+function sanitizeConfirmationQuestion(nextQuestion: string, readyToFinalize?: boolean, questionType?: ConversationQuestionType) {
+  if (readyToFinalize || questionType === "CONFIRMATION" || nextQuestion.includes("如果你愿意")) {
+    return "信息已经足够。你可以点击下方“生成画像草案”；如果还想补一条关键内容，也可以继续回复。";
+  }
+
+  return nextQuestion;
+}
+
+function parseNamesFromMessage(text: string) {
+  const normalized = text.replace(/[，。；！]/g, " ").trim();
+  const userMatch = normalized.match(/(?:我叫|我是|叫我|可以叫我|你叫我)([^\s]+)/);
+  const agentMatch = normalized.match(/(?:你叫|给你起名|叫你|你可以叫)([^\s]+)/);
+
+  return {
+    userName: userMatch?.[1]?.trim() || "",
+    agentName: agentMatch?.[1]?.trim() || "",
+  };
+}
+
 function mapSessionState(session: {
   id: string;
   status: ProfileExtractionSessionStatus;
@@ -151,6 +193,7 @@ function mapSessionState(session: {
   const brainstormingMode = getLatestBrainstormingMode(transcript);
   const lastAssistant = [...transcript].reverse().find((item) => item.role === "assistant");
   const responseMode = lastAssistant?.meta?.responseMode ?? "EXTRACTION";
+  const participantNames = getParticipantNames(transcript);
 
   return {
     id: session.id,
@@ -158,6 +201,7 @@ function mapSessionState(session: {
     sourceMode: "CONVERSATIONAL",
     brainstormingMode,
     responseMode,
+    participantNames,
     draftProfile,
     transcript,
     currentQuestion: session.currentQuestion,
@@ -185,8 +229,9 @@ async function generateConversationTurn(args: {
       "每一轮你都必须先理解用户刚才真正表达了什么，再决定下一步最值得问什么。",
       "不要按固定字段顺序提问，不要像表单，不要像问卷。",
       "不要用空泛的知识型创作者模板去定义用户。",
+      "如果用户给出了双方称呼，请提取 userName 和 agentName。",
       "只有在你认为当前信息已经足够形成第一版画像时，才把 readyToFinalize 设为 true。",
-      '返回严格 JSON：{"draftProfile":{...},"nextQuestion":"...","questionType":"OPENING|EXPLORATION|AUDIENCE|CAPABILITY|POSITIONING|THEMES|BOUNDARY|GOAL|STYLE|CONFIRMATION","readyToFinalize":true|false,"reasoningSummary":"...","responseMode":"BRAINSTORMING|EXTRACTION"}',
+      '返回严格 JSON：{"draftProfile":{...},"nextQuestion":"...","questionType":"OPENING|EXPLORATION|AUDIENCE|CAPABILITY|POSITIONING|THEMES|BOUNDARY|GOAL|STYLE|CONFIRMATION","readyToFinalize":true|false,"reasoningSummary":"...","responseMode":"BRAINSTORMING|EXTRACTION","userName":"","agentName":""}',
     ].join("\n"),
     userPrompt: JSON.stringify(
       {
@@ -206,6 +251,22 @@ async function generateConversationTurn(args: {
   }
 
   return result;
+}
+
+export async function getLatestActiveProfileExtractionConversationSession() {
+  assertDatabaseConfigured();
+
+  const session = await prisma.profileExtractionSession.findFirst({
+    where: {
+      status: ProfileExtractionSessionStatus.ACTIVE,
+      sourceMode: ProfileExtractionSourceMode.CONVERSATIONAL,
+    },
+    orderBy: {
+      updatedAt: "desc",
+    },
+  });
+
+  return session ? mapSessionState(session) : null;
 }
 
 async function generateFinalDraft(args: {
@@ -241,6 +302,14 @@ export async function createProfileExtractionConversationSession(
 ) {
   assertDatabaseConfigured();
 
+  const existing = await getLatestActiveProfileExtractionConversationSession().catch(() => null);
+  if (existing) {
+    return {
+      session: existing,
+      requestedTier: requestedTier ?? "DEEP",
+    };
+  }
+
   const transcript: ConversationTranscriptMessage[] = [
     {
       role: "system",
@@ -248,37 +317,32 @@ export async function createProfileExtractionConversationSession(
       createdAt: nowIso(),
       meta: {
         brainstormingMode,
+        userName: "",
+        agentName: "招财",
+      },
+    },
+    {
+      role: "assistant",
+      content: firstQuestion(),
+      createdAt: nowIso(),
+      questionType: "OPENING",
+      meta: {
+        brainstormingMode,
+        responseMode: "BRAINSTORMING",
+        usedModel: false,
+        userName: "",
+        agentName: "招财",
       },
     },
   ];
-
-  const opening = await generateConversationTurn({
-    transcript,
-    draftProfile: EMPTY_DRAFT,
-    requestedTier,
-    brainstormingMode,
-    phase: "OPENING",
-  });
-
-  transcript.push({
-    role: "assistant",
-    content: opening.nextQuestion!.trim(),
-    createdAt: nowIso(),
-    questionType: opening.questionType ?? "OPENING",
-    meta: {
-      brainstormingMode,
-      responseMode: opening.responseMode,
-      usedModel: true,
-    },
-  });
 
   const session = await prisma.profileExtractionSession.create({
     data: {
       sourceMode: ProfileExtractionSourceMode.CONVERSATIONAL,
       transcriptJson: transcript,
-      draftProfileJson: mergeDraft(EMPTY_DRAFT, opening.draftProfile ?? null),
-      currentQuestion: opening.nextQuestion!.trim(),
-      questionType: opening.questionType ?? "OPENING",
+      draftProfileJson: EMPTY_DRAFT,
+      currentQuestion: firstQuestion(),
+      questionType: "OPENING",
       turnCount: 0,
       lastUserMessage: null,
     },
@@ -287,7 +351,7 @@ export async function createProfileExtractionConversationSession(
   return {
     session: {
       ...mapSessionState(session),
-      readyToFinalize: Boolean(opening.readyToFinalize),
+      readyToFinalize: false,
     },
     requestedTier: requestedTier ?? "DEEP",
   };
@@ -318,6 +382,8 @@ export async function replyToProfileExtractionConversationSession(input: {
     : [];
   const activeBrainstormingMode = input.brainstormingMode ?? getLatestBrainstormingMode(transcript);
   const userMessage = input.message?.trim() ?? "";
+  const currentNames = getParticipantNames(transcript);
+  const parsedNames = parseNamesFromMessage(userMessage);
 
   if (!input.skip && !userMessage) {
     throw new ServiceError("请输入回答内容，或选择跳过当前问题。", 400, "EMPTY_CONVERSATION_REPLY");
@@ -350,17 +416,28 @@ export async function replyToProfileExtractionConversationSession(input: {
     phase: "CONTINUE",
   });
 
-  const nextDraft = mergeDraft(draftProfile, modelTurn.draftProfile ?? null);
+  const nextDraft = mergeDraft(draftProfile, {
+    ...(modelTurn.draftProfile ?? null),
+    ...((modelTurn.userName?.trim() || parsedNames.userName) ? { name: modelTurn.userName?.trim() || parsedNames.userName } : {}),
+  });
+  const nextUserName = modelTurn.userName?.trim() || parsedNames.userName || currentNames.userName;
+  const nextAgentName = modelTurn.agentName?.trim() || parsedNames.agentName || currentNames.agentName || "招财";
 
   transcript.push({
     role: "assistant",
-    content: modelTurn.nextQuestion!.trim(),
+    content: sanitizeConfirmationQuestion(
+      modelTurn.nextQuestion!.trim(),
+      modelTurn.readyToFinalize,
+      modelTurn.questionType,
+    ),
     createdAt: nowIso(),
     questionType: modelTurn.questionType ?? "EXPLORATION",
     meta: {
       brainstormingMode: activeBrainstormingMode,
       responseMode: modelTurn.responseMode,
       usedModel: true,
+      userName: nextUserName,
+      agentName: nextAgentName,
     },
   });
 

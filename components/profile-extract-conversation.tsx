@@ -22,6 +22,10 @@ export function ProfileExtractConversation() {
   const [answer, setAnswer] = useState("");
   const [feedback, setFeedback] = useState("");
   const [error, setError] = useState("");
+  const participantNames = session?.participantNames ?? {
+    userName: "你",
+    agentName: "系统",
+  };
   const emptyDraft = {
     name: "",
     positioning: "",
@@ -38,6 +42,14 @@ export function ProfileExtractConversation() {
     startTransition(async () => {
       try {
         setError("");
+        const existingResponse = await fetch("/api/profile/extract/conversation");
+        const existingResult = (await existingResponse.json()) as ProfileExtractConversationStartResponse;
+
+        if (existingResponse.ok && existingResult.ok && existingResult.data?.session) {
+          setSession(existingResult.data.session);
+          return;
+        }
+
         const response = await fetch("/api/profile/extract/conversation", {
           method: "POST",
           headers: {
@@ -168,8 +180,13 @@ export function ProfileExtractConversation() {
           {session?.transcript
             .filter((item: ProfileExtractionConversationSession["transcript"][number]) => item.role !== "system")
             .map((item: ProfileExtractionConversationSession["transcript"][number], index: number) => (
-            <div className="subpanel px-4 py-4" key={`${item.role}-${index}-${item.createdAt}`}>
-              <p className="text-sm font-semibold text-slate-700">{item.role === "assistant" ? "系统" : "你"}</p>
+            <div
+              className={`subpanel px-4 py-4 ${item.role === "assistant" ? "" : "ml-auto text-right"}`}
+              key={`${item.role}-${index}-${item.createdAt}`}
+            >
+              <p className={`text-sm font-semibold text-slate-700 ${item.role === "assistant" ? "" : "text-right"}`}>
+                {item.role === "assistant" ? participantNames.agentName : participantNames.userName}
+              </p>
               <p className="muted mt-2 text-sm leading-7">{item.content}</p>
               {item.meta?.responseMode ? (
                 <p className="muted mt-2 text-xs leading-6">
