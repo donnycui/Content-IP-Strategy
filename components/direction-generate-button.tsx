@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import type { DirectionsGenerateResponse, ModelTierValue } from "@/lib/domain/contracts";
+import { getApiPath } from "@/lib/client-backend";
 import { ModelTierPicker } from "@/components/model-tier-picker";
 
 export function DirectionGenerateButton({
@@ -22,7 +23,7 @@ export function DirectionGenerateButton({
         setFeedback("");
         setError("");
 
-        const response = await fetch("/api/directions/generate", {
+        const response = await fetch(getApiPath("/directions/generate"), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

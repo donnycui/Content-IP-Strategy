@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import type { ModelTierValue, TopicsGenerateResponse } from "@/lib/domain/contracts";
+import { getApiPath } from "@/lib/client-backend";
 import { ModelTierPicker } from "@/components/model-tier-picker";
 
 export function TopicGenerateButton({
@@ -22,7 +23,7 @@ export function TopicGenerateButton({
         setFeedback("");
         setError("");
 
-        const response = await fetch("/api/topics/generate", {
+        const response = await fetch(getApiPath("/topics/generate"), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

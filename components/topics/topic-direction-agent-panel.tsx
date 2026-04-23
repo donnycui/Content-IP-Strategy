@@ -1,17 +1,11 @@
 import { DirectionGenerateButton } from "@/components/direction-generate-button";
 import { HomeSectionSkeleton } from "@/components/home/home-section-skeleton";
 import { LearningInsightsPanel } from "@/components/learning/learning-insights-panel";
-import { CandidatesListSection } from "@/components/candidates/candidates-list-section";
-import { CandidatesProfileSection } from "@/components/candidates/candidates-profile-section";
-import { TopicsListSection } from "@/components/topics/topics-list-section";
-import { TopicsProfileSection } from "@/components/topics/topics-profile-section";
 import { TopicDirectionActions } from "@/components/topics/topic-direction-actions";
+import { TopicDirectionWorkspaceClient } from "@/components/topics/topic-direction-workspace-client";
 import { Suspense } from "react";
-import { getTopicDirectionDashboard } from "@/lib/services/topic-direction-dashboard-service";
 
 export async function TopicDirectionAgentPanel() {
-  const dashboard = await getTopicDirectionDashboard();
-
   return (
     <section className="space-y-5">
       <section className="panel px-6 py-5">
@@ -28,20 +22,8 @@ export async function TopicDirectionAgentPanel() {
 
       <LearningInsightsPanel />
 
-      <Suspense fallback={<HomeSectionSkeleton compact />}>
-        <TopicsProfileSection profile={dashboard.profile} />
-      </Suspense>
-
       <Suspense fallback={<HomeSectionSkeleton />}>
-        <TopicsListSection directions={dashboard.directions} profileId={dashboard.profile.id} topics={dashboard.topics} />
-      </Suspense>
-
-      <Suspense fallback={<HomeSectionSkeleton compact />}>
-        <CandidatesProfileSection profile={dashboard.profile} />
-      </Suspense>
-
-      <Suspense fallback={<HomeSectionSkeleton />}>
-        <CandidatesListSection candidates={dashboard.topicCandidates} />
+        <TopicDirectionWorkspaceClient />
       </Suspense>
     </section>
   );

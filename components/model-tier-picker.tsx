@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { ModelCapabilityValue, ModelTierAccessResponse, ModelTierValue } from "@/lib/domain/contracts";
+import { getApiPath } from "@/lib/client-backend";
 
 const tierOptions: Array<{
   value: ModelTierValue;
@@ -27,7 +28,7 @@ export function ModelTierPicker(props: {
 
     async function loadTierAccess() {
       try {
-        const response = await fetch(`/api/model-tier-access?capabilityKey=${props.capabilityKey}`);
+        const response = await fetch(`${getApiPath("/model-tier-access")}?capabilityKey=${props.capabilityKey}`);
         const result = (await response.json()) as ModelTierAccessResponse;
 
         if (!response.ok || !result.ok || !result.data) {

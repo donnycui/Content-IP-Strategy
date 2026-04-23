@@ -10,6 +10,7 @@ import type {
   ProfileExtractionConversationSession,
   ProfileExtractConversationStartResponse,
 } from "@/lib/domain/contracts";
+import { getApiPath } from "@/lib/client-backend";
 import { ModelTierPicker } from "@/components/model-tier-picker";
 import { ProfileExtractDraftPreview } from "@/components/profile-extract-draft-preview";
 
@@ -53,7 +54,7 @@ export function ProfileExtractConversation() {
         setError("");
         setAnswer("");
 
-        const response = await fetch("/api/profile/extract/conversation", {
+        const response = await fetch(getApiPath("/profile/extract/conversation"), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -82,7 +83,7 @@ export function ProfileExtractConversation() {
     startTransition(async () => {
       try {
         setError("");
-        const existingResponse = await fetch("/api/profile/extract/conversation");
+        const existingResponse = await fetch(getApiPath("/profile/extract/conversation"));
         const existingResult = (await existingResponse.json()) as ProfileExtractConversationStartResponse;
 
         if (existingResponse.ok && existingResult.ok && existingResult.data?.session) {
@@ -109,7 +110,7 @@ export function ProfileExtractConversation() {
         setFeedback("");
         setError("");
 
-        const response = await fetch(`/api/profile/extract/conversation/${session.id}/reply`, {
+        const response = await fetch(getApiPath(`/profile/extract/conversation/${session.id}/reply`), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -146,7 +147,7 @@ export function ProfileExtractConversation() {
         setFeedback("");
         setError("");
 
-        const response = await fetch(`/api/profile/extract/conversation/${session.id}/finalize`, {
+        const response = await fetch(getApiPath(`/profile/extract/conversation/${session.id}/finalize`), {
           method: "POST",
         });
 

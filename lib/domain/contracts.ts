@@ -157,6 +157,17 @@ export type TopicCandidatesGenerateResponse = ApiResponse<{
   createdCount: number;
 }>;
 
+export type TopicDirectionDashboardPayload = {
+  profile: CreatorProfileRow;
+  directions: DirectionRow[];
+  topics: TopicRow[];
+  topicCandidates: TopicCandidateRow[];
+};
+
+export type TopicDirectionDashboardResponse = ApiResponse<{
+  dashboard: TopicDirectionDashboardPayload;
+}>;
+
 export type TopicCandidateStatusUpdateRequest = {
   status?: "KEPT" | "DEFERRED" | "REJECTED";
 };
