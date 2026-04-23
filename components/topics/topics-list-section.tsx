@@ -2,6 +2,8 @@ import Link from "next/link";
 import { getDirections } from "@/lib/direction-data";
 import { getActiveCreatorProfile, mockCreatorProfile } from "@/lib/profile-data";
 import { getTopics } from "@/lib/topic-data";
+import type { DirectionRow } from "@/lib/direction-data";
+import type { TopicRow } from "@/lib/topic-data";
 
 const topicStatusLabels = {
   ACTIVE: "活跃主题线",
@@ -9,9 +11,14 @@ const topicStatusLabels = {
   ARCHIVED: "已归档",
 } as const;
 
-export async function TopicsListSection() {
-  const profile = (await getActiveCreatorProfile()) ?? mockCreatorProfile;
-  const [topics, directions] = await Promise.all([getTopics(profile.id), getDirections(profile.id)]);
+export async function TopicsListSection(props?: {
+  profileId?: string;
+  topics?: TopicRow[];
+  directions?: DirectionRow[];
+}) {
+  const profile = props?.profileId ? null : (await getActiveCreatorProfile()) ?? mockCreatorProfile;
+  const topics = props?.topics ?? (await getTopics(props?.profileId ?? profile?.id));
+  const directions = props?.directions ?? (await getDirections(props?.profileId ?? profile?.id));
 
   const grouped = topics.reduce<Record<string, typeof topics>>((accumulator, topic) => {
     const key = topic.directionTitle ?? "未归入方向";

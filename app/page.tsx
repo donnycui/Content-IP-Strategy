@@ -8,6 +8,7 @@ import { HomeSectionSkeleton } from "@/components/home/home-section-skeleton";
 import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
+export const preferredRegion = "sfo1";
 
 export default async function HomePage() {
   const center = await getCenterHomeData();

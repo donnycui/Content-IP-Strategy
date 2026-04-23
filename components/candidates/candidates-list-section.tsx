@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ContentProjectCreateButton } from "@/components/content/content-project-create-button";
 import { TopicCandidateStatusActions } from "@/components/topic-candidate-status-actions";
 import { getTopicCandidates } from "@/lib/topic-candidate-data";
+import type { TopicCandidateRow } from "@/lib/topic-candidate-data";
 
 const priorityLabels = {
   PRIMARY: "优先推进",
@@ -22,8 +23,8 @@ const formatLabels = {
   SERIES_ENTRY: "专题系列入口",
 } as const;
 
-export async function CandidatesListSection() {
-  const candidates = await getTopicCandidates();
+export async function CandidatesListSection(props?: { candidates?: TopicCandidateRow[] }) {
+  const candidates = props?.candidates ?? (await getTopicCandidates());
 
   const groupedCandidates = candidates.reduce<Record<string, typeof candidates>>((accumulator, candidate) => {
     const key = candidate.directionTitle ?? "未归入方向";

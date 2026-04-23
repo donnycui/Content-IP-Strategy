@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { getActiveCreatorProfile, mockCreatorProfile } from "@/lib/profile-data";
+import type { CreatorProfileRow } from "@/lib/profile-data";
 
-export async function TopicsProfileSection() {
-  const profile = (await getActiveCreatorProfile()) ?? mockCreatorProfile;
+export async function TopicsProfileSection(props?: { profile?: CreatorProfileRow }) {
+  const profile = props?.profile ?? (await getActiveCreatorProfile()) ?? mockCreatorProfile;
 
   return (
     <section className="panel px-6 py-5">

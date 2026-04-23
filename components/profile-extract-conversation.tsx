@@ -19,6 +19,7 @@ export function ProfileExtractConversation() {
   const [requestedTier, setRequestedTier] = useState<ModelTierValue>("BALANCED");
   const [brainstormingMode, setBrainstormingMode] = useState<BrainstormingModeValue>("AUTO");
   const [session, setSession] = useState<ProfileExtractionConversationSession | null>(null);
+  const [checkedExistingSession, setCheckedExistingSession] = useState(false);
   const [answer, setAnswer] = useState("");
   const [feedback, setFeedback] = useState("");
   const [error, setError] = useState("");
@@ -45,7 +46,7 @@ export function ProfileExtractConversation() {
     });
   }
 
-  function startNewConversation() {
+  function startConversation(forceNew = false) {
     startTransition(async () => {
       try {
         setFeedback("");
@@ -60,7 +61,7 @@ export function ProfileExtractConversation() {
           body: JSON.stringify({
             requestedTier,
             brainstormingMode,
-            forceNew: true,
+            forceNew,
           }),
         });
 
@@ -86,29 +87,11 @@ export function ProfileExtractConversation() {
 
         if (existingResponse.ok && existingResult.ok && existingResult.data?.session) {
           setSession(existingResult.data.session);
-          return;
         }
-
-        const response = await fetch("/api/profile/extract/conversation", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            requestedTier,
-            brainstormingMode,
-          }),
-        });
-
-        const result = (await response.json()) as ProfileExtractConversationStartResponse;
-
-        if (!response.ok || !result.ok || !result.data?.session) {
-          throw new Error(result.ok ? "启动对话式提炼失败。" : (result.error ?? "启动对话式提炼失败。"));
-        }
-
-        setSession(result.data.session);
       } catch (startError) {
         setError(startError instanceof Error ? startError.message : "启动对话式提炼失败。");
+      } finally {
+        setCheckedExistingSession(true);
       }
     });
     // Only create the initial conversation once on mount.
@@ -220,7 +203,7 @@ export function ProfileExtractConversation() {
             <button
               className="rounded-2xl border border-slate-300/70 bg-white/70 px-4 py-2.5 text-sm text-slate-700 transition hover:border-slate-400 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
               disabled={isPending}
-              onClick={startNewConversation}
+              onClick={() => startConversation(true)}
               type="button"
             >
               开启新会话
@@ -233,26 +216,49 @@ export function ProfileExtractConversation() {
         </p>
 
         <div className="mt-6 xl:min-h-0 xl:flex-1 xl:overflow-y-auto xl:pr-2">
-          <div className="space-y-4">
-          {session?.transcript
-            .filter((item: ProfileExtractionConversationSession["transcript"][number]) => item.role !== "system")
-            .map((item: ProfileExtractionConversationSession["transcript"][number], index: number) => (
-            <div
-              className={`subpanel px-4 py-4 ${item.role === "assistant" ? "" : "ml-auto text-right"}`}
-              key={`${item.role}-${index}-${item.createdAt}`}
-            >
-              <p className={`text-sm font-semibold text-slate-700 ${item.role === "assistant" ? "" : "text-right"}`}>
-                {item.role === "assistant" ? participantNames.agentName : participantNames.userName}
-              </p>
-              <p className="muted mt-2 text-sm leading-7">{item.content}</p>
-              {item.meta?.responseMode ? (
-                <p className="muted mt-2 text-xs leading-6">
-                  当前模式：{item.meta.responseMode === "BRAINSTORMING" ? "共创发散" : "提炼收敛"}
-                </p>
-              ) : null}
+          {session ? (
+            <div className="space-y-4">
+              {session.transcript
+                .filter((item: ProfileExtractionConversationSession["transcript"][number]) => item.role !== "system")
+                .map((item: ProfileExtractionConversationSession["transcript"][number], index: number) => (
+                  <div
+                    className={`subpanel px-4 py-4 ${item.role === "assistant" ? "" : "ml-auto text-right"}`}
+                    key={`${item.role}-${index}-${item.createdAt}`}
+                  >
+                    <p className={`text-sm font-semibold text-slate-700 ${item.role === "assistant" ? "" : "text-right"}`}>
+                      {item.role === "assistant" ? participantNames.agentName : participantNames.userName}
+                    </p>
+                    <p className="muted mt-2 text-sm leading-7">{item.content}</p>
+                    {item.meta?.responseMode ? (
+                      <p className="muted mt-2 text-xs leading-6">
+                        当前模式：{item.meta.responseMode === "BRAINSTORMING" ? "共创发散" : "提炼收敛"}
+                      </p>
+                    ) : null}
+                  </div>
+                ))}
             </div>
-          ))}
-          </div>
+          ) : checkedExistingSession ? (
+            <div className="subpanel px-5 py-5">
+              <p className="text-sm font-semibold text-slate-800">准备开始新的 IP 提炼</p>
+              <p className="muted mt-2 text-sm leading-7">
+                当前没有进行中的会话。页面已经准备好了，你可以点击下方按钮开始新的提炼，而不是在首屏等待模型先生成问题。
+              </p>
+              <div className="mt-4">
+                <button
+                  className="rounded-2xl border border-sky-300/30 bg-sky-400/10 px-5 py-3 text-sm transition hover:border-sky-200 hover:bg-sky-400/20 disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={isPending}
+                  onClick={() => startConversation(false)}
+                  type="button"
+                >
+                  {isPending ? "启动中..." : "开始提炼"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="subpanel px-5 py-5">
+              <p className="muted text-sm leading-7">正在检查是否存在未完成的会话...</p>
+            </div>
+          )}
         </div>
 
         <div className="mt-5 border-t border-slate-200/80 pt-5">

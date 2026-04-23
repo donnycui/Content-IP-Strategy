@@ -7,8 +7,11 @@ import { TopicsListSection } from "@/components/topics/topics-list-section";
 import { TopicsProfileSection } from "@/components/topics/topics-profile-section";
 import { TopicDirectionActions } from "@/components/topics/topic-direction-actions";
 import { Suspense } from "react";
+import { getTopicDirectionDashboard } from "@/lib/services/topic-direction-dashboard-service";
 
 export async function TopicDirectionAgentPanel() {
+  const dashboard = await getTopicDirectionDashboard();
+
   return (
     <section className="space-y-5">
       <section className="panel px-6 py-5">
@@ -26,19 +29,19 @@ export async function TopicDirectionAgentPanel() {
       <LearningInsightsPanel />
 
       <Suspense fallback={<HomeSectionSkeleton compact />}>
-        <TopicsProfileSection />
+        <TopicsProfileSection profile={dashboard.profile} />
       </Suspense>
 
       <Suspense fallback={<HomeSectionSkeleton />}>
-        <TopicsListSection />
+        <TopicsListSection directions={dashboard.directions} profileId={dashboard.profile.id} topics={dashboard.topics} />
       </Suspense>
 
       <Suspense fallback={<HomeSectionSkeleton compact />}>
-        <CandidatesProfileSection />
+        <CandidatesProfileSection profile={dashboard.profile} />
       </Suspense>
 
       <Suspense fallback={<HomeSectionSkeleton />}>
-        <CandidatesListSection />
+        <CandidatesListSection candidates={dashboard.topicCandidates} />
       </Suspense>
     </section>
   );

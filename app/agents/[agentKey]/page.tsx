@@ -4,6 +4,7 @@ import { isAgentRouteKey } from "@/lib/center/agent-stage-config";
 import { getAgentStageShellData } from "@/lib/services/agent-stage-service";
 
 export const dynamic = "force-dynamic";
+export const preferredRegion = "sfo1";
 
 export default async function AgentStagePage({
   params,
