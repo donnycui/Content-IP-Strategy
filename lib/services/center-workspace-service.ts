@@ -86,6 +86,30 @@ export async function getActiveCenterWorkspace(): Promise<CenterWorkspaceRecord 
   }
 }
 
+export async function getCenterWorkspaceForRead(input?: {
+  creatorProfileId?: string | null;
+  currentAgentKey?: CenterAgentKeyValue;
+  recommendedActionLabel?: string | null;
+  recommendedActionHref?: string | null;
+  lastStageReason?: string | null;
+}): Promise<CenterWorkspaceRecord> {
+  const activeProfile = await getActiveCreatorProfile();
+  const creatorProfileId = input?.creatorProfileId !== undefined ? input.creatorProfileId : activeProfile?.id ?? null;
+  const existing = await getActiveCenterWorkspace();
+
+  if (existing) {
+    return existing;
+  }
+
+  return buildMockCenterWorkspace({
+    creatorProfileId,
+    currentAgentKey: input?.currentAgentKey,
+    recommendedActionLabel: input?.recommendedActionLabel,
+    recommendedActionHref: input?.recommendedActionHref,
+    lastStageReason: input?.lastStageReason,
+  });
+}
+
 export async function ensureActiveCenterWorkspace(input?: {
   creatorProfileId?: string | null;
   currentAgentKey?: CenterAgentKeyValue;

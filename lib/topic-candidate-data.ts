@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { getActiveCreatorProfile, mockCreatorProfile, type CreatorProfileRow } from "@/lib/profile-data";
 
@@ -41,7 +42,7 @@ export const mockTopicCandidates: TopicCandidateRow[] = [
   },
 ];
 
-export async function getTopicCandidates(creatorProfileId?: string): Promise<TopicCandidateRow[]> {
+export const getTopicCandidates = cache(async (creatorProfileId?: string): Promise<TopicCandidateRow[]> => {
   if (!process.env.DATABASE_URL) {
     return mockTopicCandidates;
   }
@@ -104,7 +105,7 @@ export async function getTopicCandidates(creatorProfileId?: string): Promise<Top
   } catch {
     return [];
   }
-}
+});
 
 export async function getActiveProfileOrMock(): Promise<CreatorProfileRow> {
   return (await getActiveCreatorProfile()) ?? mockCreatorProfile;

@@ -11,7 +11,7 @@ import { getContentProjectDetail } from "@/lib/services/content-project-service"
 import { upsertPlatformStrategyMemo } from "@/lib/services/platform-strategy-service";
 import { appendProfileEvolutionNote } from "@/lib/services/profile-service";
 import { getReviewDashboard } from "@/lib/services/review-snapshot-service";
-import { ensureActiveCenterWorkspace } from "@/lib/services/center-workspace-service";
+import { ensureActiveCenterWorkspace, getCenterWorkspaceForRead } from "@/lib/services/center-workspace-service";
 import { upsertActiveSharedMemoryRecord } from "@/lib/services/shared-memory-service";
 import { applyStyleEvolutionDecision } from "@/lib/services/style-skill-service";
 
@@ -279,7 +279,9 @@ export async function getEvolutionDashboard(): Promise<{
   decisions: EvolutionDecisionPayload[];
   latestReviews: ReviewSnapshotPayload[];
 }> {
-  const workspace = await ensureActiveCenterWorkspace();
+  const workspace = await getCenterWorkspaceForRead({
+    currentAgentKey: "EVOLUTION",
+  });
   const reviewDashboard = await getReviewDashboard();
 
   if (!process.env.DATABASE_URL) {

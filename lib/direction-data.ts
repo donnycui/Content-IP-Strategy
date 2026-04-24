@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { getActiveCreatorProfile, mockCreatorProfile, type CreatorProfileRow } from "@/lib/profile-data";
 
@@ -102,7 +103,7 @@ function deriveFallbackDirections(profile: CreatorProfileRow, signalTitles: stri
   ];
 }
 
-export async function getDirections(creatorProfileId?: string): Promise<DirectionRow[]> {
+export const getDirections = cache(async (creatorProfileId?: string): Promise<DirectionRow[]> => {
   if (!process.env.DATABASE_URL) {
     return mockDirections;
   }
@@ -168,4 +169,4 @@ export async function getDirections(creatorProfileId?: string): Promise<Directio
   } catch {
     return [];
   }
-}
+});

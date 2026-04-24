@@ -5,9 +5,8 @@ import type {
   CenterAgentSummaryPayload,
   CenterWorkspaceRecord,
 } from "@/lib/domain/contracts";
-import { getAgentThreadsForWorkspace } from "@/lib/services/agent-thread-service";
 import { buildAgentCards, getCenterStageSnapshot } from "@/lib/services/center-home-service";
-import { ensureActiveCenterWorkspace } from "@/lib/services/center-workspace-service";
+import { getCenterWorkspaceForRead } from "@/lib/services/center-workspace-service";
 
 type AgentLegacyLink = {
   label: string;
@@ -175,8 +174,9 @@ export function getAgentStageDefinition(routeKey: AgentRouteKey) {
 export async function getAgentStageShellData(routeKey: AgentRouteKey): Promise<AgentStageShellData> {
   const definition = getAgentStageDefinition(routeKey);
   const snapshot = await getCenterStageSnapshot();
-  const workspace = await ensureActiveCenterWorkspace();
-  const threads = await getAgentThreadsForWorkspace(workspace.id);
+  const workspace = await getCenterWorkspaceForRead({
+    currentAgentKey: CENTER_AGENT_KEY_BY_ROUTE[routeKey],
+  });
   const agentKey = CENTER_AGENT_KEY_BY_ROUTE[routeKey];
   const agents = buildAgentCards({
     hasProfile: snapshot.hasStructuredProfile,
@@ -192,12 +192,10 @@ export async function getAgentStageShellData(routeKey: AgentRouteKey): Promise<A
     throw new Error(`Agent summary missing for ${routeKey}.`);
   }
 
-  const thread = threads.find((item) => item.agentKey === agentKey) ?? null;
-
   return {
     workspace,
     agent,
-    thread,
+    thread: null,
     definition,
   };
 }

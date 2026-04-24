@@ -1,7 +1,7 @@
 import type { StyleRevisionPayload, StyleSamplePayload, StyleSkillDashboardPayload, StyleSkillPayload } from "@/lib/domain/contracts";
 import { getActiveCreatorProfile } from "@/lib/profile-data";
 import { prisma } from "@/lib/prisma";
-import { ensureActiveCenterWorkspace } from "@/lib/services/center-workspace-service";
+import { ensureActiveCenterWorkspace, getCenterWorkspaceForRead } from "@/lib/services/center-workspace-service";
 
 function buildFallbackRules(profile?: Awaited<ReturnType<typeof getActiveCreatorProfile>> | null) {
   const voice = profile?.voiceStyle || "先说人话，再说观点，最后给行动方向。";
@@ -116,8 +116,12 @@ function mapStyleRevision(record: {
 }
 
 export async function getActiveStyleSkill(): Promise<StyleSkillPayload> {
-  const workspace = await ensureActiveCenterWorkspace();
-  const profile = await getActiveCreatorProfile();
+  const [workspace, profile] = await Promise.all([
+    getCenterWorkspaceForRead({
+      currentAgentKey: "STYLE_CONTENT",
+    }),
+    getActiveCreatorProfile(),
+  ]);
   const fallback = buildFallbackStyleSkill({
     workspaceId: workspace.id,
     creatorProfileId: workspace.creatorProfileId,
@@ -192,7 +196,7 @@ export async function ensureActiveStyleSkill(): Promise<StyleSkillPayload> {
 }
 
 export async function getStyleSkillDashboard(): Promise<StyleSkillDashboardPayload> {
-  const skill = await ensureActiveStyleSkill();
+  const skill = await getActiveStyleSkill();
 
   if (!process.env.DATABASE_URL) {
     return {

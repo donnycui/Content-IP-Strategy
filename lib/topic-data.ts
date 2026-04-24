@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { getDirections, mockDirections, type DirectionRow } from "@/lib/direction-data";
 import { getObservationClusterLabel } from "@/lib/observation-clusters";
@@ -61,7 +62,7 @@ function shapeFallbackTopics(profile: CreatorProfileRow, directions: DirectionRo
     }));
 }
 
-export async function getTopics(creatorProfileId?: string): Promise<TopicRow[]> {
+export const getTopics = cache(async (creatorProfileId?: string): Promise<TopicRow[]> => {
   if (!process.env.DATABASE_URL) {
     return mockTopics;
   }
@@ -143,4 +144,4 @@ export async function getTopics(creatorProfileId?: string): Promise<TopicRow[]> 
   } catch {
     return [];
   }
-}
+});

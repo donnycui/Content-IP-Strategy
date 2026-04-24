@@ -5,7 +5,7 @@ import type {
 } from "@/lib/domain/contracts";
 import { prisma } from "@/lib/prisma";
 import { getStyleContentDashboard } from "@/lib/services/content-project-service";
-import { ensureActiveCenterWorkspace } from "@/lib/services/center-workspace-service";
+import { ensureActiveCenterWorkspace, getCenterWorkspaceForRead } from "@/lib/services/center-workspace-service";
 
 function mapReviewSnapshot(record: {
   id: string;
@@ -136,7 +136,12 @@ export async function createReviewSnapshot(input: ReviewSnapshotCreateRequest): 
 }
 
 export async function getReviewDashboard(): Promise<ReviewDashboardPayload> {
-  const [workspace, styleContent] = await Promise.all([ensureActiveCenterWorkspace(), getStyleContentDashboard()]);
+  const [workspace, styleContent] = await Promise.all([
+    getCenterWorkspaceForRead({
+      currentAgentKey: "DAILY_REVIEW",
+    }),
+    getStyleContentDashboard(),
+  ]);
 
   if (!process.env.DATABASE_URL) {
     return {

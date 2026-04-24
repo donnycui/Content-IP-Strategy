@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { buildFallbackProfileUpdateSuggestions } from "@/lib/profile-update-suggestion-generation";
 import { getActiveCreatorProfile, mockCreatorProfile, type CreatorProfileRow } from "@/lib/profile-data";
@@ -28,7 +29,8 @@ export const mockProfileUpdateSuggestions: ProfileUpdateSuggestionRow[] = [
   },
 ];
 
-export async function getProfileUpdateSuggestions(creatorProfileId?: string): Promise<ProfileUpdateSuggestionRow[]> {
+export const getProfileUpdateSuggestions = cache(
+  async (creatorProfileId?: string): Promise<ProfileUpdateSuggestionRow[]> => {
   if (!process.env.DATABASE_URL) {
     return mockProfileUpdateSuggestions;
   }
@@ -105,7 +107,7 @@ export async function getProfileUpdateSuggestions(creatorProfileId?: string): Pr
   } catch {
     return [];
   }
-}
+});
 
 export async function getActiveProfileForSuggestions(): Promise<CreatorProfileRow> {
   return (await getActiveCreatorProfile()) ?? mockCreatorProfile;

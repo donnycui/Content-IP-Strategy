@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 
 export type CreatorProfileRow = {
@@ -39,7 +40,7 @@ export const mockCreatorProfile: CreatorProfileRow = {
   pendingSuggestionsCount: 0,
 };
 
-export async function getActiveCreatorProfile(): Promise<CreatorProfileRow | null> {
+export const getActiveCreatorProfile = cache(async (): Promise<CreatorProfileRow | null> => {
   if (!process.env.DATABASE_URL) {
     return mockCreatorProfile;
   }
@@ -96,5 +97,4 @@ export async function getActiveCreatorProfile(): Promise<CreatorProfileRow | nul
   } catch {
     return null;
   }
-}
-
+});

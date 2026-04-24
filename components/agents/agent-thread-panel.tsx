@@ -61,7 +61,7 @@ export function AgentThreadPanel({ data }: { data: AgentStageShellData }) {
             <p className="text-sm font-semibold text-slate-800">当前阻塞 / 注意点</p>
             {blockers.length ? (
               <ul className="mt-3 space-y-2 text-sm leading-7 text-slate-700">
-                {blockers.map((item) => (
+                {blockers.map((item: string) => (
                   <li key={item}>- {item}</li>
                 ))}
               </ul>
@@ -74,7 +74,7 @@ export function AgentThreadPanel({ data }: { data: AgentStageShellData }) {
             <p className="text-sm font-semibold text-slate-800">线程内已挂靠资产</p>
             {assets.length ? (
               <ul className="mt-3 space-y-2 text-sm leading-7 text-slate-700">
-                {assets.map((item) => (
+                {assets.map((item: string) => (
                   <li key={item}>- {item}</li>
                 ))}
               </ul>

@@ -1,6 +1,6 @@
 import type { PlatformStrategyMemoPayload } from "@/lib/domain/contracts";
 import { prisma } from "@/lib/prisma";
-import { ensureActiveCenterWorkspace } from "@/lib/services/center-workspace-service";
+import { ensureActiveCenterWorkspace, getCenterWorkspaceForRead } from "@/lib/services/center-workspace-service";
 
 function mapPlatformStrategyMemo(record: {
   id: string;
@@ -102,7 +102,9 @@ export async function upsertPlatformStrategyMemo(input: {
 }
 
 export async function getPlatformStrategyMemos(): Promise<PlatformStrategyMemoPayload[]> {
-  const workspace = await ensureActiveCenterWorkspace();
+  const workspace = await getCenterWorkspaceForRead({
+    currentAgentKey: "EVOLUTION",
+  });
 
   if (!process.env.DATABASE_URL) {
     return [];

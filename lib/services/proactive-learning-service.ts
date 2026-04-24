@@ -3,7 +3,7 @@ import { getDirections } from "@/lib/direction-data";
 import { getActiveSharedMemoryRecords, upsertActiveSharedMemoryRecord } from "@/lib/services/shared-memory-service";
 import { getStyleSkillDashboard } from "@/lib/services/style-skill-service";
 import { getReviewDashboard } from "@/lib/services/review-snapshot-service";
-import { ensureActiveCenterWorkspace } from "@/lib/services/center-workspace-service";
+import { ensureActiveCenterWorkspace, getCenterWorkspaceForRead } from "@/lib/services/center-workspace-service";
 import { getTopics } from "@/lib/topic-data";
 
 function buildFallbackInsights(input: {
@@ -97,7 +97,9 @@ export async function generateLearningInsights(): Promise<{ createdCount: number
 }
 
 export async function getLearningInsightsDashboard(): Promise<LearningInsightsDashboardPayload> {
-  const workspace = await ensureActiveCenterWorkspace();
+  const workspace = await getCenterWorkspaceForRead({
+    currentAgentKey: "EVOLUTION",
+  });
   const [insights, activeRecords] = await Promise.all([
     deriveLearningInsights(),
     getActiveSharedMemoryRecords(workspace.id, ["LEARNING_INSIGHT"]),

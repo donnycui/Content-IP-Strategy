@@ -15,7 +15,7 @@ import { generateProjectAssets } from "@/lib/services/content-asset-service";
 import { ensureExportPublishRecords } from "@/lib/services/publish-record-service";
 import { getReviewSnapshotsByProjectId } from "@/lib/services/review-snapshot-service";
 import { ensureActiveStyleSkill } from "@/lib/services/style-skill-service";
-import { ensureActiveCenterWorkspace } from "@/lib/services/center-workspace-service";
+import { ensureActiveCenterWorkspace, getCenterWorkspaceForRead } from "@/lib/services/center-workspace-service";
 
 function mapContentProject(record: {
   id: string;
@@ -193,7 +193,9 @@ export async function createContentProjectFromTopicCandidate(candidateId?: strin
 }
 
 export async function getStyleContentDashboard(): Promise<StyleContentDashboardPayload> {
-  const workspace = await ensureActiveCenterWorkspace();
+  const workspace = await getCenterWorkspaceForRead({
+    currentAgentKey: "STYLE_CONTENT",
+  });
   const recommendedCandidates = (await getTopicCandidates()).slice(0, 4);
 
   if (!process.env.DATABASE_URL) {
