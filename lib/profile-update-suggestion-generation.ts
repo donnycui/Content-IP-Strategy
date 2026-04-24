@@ -45,12 +45,11 @@ function suggestNextStage(
 export async function generateProfileUpdateSuggestionsForProfile(
   profile: CreatorProfileRow,
 ): Promise<DraftProfileUpdateSuggestion[]> {
-  return generateProfileUpdateSuggestionsForProfileWithTier(profile);
+  return buildFallbackProfileUpdateSuggestions(profile);
 }
 
-export async function generateProfileUpdateSuggestionsForProfileWithTier(
+export async function buildFallbackProfileUpdateSuggestions(
   profile: CreatorProfileRow,
-  requestedTier?: "FAST" | "BALANCED" | "DEEP",
 ): Promise<DraftProfileUpdateSuggestion[]> {
   const [reviewSummary, topicCandidates, directions, topics] = await Promise.all([
     getReviewDashboard(),
@@ -124,6 +123,22 @@ export async function generateProfileUpdateSuggestionsForProfileWithTier(
   }
 
   const fallbackSuggestions = suggestions;
+
+  return fallbackSuggestions;
+}
+
+export async function generateProfileUpdateSuggestionsForProfileWithTier(
+  profile: CreatorProfileRow,
+  requestedTier?: "FAST" | "BALANCED" | "DEEP",
+): Promise<DraftProfileUpdateSuggestion[]> {
+  const [reviewSummary, topicCandidates, directions, topics] = await Promise.all([
+    getReviewDashboard(),
+    getTopicCandidates(profile.id),
+    getDirections(profile.id),
+    getTopics(profile.id),
+  ]);
+  const fallbackSuggestions = await buildFallbackProfileUpdateSuggestions(profile);
+  const keptCandidates = topicCandidates.filter((candidate) => candidate.status === "KEPT");
 
   const payload = await executeStructuredGeneration<ProfileEvolutionPayload>({
     capabilityKey: "profile_evolution",

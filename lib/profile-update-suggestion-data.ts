@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { generateProfileUpdateSuggestionsForProfile } from "@/lib/profile-update-suggestion-generation";
+import { buildFallbackProfileUpdateSuggestions } from "@/lib/profile-update-suggestion-generation";
 import { getActiveCreatorProfile, mockCreatorProfile, type CreatorProfileRow } from "@/lib/profile-data";
 
 export type ProfileUpdateSuggestionRow = {
@@ -61,7 +61,7 @@ export async function getProfileUpdateSuggestions(creatorProfileId?: string): Pr
     });
 
     if (!items.length) {
-      const fallback = await generateProfileUpdateSuggestionsForProfile({
+      const fallback = await buildFallbackProfileUpdateSuggestions({
         id: profile.id,
         name: profile.name,
         positioning: profile.positioning ?? "",
