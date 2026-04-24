@@ -49,18 +49,10 @@ function buildTopicSummary(direction: DirectionRow) {
   return `${direction.title} 这条主题线承接的是方向层已经确认的长期判断。下一步应该围绕它沉淀案例、方法和连续表达，而不是只做一次性选题。`;
 }
 
-export async function generateTopicsForProfile(
+export function buildFallbackTopicsForProfile(
   profile: CreatorProfileRow,
   directions: DirectionRow[],
-): Promise<DraftTopic[]> {
-  return generateTopicsForProfileWithTier(profile, directions);
-}
-
-export async function generateTopicsForProfileWithTier(
-  profile: CreatorProfileRow,
-  directions: DirectionRow[],
-  requestedTier?: "FAST" | "BALANCED" | "DEEP",
-): Promise<DraftTopic[]> {
+): DraftTopic[] {
   const fallbackDrafts: DraftTopic[] = directions.slice(0, 6).map((direction, index) => ({
     title: direction.title,
     summary: buildTopicSummary(direction),
@@ -71,6 +63,41 @@ export async function generateTopicsForProfileWithTier(
     secondaryObservationCluster: null,
     directionId: direction.id,
   }));
+
+  if (fallbackDrafts.length) {
+    return fallbackDrafts;
+  }
+
+  const firstTheme = profile.coreThemes.split(/[；;。]/).map((item) => item.trim()).filter(Boolean)[0] ?? "技术革命如何改写权力结构";
+  const fallbackClusterKey: ObservationClusterKey = "distribution_model_break";
+
+  return [
+    {
+      title: directions[0]?.title || getObservationClusterLabel(fallbackClusterKey) || "主题线待继续明确",
+      summary: `当前真实信号还不够密，但围绕“${firstTheme}”的主题线已经值得先建立一个观察容器，后续再用新信号填充它。`,
+      status: "WATCHING",
+      heatScore: 2.8,
+      signalCount: 0,
+      primaryObservationCluster: fallbackClusterKey,
+      secondaryObservationCluster: null,
+      directionId: directions[0]?.id ?? null,
+    },
+  ];
+}
+
+export async function generateTopicsForProfile(
+  profile: CreatorProfileRow,
+  directions: DirectionRow[],
+): Promise<DraftTopic[]> {
+  return buildFallbackTopicsForProfile(profile, directions);
+}
+
+export async function generateTopicsForProfileWithTier(
+  profile: CreatorProfileRow,
+  directions: DirectionRow[],
+  requestedTier?: "FAST" | "BALANCED" | "DEEP",
+): Promise<DraftTopic[]> {
+  const fallbackDrafts = buildFallbackTopicsForProfile(profile, directions);
 
   if (fallbackDrafts.length) {
     const payload = await executeStructuredGeneration<TopicGenerationPayload>({
@@ -146,19 +173,5 @@ export async function generateTopicsForProfileWithTier(
     return normalized.length ? normalized : fallbackDrafts;
   }
 
-  const firstTheme = profile.coreThemes.split(/[；;。]/).map((item) => item.trim()).filter(Boolean)[0] ?? "技术革命如何改写权力结构";
-  const fallbackClusterKey: ObservationClusterKey = "distribution_model_break";
-
-  return [
-    {
-      title: directions[0]?.title || getObservationClusterLabel(fallbackClusterKey) || "主题线待继续明确",
-      summary: `当前真实信号还不够密，但围绕“${firstTheme}”的主题线已经值得先建立一个观察容器，后续再用新信号填充它。`,
-      status: "WATCHING",
-      heatScore: 2.8,
-      signalCount: 0,
-      primaryObservationCluster: fallbackClusterKey,
-      secondaryObservationCluster: null,
-      directionId: directions[0]?.id ?? null,
-    },
-  ];
+  return fallbackDrafts;
 }

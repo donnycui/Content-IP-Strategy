@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getDirections, mockDirections, type DirectionRow } from "@/lib/direction-data";
 import { getObservationClusterLabel } from "@/lib/observation-clusters";
-import { generateTopicsForProfile } from "@/lib/topic-generation";
+import { buildFallbackTopicsForProfile } from "@/lib/topic-generation";
 import { getActiveCreatorProfile, mockCreatorProfile, type CreatorProfileRow } from "@/lib/profile-data";
 
 export type TopicRow = {
@@ -41,8 +41,9 @@ const mockTopics: TopicRow[] = [
 ];
 
 function shapeFallbackTopics(profile: CreatorProfileRow, directions: DirectionRow[]) {
-  return generateTopicsForProfile(profile, directions).then((drafts) =>
-    drafts.map((draft, index) => ({
+  const drafts = buildFallbackTopicsForProfile(profile, directions);
+
+  return drafts.map((draft, index) => ({
       id: `topic-fallback-${index + 1}`,
       creatorProfileId: profile.id,
       directionId: draft.directionId,
@@ -57,8 +58,7 @@ function shapeFallbackTopics(profile: CreatorProfileRow, directions: DirectionRo
         ? getObservationClusterLabel(draft.secondaryObservationCluster)
         : null,
       sampleSignals: [],
-    })),
-  );
+    }));
 }
 
 export async function getTopics(creatorProfileId?: string): Promise<TopicRow[]> {
