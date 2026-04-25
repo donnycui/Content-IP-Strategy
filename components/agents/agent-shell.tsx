@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { AgentRouteSkeleton } from "@/components/agents/agent-route-skeleton";
 import { AgentSummaryPanel } from "@/components/agents/agent-summary-panel";
 import { EvolutionAgentPanel } from "@/components/evolution/evolution-agent-panel";
-import { HomeSectionSkeleton } from "@/components/home/home-section-skeleton";
 import { CreatorProfileAgentPanel } from "@/components/profile/creator-profile-agent-panel";
 import { IpExtractionAgentPanel } from "@/components/profile/ip-extraction-agent-panel";
 import { ReviewAgentPanel } from "@/components/review/review-agent-panel";
@@ -27,7 +27,7 @@ export async function AgentShell({ data }: { data: AgentStageShellData }) {
       </section>
 
       <AgentSummaryPanel data={data} />
-      <Suspense fallback={<HomeSectionSkeleton />}>
+      <Suspense fallback={<AgentRouteSkeleton />}>
         {data.definition.routeKey === "ip-extraction" ? <IpExtractionAgentPanel /> : null}
         {data.definition.routeKey === "creator-profile" ? <CreatorProfileAgentPanel /> : null}
         {data.definition.routeKey === "topic-direction" ? <TopicDirectionAgentPanel /> : null}
