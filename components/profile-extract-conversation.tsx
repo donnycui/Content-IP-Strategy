@@ -47,6 +47,24 @@ export function ProfileExtractConversation() {
     });
   }
 
+  function normalizeActionError(error: unknown, fallback: string) {
+    if (!(error instanceof Error)) {
+      return fallback;
+    }
+
+    const message = error.message?.trim() || fallback;
+
+    if (
+      message === "Not Found" ||
+      message.includes("Route POST:/api/profile/extract/conversation not found") ||
+      message.includes("Route GET:/api/profile/extract/conversation not found")
+    ) {
+      return "IP 提炼服务当前没有正确接通，请稍后重试。";
+    }
+
+    return message;
+  }
+
   function startConversation(forceNew = false) {
     startTransition(async () => {
       try {
@@ -74,7 +92,7 @@ export function ProfileExtractConversation() {
 
         setSession(result.data.session);
       } catch (startError) {
-        setError(startError instanceof Error ? startError.message : "开启新会话失败。");
+        setError(normalizeActionError(startError, "开启新会话失败。"));
       }
     });
   }
@@ -90,7 +108,7 @@ export function ProfileExtractConversation() {
           setSession(existingResult.data.session);
         }
       } catch (startError) {
-        setError(startError instanceof Error ? startError.message : "启动对话式提炼失败。");
+        setError(normalizeActionError(startError, "启动对话式提炼失败。"));
       } finally {
         setCheckedExistingSession(true);
       }
@@ -132,7 +150,7 @@ export function ProfileExtractConversation() {
         setSession(result.data.session);
         setAnswer("");
       } catch (replyError) {
-        setError(replyError instanceof Error ? replyError.message : "提交回答失败。");
+        setError(normalizeActionError(replyError, "提交回答失败。"));
       }
     });
   }
@@ -161,7 +179,7 @@ export function ProfileExtractConversation() {
         router.push("/agents/creator-profile");
         router.refresh();
       } catch (finalizeError) {
-        setError(finalizeError instanceof Error ? finalizeError.message : "生成最终画像失败。");
+        setError(normalizeActionError(finalizeError, "生成最终画像失败。"));
       }
     });
   }
@@ -262,45 +280,52 @@ export function ProfileExtractConversation() {
           )}
         </div>
 
-        <div className="mt-5 border-t border-slate-200/80 pt-5">
-          <label className="grid gap-2">
-            <span className="text-sm font-medium text-slate-700">你的回答</span>
-            <textarea
-              className="min-h-36 rounded-3xl border px-4 py-4 text-sm leading-7 outline-none transition"
-              onChange={(event) => setAnswer(event.target.value)}
-              placeholder={session ? "直接回答当前问题，尽量具体。" : "正在启动对话式提炼..."}
-              value={answer}
-            />
-          </label>
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              className="rounded-2xl border border-sky-300/30 bg-sky-400/10 px-5 py-3 text-sm transition hover:border-sky-200 hover:bg-sky-400/20 disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={isPending || !session}
-              onClick={() => submitReply(false)}
-              type="button"
-            >
-              {isPending ? "提交中..." : "提交回答"}
-            </button>
-            <button
-              className="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm transition hover:border-white/20 disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={isPending || !session}
-              onClick={() => submitReply(true)}
-              type="button"
-            >
-              跳过当前问题
-            </button>
-            <button
-              className="rounded-2xl border border-emerald-300/30 bg-emerald-400/10 px-5 py-3 text-sm transition hover:border-emerald-200 hover:bg-emerald-400/20 disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={isPending || !session || session.turnCount === 0}
-              onClick={finalizeConversation}
-              type="button"
-            >
-              生成画像草案
-            </button>
+        {session ? (
+          <div className="mt-5 border-t border-slate-200/80 pt-5">
+            <label className="grid gap-2">
+              <span className="text-sm font-medium text-slate-700">你的回答</span>
+              <textarea
+                className="min-h-36 rounded-3xl border px-4 py-4 text-sm leading-7 outline-none transition"
+                onChange={(event) => setAnswer(event.target.value)}
+                placeholder="直接回答当前问题，尽量具体。"
+                value={answer}
+              />
+            </label>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                className="rounded-2xl border border-sky-300/30 bg-sky-400/10 px-5 py-3 text-sm transition hover:border-sky-200 hover:bg-sky-400/20 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={isPending}
+                onClick={() => submitReply(false)}
+                type="button"
+              >
+                {isPending ? "提交中..." : "提交回答"}
+              </button>
+              <button
+                className="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm transition hover:border-white/20 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={isPending}
+                onClick={() => submitReply(true)}
+                type="button"
+              >
+                跳过当前问题
+              </button>
+              <button
+                className="rounded-2xl border border-emerald-300/30 bg-emerald-400/10 px-5 py-3 text-sm transition hover:border-emerald-200 hover:bg-emerald-400/20 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={isPending || session.turnCount === 0}
+                onClick={finalizeConversation}
+                type="button"
+              >
+                生成画像草案
+              </button>
+              {feedback ? <span className="text-sm text-emerald-700">{feedback}</span> : null}
+              {error ? <span className="text-sm text-rose-600">{error}</span> : null}
+            </div>
+          </div>
+        ) : (
+          <div className="mt-5 border-t border-slate-200/80 pt-5">
             {feedback ? <span className="text-sm text-emerald-700">{feedback}</span> : null}
             {error ? <span className="text-sm text-rose-600">{error}</span> : null}
           </div>
-        </div>
+        )}
       </section>
 
       <ProfileExtractDraftPreview draft={session?.draftProfile ?? emptyDraft} />

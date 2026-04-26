@@ -90,15 +90,38 @@ function normalizeDraftPatch(patch?: Partial<CreatorProfileDraft> | null) {
     return {};
   }
 
+  const normalizeText = (value: unknown) => {
+    if (typeof value === "string") {
+      return value.trim();
+    }
+
+    if (Array.isArray(value)) {
+      return value
+        .map((item) => (typeof item === "string" ? item.trim() : String(item ?? "").trim()))
+        .filter(Boolean)
+        .join("；");
+    }
+
+    if (value && typeof value === "object") {
+      return JSON.stringify(value);
+    }
+
+    if (value === null || value === undefined) {
+      return "";
+    }
+
+    return String(value).trim();
+  };
+
   return {
-    name: patch.name?.trim() ?? "",
-    positioning: patch.positioning?.trim() ?? "",
-    persona: patch.persona?.trim() ?? "",
-    audience: patch.audience?.trim() ?? "",
-    coreThemes: patch.coreThemes?.trim() ?? "",
-    voiceStyle: patch.voiceStyle?.trim() ?? "",
-    growthGoal: patch.growthGoal?.trim() ?? "",
-    contentBoundaries: patch.contentBoundaries?.trim() ?? "",
+    name: normalizeText(patch.name),
+    positioning: normalizeText(patch.positioning),
+    persona: normalizeText(patch.persona),
+    audience: normalizeText(patch.audience),
+    coreThemes: normalizeText(patch.coreThemes),
+    voiceStyle: normalizeText(patch.voiceStyle),
+    growthGoal: normalizeText(patch.growthGoal),
+    contentBoundaries: normalizeText(patch.contentBoundaries),
     currentStage: patch.currentStage ?? "EXPLORING",
   };
 }
