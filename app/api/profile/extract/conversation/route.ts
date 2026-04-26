@@ -37,6 +37,7 @@ export async function POST(request: Request) {
     const result = await createProfileExtractionConversationSession(
       payload.requestedTier,
       payload.brainstormingMode,
+      payload.extractionConstraint,
       payload.forceNew,
     );
 

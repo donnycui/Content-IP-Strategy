@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type {
   BrainstormingModeValue,
+  ExtractionConstraintValue,
   ModelTierValue,
   ProfileExtractConversationFinalizeResponse,
   ProfileExtractConversationReplyResponse,
@@ -19,6 +20,7 @@ export function ProfileExtractConversation() {
   const [isPending, startTransition] = useTransition();
   const [requestedTier, setRequestedTier] = useState<ModelTierValue>("BALANCED");
   const [brainstormingMode, setBrainstormingMode] = useState<BrainstormingModeValue>("AUTO");
+  const [extractionConstraint, setExtractionConstraint] = useState<ExtractionConstraintValue>("STRONG");
   const [session, setSession] = useState<ProfileExtractionConversationSession | null>(null);
   const [checkedExistingSession, setCheckedExistingSession] = useState(false);
   const [answer, setAnswer] = useState("");
@@ -80,6 +82,7 @@ export function ProfileExtractConversation() {
           body: JSON.stringify({
             requestedTier,
             brainstormingMode,
+            extractionConstraint,
             forceNew,
           }),
         });
@@ -106,6 +109,7 @@ export function ProfileExtractConversation() {
 
         if (existingResponse.ok && existingResult.ok && existingResult.data?.session) {
           setSession(existingResult.data.session);
+          setExtractionConstraint(existingResult.data.session.extractionConstraint);
         }
       } catch (startError) {
         setError(normalizeActionError(startError, "启动对话式提炼失败。"));
@@ -138,6 +142,7 @@ export function ProfileExtractConversation() {
             skip,
             requestedTier,
             brainstormingMode,
+            extractionConstraint,
           }),
         });
 
@@ -210,6 +215,29 @@ export function ProfileExtractConversation() {
               ))}
             </div>
           </div>
+          <div className="grid gap-2">
+            <span className="text-sm font-medium text-slate-700">提炼约束</span>
+            <div className="flex flex-wrap gap-2">
+              {(
+                [
+                  { value: "STRONG", label: "强约束" },
+                  { value: "MEDIUM", label: "中等约束" },
+                  { value: "WEAK", label: "弱约束" },
+                ] as Array<{ value: ExtractionConstraintValue; label: string }>
+              ).map((item) => (
+                <button
+                  className={`pill transition ${
+                    extractionConstraint === item.value ? "pill-active" : "hover:border-sky-400 hover:text-slate-800"
+                  }`}
+                  key={item.value}
+                  onClick={() => setExtractionConstraint(item.value)}
+                  type="button"
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="ml-auto flex flex-wrap gap-2">
             <button
               className="rounded-2xl border border-slate-300/70 bg-white/70 px-4 py-2.5 text-sm text-slate-700 transition hover:border-slate-400 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
@@ -232,6 +260,9 @@ export function ProfileExtractConversation() {
 
         <p className="muted mt-3 text-sm leading-7">
           `OFF` 直接提炼，`AUTO` 系统自动判断是否先共创，`ON` 先发散再收敛。
+        </p>
+        <p className="muted mt-2 text-sm leading-7">
+          默认强约束，系统会尽量把方向、人设、受众、表达形式和平台风格偏好都聊到。
         </p>
 
         <div className="mt-6 xl:min-h-0 xl:flex-1 xl:overflow-y-auto xl:pr-2">
@@ -310,7 +341,7 @@ export function ProfileExtractConversation() {
               </button>
               <button
                 className="rounded-2xl border border-emerald-300/30 bg-emerald-400/10 px-5 py-3 text-sm transition hover:border-emerald-200 hover:bg-emerald-400/20 disabled:cursor-not-allowed disabled:opacity-50"
-                disabled={isPending || session.turnCount === 0}
+                disabled={isPending || !session.readyToFinalize}
                 onClick={finalizeConversation}
                 type="button"
               >

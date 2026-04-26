@@ -27,6 +27,7 @@ export type ProfileExtractionConversationMessage = {
   skipped?: boolean;
   meta?: {
     brainstormingMode?: BrainstormingModeValue;
+    extractionConstraint?: ExtractionConstraintValue;
     responseMode?: "BRAINSTORMING" | "EXTRACTION";
     usedModel?: boolean;
     userName?: string;
@@ -35,6 +36,14 @@ export type ProfileExtractionConversationMessage = {
 };
 
 export type BrainstormingModeValue = "OFF" | "AUTO" | "ON";
+export type ExtractionConstraintValue = "STRONG" | "MEDIUM" | "WEAK";
+export type InterviewCoverageStatusValue = "UNTOUCHED" | "TOUCHED" | "SUFFICIENT";
+export type InterviewCoverageKeyValue =
+  | "DIRECTION"
+  | "PERSONA"
+  | "AUDIENCE"
+  | "EXPRESSION_FORMAT"
+  | "PLATFORM_STYLE";
 export type ModelCapabilityValue =
   | "signal_scoring"
   | "ip_extraction_interview"
@@ -62,11 +71,13 @@ export type ProfileExtractionConversationSession = {
   status: "ACTIVE" | "COMPLETED" | "ABANDONED";
   sourceMode: "CONVERSATIONAL";
   brainstormingMode: BrainstormingModeValue;
+  extractionConstraint: ExtractionConstraintValue;
   responseMode: "BRAINSTORMING" | "EXTRACTION";
   participantNames: {
     userName: string;
     agentName: string;
   };
+  coverage: Record<InterviewCoverageKeyValue, InterviewCoverageStatusValue>;
   draftProfile: ProfileExtractionConversationDraft;
   transcript: ProfileExtractionConversationMessage[];
   currentQuestion: string | null;
@@ -78,6 +89,7 @@ export type ProfileExtractionConversationSession = {
 export type ProfileExtractConversationStartRequest = {
   requestedTier?: ModelTierValue;
   brainstormingMode?: BrainstormingModeValue;
+  extractionConstraint?: ExtractionConstraintValue;
   forceNew?: boolean;
 };
 
@@ -86,6 +98,7 @@ export type ProfileExtractConversationReplyRequest = {
   skip?: boolean;
   requestedTier?: ModelTierValue;
   brainstormingMode?: BrainstormingModeValue;
+  extractionConstraint?: ExtractionConstraintValue;
 };
 
 export type ProfileExtractConversationStartResponse = ApiResponse<{

@@ -3,7 +3,12 @@ import {
   ProfileExtractionSessionStatus,
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import type { BrainstormingModeValue } from "@/lib/domain/contracts";
+import type {
+  BrainstormingModeValue,
+  ExtractionConstraintValue,
+  InterviewCoverageKeyValue,
+  InterviewCoverageStatusValue,
+} from "@/lib/domain/contracts";
 import type { CreatorProfileDraft } from "@/lib/profile-data";
 import { activateCreatorProfileDraft, assertDatabaseConfigured } from "@/lib/services/profile-service";
 import { executeStructuredGeneration } from "@/lib/services/structured-generation-service";
@@ -29,6 +34,7 @@ export type ConversationTranscriptMessage = {
   skipped?: boolean;
   meta?: {
     brainstormingMode?: BrainstormingModeValue;
+    extractionConstraint?: ExtractionConstraintValue;
     responseMode?: "BRAINSTORMING" | "EXTRACTION";
     usedModel?: boolean;
     userName?: string;
@@ -41,11 +47,13 @@ export type ConversationSessionState = {
   status: "ACTIVE" | "COMPLETED" | "ABANDONED";
   sourceMode: "CONVERSATIONAL";
   brainstormingMode: BrainstormingModeValue;
+  extractionConstraint: ExtractionConstraintValue;
   responseMode: "BRAINSTORMING" | "EXTRACTION";
   participantNames: {
     userName: string;
     agentName: string;
   };
+  coverage: Record<InterviewCoverageKeyValue, InterviewCoverageStatusValue>;
   draftProfile: CreatorProfileDraft;
   transcript: ConversationTranscriptMessage[];
   currentQuestion: string | null;
@@ -77,12 +85,20 @@ const EMPTY_DRAFT: CreatorProfileDraft = {
   currentStage: "EXPLORING",
 };
 
+const EMPTY_COVERAGE: Record<InterviewCoverageKeyValue, InterviewCoverageStatusValue> = {
+  DIRECTION: "UNTOUCHED",
+  PERSONA: "UNTOUCHED",
+  AUDIENCE: "UNTOUCHED",
+  EXPRESSION_FORMAT: "UNTOUCHED",
+  PLATFORM_STYLE: "UNTOUCHED",
+};
+
 function nowIso() {
   return new Date().toISOString();
 }
 
 function firstQuestion() {
-  return "开始之前先约定一下：我怎么称呼你？你也可以顺手给我起个名字，后面我们就用这两个名字来对话。";
+  return "开始之前先约定一下：我怎么称呼你？你也可以顺手给我起个名字。然后请你先用一小段话做个自我介绍，尽量一起讲 4 件事：你的职业背景、你想打造什么方向的 IP、你现在最初的想法、以及你为什么现在想做这件事。";
 }
 
 function normalizeDraftPatch(patch?: Partial<CreatorProfileDraft> | null) {
@@ -147,6 +163,11 @@ function getLatestBrainstormingMode(transcript: ConversationTranscriptMessage[])
   return systemEntries?.meta?.brainstormingMode ?? "AUTO";
 }
 
+function getLatestExtractionConstraint(transcript: ConversationTranscriptMessage[]) {
+  const systemEntries = [...transcript].reverse().find((item) => item.role === "system" && item.meta?.extractionConstraint);
+  return systemEntries?.meta?.extractionConstraint ?? "STRONG";
+}
+
 function getParticipantNames(transcript: ConversationTranscriptMessage[]) {
   const latest = [...transcript]
     .reverse()
@@ -158,12 +179,154 @@ function getParticipantNames(transcript: ConversationTranscriptMessage[]) {
   };
 }
 
-function hasEnoughDraftSignal(draft: CreatorProfileDraft) {
-  const fields = [draft.positioning, draft.audience, draft.coreThemes, draft.growthGoal, draft.contentBoundaries].filter(
-    (item) => item.trim().length > 0,
-  );
+function hasLength(value: string, min: number) {
+  return value.trim().length >= min;
+}
 
-  return fields.length >= 3;
+function countKeywords(text: string, keywords: string[]) {
+  return keywords.filter((keyword) => text.includes(keyword)).length;
+}
+
+function buildCoverage(input: {
+  draft: CreatorProfileDraft;
+  transcript: ConversationTranscriptMessage[];
+}) {
+  const userText = input.transcript
+    .filter((item) => item.role === "user")
+    .map((item) => item.content)
+    .join("\n");
+
+  const formatKeywordCount = countKeywords(userText, [
+    "短视频",
+    "长视频",
+    "视频",
+    "图文",
+    "直播",
+    "口播",
+    "长文",
+    "文章",
+    "播客",
+    "专栏",
+    "栏目",
+    "系列",
+  ]);
+  const platformKeywordCount = countKeywords(userText, [
+    "小红书",
+    "公众号",
+    "视频号",
+    "抖音",
+    "快手",
+    "B站",
+    "知乎",
+    "微博",
+  ]);
+  const styleKeywordCount = countKeywords(userText, [
+    "风格",
+    "调性",
+    "语气",
+    "口吻",
+    "硬核",
+    "轻松",
+    "专业",
+    "幽默",
+    "真实体验",
+    "避坑",
+    "测评",
+    "表达",
+  ]);
+
+  const coverage = { ...EMPTY_COVERAGE };
+
+  coverage.DIRECTION = hasLength(input.draft.positioning, 24) || hasLength(input.draft.coreThemes, 16)
+    ? "SUFFICIENT"
+    : hasLength(input.draft.positioning, 6) || hasLength(input.draft.coreThemes, 6) || hasLength(input.draft.growthGoal, 6)
+      ? "TOUCHED"
+      : "UNTOUCHED";
+
+  coverage.PERSONA = hasLength(input.draft.persona, 20) || hasLength(input.draft.voiceStyle, 10)
+    ? "SUFFICIENT"
+    : hasLength(input.draft.persona, 6) || hasLength(input.draft.voiceStyle, 6)
+      ? "TOUCHED"
+      : "UNTOUCHED";
+
+  coverage.AUDIENCE = hasLength(input.draft.audience, 12)
+    ? "SUFFICIENT"
+    : hasLength(input.draft.audience, 4)
+      ? "TOUCHED"
+      : "UNTOUCHED";
+
+  coverage.EXPRESSION_FORMAT = formatKeywordCount >= 2 ? "SUFFICIENT" : formatKeywordCount >= 1 ? "TOUCHED" : "UNTOUCHED";
+
+  coverage.PLATFORM_STYLE =
+    platformKeywordCount >= 1 && styleKeywordCount >= 1
+      ? "SUFFICIENT"
+      : platformKeywordCount >= 1 || styleKeywordCount >= 1
+        ? "TOUCHED"
+        : "UNTOUCHED";
+
+  return coverage;
+}
+
+function canFinalizeConversation(input: {
+  extractionConstraint: ExtractionConstraintValue;
+  coverage: Record<InterviewCoverageKeyValue, InterviewCoverageStatusValue>;
+  turnCount: number;
+}) {
+  const isSufficient = (key: InterviewCoverageKeyValue) => input.coverage[key] === "SUFFICIENT";
+  const isTouched = (key: InterviewCoverageKeyValue) =>
+    input.coverage[key] === "SUFFICIENT" || input.coverage[key] === "TOUCHED";
+
+  if (input.extractionConstraint === "STRONG") {
+    return (
+      input.turnCount >= 6 &&
+      isSufficient("DIRECTION") &&
+      isSufficient("PERSONA") &&
+      isSufficient("AUDIENCE") &&
+      isSufficient("EXPRESSION_FORMAT") &&
+      isSufficient("PLATFORM_STYLE")
+    );
+  }
+
+  if (input.extractionConstraint === "MEDIUM") {
+    return (
+      input.turnCount >= 4 &&
+      isSufficient("DIRECTION") &&
+      isSufficient("PERSONA") &&
+      isSufficient("AUDIENCE") &&
+      ((isSufficient("EXPRESSION_FORMAT") && isTouched("PLATFORM_STYLE")) ||
+        (isSufficient("PLATFORM_STYLE") && isTouched("EXPRESSION_FORMAT")))
+    );
+  }
+
+  const coreSufficientCount = ["DIRECTION", "PERSONA", "AUDIENCE"].filter((key) =>
+    isSufficient(key as InterviewCoverageKeyValue),
+  ).length;
+
+  return input.turnCount >= 3 && coreSufficientCount >= 2 && (isTouched("EXPRESSION_FORMAT") || isTouched("PLATFORM_STYLE"));
+}
+
+function getCoverageGapPrompt(coverage: Record<InterviewCoverageKeyValue, InterviewCoverageStatusValue>) {
+  if (coverage.DIRECTION !== "SUFFICIENT") {
+    return "我们还没把方向聊透。你最希望别人因为你输出哪类判断、经验或价值而记住你？";
+  }
+
+  if (coverage.PERSONA !== "SUFFICIENT") {
+    return "方向已经有了，但你这个人为什么值得信还没聊透。你最能建立可信度的背景、经历或判断标准是什么？";
+  }
+
+  if (coverage.AUDIENCE !== "SUFFICIENT") {
+    return "你想影响谁这件事还不够清楚。你最想服务的那群人是谁，他们现在最典型的问题是什么？";
+  }
+
+  if (coverage.EXPRESSION_FORMAT !== "SUFFICIENT") {
+    return "还有一个关键点没聊透：你更适合用什么形式表达？比如短视频、图文、长文、直播，哪些是主阵地，哪些你不想碰？";
+  }
+
+  if (coverage.PLATFORM_STYLE !== "SUFFICIENT") {
+    return "最后还差平台风格偏好。比如小红书图文、短视频、公众号或 B 站，你分别更想用什么风格和语气去表达？";
+  }
+
+  return "如果还想补一条关键内容，可以继续回复；否则可以直接生成画像草案。";
 }
 
 function ensureVisibleDraft(draft: CreatorProfileDraft) {
@@ -214,23 +377,34 @@ function mapSessionState(session: {
     ? (session.transcriptJson as ConversationTranscriptMessage[])
     : [];
   const brainstormingMode = getLatestBrainstormingMode(transcript);
+  const extractionConstraint = getLatestExtractionConstraint(transcript);
   const lastAssistant = [...transcript].reverse().find((item) => item.role === "assistant");
   const responseMode = lastAssistant?.meta?.responseMode ?? "EXTRACTION";
   const participantNames = getParticipantNames(transcript);
+  const coverage = buildCoverage({
+    draft: draftProfile,
+    transcript,
+  });
 
   return {
     id: session.id,
     status: session.status,
     sourceMode: "CONVERSATIONAL",
     brainstormingMode,
+    extractionConstraint,
     responseMode,
     participantNames,
+    coverage,
     draftProfile,
     transcript,
     currentQuestion: session.currentQuestion,
     questionType: (session.questionType as ConversationQuestionType | null) ?? null,
     turnCount: session.turnCount,
-    readyToFinalize: session.questionType === "CONFIRMATION" || hasEnoughDraftSignal(draftProfile),
+    readyToFinalize: canFinalizeConversation({
+      extractionConstraint,
+      coverage,
+      turnCount: session.turnCount,
+    }),
   };
 }
 
@@ -239,7 +413,9 @@ async function generateConversationTurn(args: {
   draftProfile: CreatorProfileDraft;
   requestedTier?: "FAST" | "BALANCED" | "DEEP";
   brainstormingMode: BrainstormingModeValue;
+  extractionConstraint: ExtractionConstraintValue;
   phase: "OPENING" | "CONTINUE";
+  coverage: Record<InterviewCoverageKeyValue, InterviewCoverageStatusValue>;
 }) {
   const result = await executeStructuredGeneration<ConversationTurnModelOutput>({
     capabilityKey: "ip_extraction_interview",
@@ -253,13 +429,16 @@ async function generateConversationTurn(args: {
       "不要按固定字段顺序提问，不要像表单，不要像问卷。",
       "不要用空泛的知识型创作者模板去定义用户。",
       "如果用户给出了双方称呼，请提取 userName 和 agentName。",
-      "只有在你认为当前信息已经足够形成第一版画像时，才把 readyToFinalize 设为 true。",
+      `当前提炼约束是 ${args.extractionConstraint}。`,
+      "只有在你认为当前信息已经足够形成第一版画像时，才把 readyToFinalize 设为 true；如果仍有关键维度不完整，请继续追问。",
       '返回严格 JSON：{"draftProfile":{...},"nextQuestion":"...","questionType":"OPENING|EXPLORATION|AUDIENCE|CAPABILITY|POSITIONING|THEMES|BOUNDARY|GOAL|STYLE|CONFIRMATION","readyToFinalize":true|false,"reasoningSummary":"...","responseMode":"BRAINSTORMING|EXTRACTION","userName":"","agentName":""}',
     ].join("\n"),
     userPrompt: JSON.stringify(
       {
         phase: args.phase,
         brainstormingMode: args.brainstormingMode,
+        extractionConstraint: args.extractionConstraint,
+        currentCoverage: args.coverage,
         currentDraft: args.draftProfile,
         transcript: args.transcript,
       },
@@ -322,6 +501,7 @@ async function generateFinalDraft(args: {
 export async function createProfileExtractionConversationSession(
   requestedTier?: "FAST" | "BALANCED" | "DEEP",
   brainstormingMode: BrainstormingModeValue = "AUTO",
+  extractionConstraint: ExtractionConstraintValue = "STRONG",
   forceNew = false,
 ) {
   assertDatabaseConfigured();
@@ -353,6 +533,7 @@ export async function createProfileExtractionConversationSession(
       createdAt: nowIso(),
       meta: {
         brainstormingMode,
+        extractionConstraint,
         userName: "",
         agentName: "招财",
       },
@@ -364,6 +545,7 @@ export async function createProfileExtractionConversationSession(
       questionType: "OPENING",
       meta: {
         brainstormingMode,
+        extractionConstraint,
         responseMode: "BRAINSTORMING",
         usedModel: false,
         userName: "",
@@ -399,6 +581,7 @@ export async function replyToProfileExtractionConversationSession(input: {
   skip?: boolean;
   requestedTier?: "FAST" | "BALANCED" | "DEEP";
   brainstormingMode?: BrainstormingModeValue;
+  extractionConstraint?: ExtractionConstraintValue;
 }) {
   assertDatabaseConfigured();
 
@@ -417,6 +600,7 @@ export async function replyToProfileExtractionConversationSession(input: {
     ? ([...(session.transcriptJson as ConversationTranscriptMessage[])] as ConversationTranscriptMessage[])
     : [];
   const activeBrainstormingMode = input.brainstormingMode ?? getLatestBrainstormingMode(transcript);
+  const activeExtractionConstraint = input.extractionConstraint ?? getLatestExtractionConstraint(transcript);
   const userMessage = input.message?.trim() ?? "";
   const currentNames = getParticipantNames(transcript);
   const parsedNames = parseNamesFromMessage(userMessage);
@@ -431,6 +615,7 @@ export async function replyToProfileExtractionConversationSession(input: {
     createdAt: nowIso(),
     meta: {
       brainstormingMode: activeBrainstormingMode,
+      extractionConstraint: activeExtractionConstraint,
     },
   });
 
@@ -449,7 +634,12 @@ export async function replyToProfileExtractionConversationSession(input: {
     draftProfile,
     requestedTier: input.requestedTier,
     brainstormingMode: activeBrainstormingMode,
+    extractionConstraint: activeExtractionConstraint,
     phase: "CONTINUE",
+    coverage: buildCoverage({
+      draft: draftProfile,
+      transcript,
+    }),
   });
 
   const nextDraft = mergeDraft(draftProfile, {
@@ -458,18 +648,44 @@ export async function replyToProfileExtractionConversationSession(input: {
   });
   const nextUserName = modelTurn.userName?.trim() || parsedNames.userName || currentNames.userName;
   const nextAgentName = modelTurn.agentName?.trim() || parsedNames.agentName || currentNames.agentName || "招财";
+  const nextTurnCount = session.turnCount + 1;
+  const nextCoverage = buildCoverage({
+    draft: nextDraft,
+    transcript,
+  });
+  const canFinalize = canFinalizeConversation({
+    extractionConstraint: activeExtractionConstraint,
+    coverage: nextCoverage,
+    turnCount: nextTurnCount,
+  });
+  const confirmationLike =
+    Boolean(modelTurn.readyToFinalize) ||
+    modelTurn.questionType === "CONFIRMATION" ||
+    Boolean(modelTurn.nextQuestion?.includes("如果你愿意")) ||
+    Boolean(modelTurn.nextQuestion?.includes("信息已经足够"));
+  const nextQuestion = canFinalize
+    ? sanitizeConfirmationQuestion(
+        modelTurn.nextQuestion!.trim(),
+        modelTurn.readyToFinalize,
+        modelTurn.questionType,
+      )
+    : confirmationLike
+      ? getCoverageGapPrompt(nextCoverage)
+      : modelTurn.nextQuestion!.trim();
+  const nextQuestionType: ConversationQuestionType = canFinalize
+    ? modelTurn.questionType ?? "CONFIRMATION"
+    : confirmationLike && modelTurn.questionType === "CONFIRMATION"
+      ? "EXPLORATION"
+      : modelTurn.questionType ?? "EXPLORATION";
 
   transcript.push({
     role: "assistant",
-    content: sanitizeConfirmationQuestion(
-      modelTurn.nextQuestion!.trim(),
-      modelTurn.readyToFinalize,
-      modelTurn.questionType,
-    ),
+    content: nextQuestion,
     createdAt: nowIso(),
-    questionType: modelTurn.questionType ?? "EXPLORATION",
+    questionType: nextQuestionType,
     meta: {
       brainstormingMode: activeBrainstormingMode,
+      extractionConstraint: activeExtractionConstraint,
       responseMode: modelTurn.responseMode,
       usedModel: true,
       userName: nextUserName,
@@ -484,9 +700,9 @@ export async function replyToProfileExtractionConversationSession(input: {
     data: {
       transcriptJson: transcript,
       draftProfileJson: nextDraft,
-      currentQuestion: modelTurn.nextQuestion!.trim(),
-      questionType: modelTurn.questionType ?? "EXPLORATION",
-      turnCount: session.turnCount + 1,
+      currentQuestion: nextQuestion,
+      questionType: nextQuestionType,
+      turnCount: nextTurnCount,
       lastUserMessage: userMessage || session.lastUserMessage,
     },
   });
@@ -494,7 +710,7 @@ export async function replyToProfileExtractionConversationSession(input: {
   return {
     session: {
       ...mapSessionState(updated),
-      readyToFinalize: Boolean(modelTurn.readyToFinalize),
+      readyToFinalize: canFinalize,
     },
   };
 }
