@@ -195,6 +195,46 @@ function countKeywords(text: string, keywords: string[]) {
   return keywords.filter((keyword) => text.includes(keyword)).length;
 }
 
+function hasAssistantAskedAbout(
+  transcript: ConversationTranscriptMessage[],
+  questionTypes: ConversationQuestionType[],
+  keywords: string[],
+) {
+  return transcript.some((item) => {
+    if (item.role !== "assistant") {
+      return false;
+    }
+
+    return (
+      (item.questionType ? questionTypes.includes(item.questionType) : false) ||
+      keywords.some((keyword) => item.content.includes(keyword))
+    );
+  });
+}
+
+function hasUserAnsweredAfterQuestion(
+  transcript: ConversationTranscriptMessage[],
+  questionTypes: ConversationQuestionType[],
+  keywords: string[],
+) {
+  const lastQuestionIndex = transcript.findLastIndex((item) => {
+    if (item.role !== "assistant") {
+      return false;
+    }
+
+    return (
+      (item.questionType ? questionTypes.includes(item.questionType) : false) ||
+      keywords.some((keyword) => item.content.includes(keyword))
+    );
+  });
+
+  if (lastQuestionIndex < 0) {
+    return false;
+  }
+
+  return transcript.slice(lastQuestionIndex + 1).some((item) => item.role === "user" && item.content.trim().length >= 2);
+}
+
 function buildCoverage(input: {
   draft: CreatorProfileDraft;
   transcript: ConversationTranscriptMessage[];
@@ -217,6 +257,14 @@ function buildCoverage(input: {
     "专栏",
     "栏目",
     "系列",
+    "同步推进",
+    "不同平台",
+    "不同类型",
+    "不同质化",
+    "主阵地",
+    "分发阵地",
+    "多平台",
+    "发布",
   ]);
   const platformKeywordCount = countKeywords(userText, [
     "小红书",
@@ -227,6 +275,8 @@ function buildCoverage(input: {
     "B站",
     "知乎",
     "微博",
+    "朋友圈",
+    "私域",
   ]);
   const styleKeywordCount = countKeywords(userText, [
     "风格",
@@ -253,6 +303,38 @@ function buildCoverage(input: {
     "专业顾问型",
     "犀利观点型",
   ]);
+  const askedExpressionFormat = hasAssistantAskedAbout(input.transcript, ["STYLE", "EXPLORATION"], [
+    "内容呈现形式",
+    "表达方式",
+    "用什么形式",
+    "主阵地",
+    "分发阵地",
+    "平台打法",
+    "平台和形式",
+  ]);
+  const answeredExpressionFormat = hasUserAnsweredAfterQuestion(input.transcript, ["STYLE", "EXPLORATION"], [
+    "内容呈现形式",
+    "表达方式",
+    "用什么形式",
+    "主阵地",
+    "分发阵地",
+    "平台打法",
+    "平台和形式",
+  ]);
+  const askedPlatformStyle = hasAssistantAskedAbout(input.transcript, ["STYLE", "EXPLORATION"], [
+    "平台打法",
+    "第一主阵地",
+    "平台作为",
+    "已有账号基础",
+    "平台风格",
+  ]);
+  const answeredPlatformStyle = hasUserAnsweredAfterQuestion(input.transcript, ["STYLE", "EXPLORATION"], [
+    "平台打法",
+    "第一主阵地",
+    "平台作为",
+    "已有账号基础",
+    "平台风格",
+  ]);
 
   const coverage = { ...EMPTY_COVERAGE };
 
@@ -274,10 +356,16 @@ function buildCoverage(input: {
       ? "TOUCHED"
       : "UNTOUCHED";
 
-  coverage.EXPRESSION_FORMAT = formatKeywordCount >= 2 ? "SUFFICIENT" : formatKeywordCount >= 1 ? "TOUCHED" : "UNTOUCHED";
+  coverage.EXPRESSION_FORMAT =
+    formatKeywordCount >= 2 || (askedExpressionFormat && answeredExpressionFormat && formatKeywordCount >= 1)
+      ? "SUFFICIENT"
+      : formatKeywordCount >= 1 || (askedExpressionFormat && answeredExpressionFormat)
+        ? "TOUCHED"
+        : "UNTOUCHED";
 
   coverage.PLATFORM_STYLE =
-    platformKeywordCount >= 1 && styleKeywordCount >= 1
+    (platformKeywordCount >= 1 && styleKeywordCount >= 1) ||
+    (askedPlatformStyle && answeredPlatformStyle && platformKeywordCount >= 1)
       ? "SUFFICIENT"
       : platformKeywordCount >= 1 || styleKeywordCount >= 1
         ? "TOUCHED"
