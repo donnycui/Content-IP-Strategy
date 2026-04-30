@@ -1,6 +1,7 @@
 import type { DirectionRow } from "@/lib/direction-data";
 import {
   getObservationClusterLabel,
+  resolveObservationClusterKey,
   type ObservationClusterKey,
 } from "@/lib/observation-clusters";
 import type { CreatorProfileRow } from "@/lib/profile-data";
@@ -43,6 +44,13 @@ const CLUSTER_KEYS: ObservationClusterKey[] = [
 
 function pickClusterKey(index: number) {
   return CLUSTER_KEYS[index % CLUSTER_KEYS.length];
+}
+
+function resolveGeneratedClusterKey(
+  input: string | null | undefined,
+  fallback: ObservationClusterKey,
+): ObservationClusterKey {
+  return resolveObservationClusterKey(input) ?? fallback;
 }
 
 function buildTopicSummary(direction: DirectionRow) {
@@ -103,7 +111,7 @@ export async function generateTopicsForProfileWithTier(
     const payload = await executeStructuredGeneration<TopicGenerationPayload>({
       capabilityKey: "topic_generation",
       systemInstruction:
-        "你是 zhaocai-IP-center 的主题线生成助手。请根据创作者画像和方向层结果，输出 1 到 8 条主题线。返回严格 JSON，格式为 {\"topics\":[{\"title\":\"...\",\"summary\":\"...\",\"status\":\"ACTIVE|WATCHING\",\"heatScore\":4.2,\"signalCount\":0,\"primaryObservationCluster\":\"固定观察簇 key\",\"secondaryObservationCluster\":null,\"directionTitle\":\"关联方向标题，可为空\"}]}。不要输出多余解释。",
+        "你是 zhaocai-IP-center 的主题线生成助手。请根据创作者画像和方向层结果，输出 1 到 8 条主题线。primaryObservationCluster 和 secondaryObservationCluster 只能使用 userPrompt.allowedObservationClusterKeys 里的固定 key，不能自造 key。返回严格 JSON，格式为 {\"topics\":[{\"title\":\"...\",\"summary\":\"...\",\"status\":\"ACTIVE|WATCHING\",\"heatScore\":4.2,\"signalCount\":0,\"primaryObservationCluster\":\"固定观察簇 key\",\"secondaryObservationCluster\":null,\"directionTitle\":\"关联方向标题，可为空\"}]}。不要输出多余解释。",
       userPrompt: JSON.stringify(
         {
           creatorProfile: {
@@ -118,6 +126,7 @@ export async function generateTopicsForProfileWithTier(
             priority: direction.priority,
             whyNow: direction.whyNow,
           })),
+          allowedObservationClusterKeys: CLUSTER_KEYS,
           fallbackTopics: fallbackDrafts,
         },
         null,
@@ -131,14 +140,12 @@ export async function generateTopicsForProfileWithTier(
     });
 
     const normalized = (payload?.topics ?? [])
-      .map((item) => {
-        const primaryObservationCluster = (item.primaryObservationCluster ?? "") as ObservationClusterKey;
-        if (!primaryObservationCluster) {
-          return null;
-        }
-
+      .map((item, index) => {
+        const fallbackTopic = fallbackDrafts[index % fallbackDrafts.length] ?? fallbackDrafts[0];
+        const fallbackClusterKey = fallbackTopic?.primaryObservationCluster ?? pickClusterKey(index);
+        const primaryObservationCluster = resolveGeneratedClusterKey(item.primaryObservationCluster, fallbackClusterKey);
         const secondaryObservationCluster = item.secondaryObservationCluster
-          ? ((item.secondaryObservationCluster as ObservationClusterKey) ?? null)
+          ? resolveObservationClusterKey(item.secondaryObservationCluster)
           : null;
         const directionId =
           directions.find((direction) => direction.title === item.directionTitle)?.id ?? directions[0]?.id ?? null;

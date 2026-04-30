@@ -83,7 +83,13 @@ type CapabilityRouteWithModels = Prisma.CapabilityRouteGetPayload<{
   };
 }>;
 
-function mapManagedModel(model: CapabilityRouteWithModels["defaultModel"]) {
+type ManagedModelWithGateway = Prisma.ManagedModelGetPayload<{
+  include: {
+    gatewayConnection: true;
+  };
+}>;
+
+function mapManagedModel(model: ManagedModelWithGateway) {
   const authSecretRef = model.gatewayConnection.authSecretRef;
 
   return {
@@ -100,6 +106,21 @@ function mapManagedModel(model: CapabilityRouteWithModels["defaultModel"]) {
     providerKey: model.providerKey,
     protocol: "openai-chat-completions" as const,
   };
+}
+
+async function findTierAliasModel(tier: ModelTier, gatewayConnectionId: string): Promise<ManagedModelWithGateway | null> {
+  return prisma.managedModel.findFirst({
+    where: {
+      enabled: true,
+      gatewayConnectionId,
+      providerKey: "gateway-alias",
+      modelKey: `tier/${tier.toLowerCase()}`,
+      tier,
+    },
+    include: {
+      gatewayConnection: true,
+    },
+  });
 }
 
 function buildGatewayEnvironmentFallback(capabilityKey: ModelCapabilityKey): ResolvedCapabilityRoute | null {
@@ -295,7 +316,14 @@ export async function resolveCapabilityRoute(
       defaultModel = fallbackModel;
       effectiveModel = "override";
     } else {
-      throw new ServiceError("当前能力尚未配置该档位模型。", 400, "CAPABILITY_TIER_NOT_CONFIGURED");
+      const tierAliasModel = await findTierAliasModel(options.requestedTier, route.defaultModel.gatewayConnectionId);
+
+      if (tierAliasModel) {
+        defaultModel = mapManagedModel(tierAliasModel);
+        effectiveModel = "override";
+      } else {
+        throw new ServiceError("当前能力尚未配置该档位模型。", 400, "CAPABILITY_TIER_NOT_CONFIGURED");
+      }
     }
   }
 
