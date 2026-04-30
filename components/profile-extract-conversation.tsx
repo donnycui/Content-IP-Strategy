@@ -15,12 +15,80 @@ import { getApiPath } from "@/lib/client-backend";
 import { ModelTierPicker } from "@/components/model-tier-picker";
 import { ProfileExtractDraftPreview } from "@/components/profile-extract-draft-preview";
 
+type ConversationSettings = {
+  requestedTier: ModelTierValue;
+  brainstormingMode: BrainstormingModeValue;
+  extractionConstraint: ExtractionConstraintValue;
+};
+
+const defaultConversationSettings: ConversationSettings = {
+  requestedTier: "BALANCED",
+  brainstormingMode: "AUTO",
+  extractionConstraint: "STRONG",
+};
+
+const settingsStoragePrefix = "zhaocai-ip-extraction-settings";
+
+function isModelTier(value: unknown): value is ModelTierValue {
+  return value === "FAST" || value === "BALANCED" || value === "DEEP";
+}
+
+function isBrainstormingMode(value: unknown): value is BrainstormingModeValue {
+  return value === "OFF" || value === "AUTO" || value === "ON";
+}
+
+function isExtractionConstraint(value: unknown): value is ExtractionConstraintValue {
+  return value === "STRONG" || value === "MEDIUM" || value === "WEAK";
+}
+
+function readStoredSettings(sessionId?: string): Partial<ConversationSettings> {
+  if (typeof window === "undefined") {
+    return {};
+  }
+
+  const key = sessionId ? `${settingsStoragePrefix}:${sessionId}` : `${settingsStoragePrefix}:last`;
+  const raw = window.localStorage.getItem(key);
+
+  if (!raw) {
+    return {};
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as Partial<ConversationSettings>;
+
+    return {
+      requestedTier: isModelTier(parsed.requestedTier) ? parsed.requestedTier : undefined,
+      brainstormingMode: isBrainstormingMode(parsed.brainstormingMode) ? parsed.brainstormingMode : undefined,
+      extractionConstraint: isExtractionConstraint(parsed.extractionConstraint) ? parsed.extractionConstraint : undefined,
+    };
+  } catch {
+    return {};
+  }
+}
+
+function writeStoredSettings(settings: ConversationSettings, sessionId?: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const serialized = JSON.stringify(settings);
+  window.localStorage.setItem(`${settingsStoragePrefix}:last`, serialized);
+
+  if (sessionId) {
+    window.localStorage.setItem(`${settingsStoragePrefix}:${sessionId}`, serialized);
+  }
+}
+
 export function ProfileExtractConversation() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [requestedTier, setRequestedTier] = useState<ModelTierValue>("BALANCED");
-  const [brainstormingMode, setBrainstormingMode] = useState<BrainstormingModeValue>("AUTO");
-  const [extractionConstraint, setExtractionConstraint] = useState<ExtractionConstraintValue>("STRONG");
+  const [requestedTier, setRequestedTier] = useState<ModelTierValue>(defaultConversationSettings.requestedTier);
+  const [brainstormingMode, setBrainstormingMode] = useState<BrainstormingModeValue>(
+    defaultConversationSettings.brainstormingMode,
+  );
+  const [extractionConstraint, setExtractionConstraint] = useState<ExtractionConstraintValue>(
+    defaultConversationSettings.extractionConstraint,
+  );
   const [session, setSession] = useState<ProfileExtractionConversationSession | null>(null);
   const [checkedExistingSession, setCheckedExistingSession] = useState(false);
   const [answer, setAnswer] = useState("");
@@ -67,6 +135,17 @@ export function ProfileExtractConversation() {
     return message;
   }
 
+  useEffect(() => {
+    writeStoredSettings(
+      {
+        requestedTier,
+        brainstormingMode,
+        extractionConstraint,
+      },
+      session?.id,
+    );
+  }, [brainstormingMode, extractionConstraint, requestedTier, session?.id]);
+
   function startConversation(forceNew = false) {
     startTransition(async () => {
       try {
@@ -104,14 +183,20 @@ export function ProfileExtractConversation() {
     startTransition(async () => {
       try {
         setError("");
+        const lastSettings = readStoredSettings();
+        setRequestedTier(lastSettings.requestedTier ?? defaultConversationSettings.requestedTier);
+        setBrainstormingMode(lastSettings.brainstormingMode ?? defaultConversationSettings.brainstormingMode);
+        setExtractionConstraint(lastSettings.extractionConstraint ?? defaultConversationSettings.extractionConstraint);
+
         const existingResponse = await fetch(getApiPath("/profile/extract/conversation"));
         const existingResult = (await existingResponse.json()) as ProfileExtractConversationStartResponse;
 
         if (existingResponse.ok && existingResult.ok && existingResult.data?.session) {
+          const storedSettings = readStoredSettings(existingResult.data.session.id);
           setSession(existingResult.data.session);
-          setRequestedTier(existingResult.data.session.requestedTier);
-          setBrainstormingMode(existingResult.data.session.brainstormingMode);
-          setExtractionConstraint(existingResult.data.session.extractionConstraint);
+          setRequestedTier(storedSettings.requestedTier ?? existingResult.data.session.requestedTier);
+          setBrainstormingMode(storedSettings.brainstormingMode ?? existingResult.data.session.brainstormingMode);
+          setExtractionConstraint(storedSettings.extractionConstraint ?? existingResult.data.session.extractionConstraint);
         }
       } catch (startError) {
         setError(normalizeActionError(startError, "启动对话式提炼失败。"));
@@ -183,6 +268,7 @@ export function ProfileExtractConversation() {
         }
 
         setFeedback("对话式提炼完成，已生成创作者画像。");
+        window.localStorage.removeItem(`${settingsStoragePrefix}:${session.id}`);
         router.push("/agents/creator-profile");
         router.refresh();
       } catch (finalizeError) {
