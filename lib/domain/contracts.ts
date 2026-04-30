@@ -28,6 +28,7 @@ export type ProfileExtractionConversationMessage = {
   meta?: {
     brainstormingMode?: BrainstormingModeValue;
     extractionConstraint?: ExtractionConstraintValue;
+    requestedTier?: ModelTierValue;
     responseMode?: "BRAINSTORMING" | "EXTRACTION";
     usedModel?: boolean;
     userName?: string;
@@ -70,6 +71,7 @@ export type ProfileExtractionConversationSession = {
   id: string;
   status: "ACTIVE" | "COMPLETED" | "ABANDONED";
   sourceMode: "CONVERSATIONAL";
+  requestedTier: ModelTierValue;
   brainstormingMode: BrainstormingModeValue;
   extractionConstraint: ExtractionConstraintValue;
   responseMode: "BRAINSTORMING" | "EXTRACTION";

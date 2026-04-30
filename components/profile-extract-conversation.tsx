@@ -109,6 +109,8 @@ export function ProfileExtractConversation() {
 
         if (existingResponse.ok && existingResult.ok && existingResult.data?.session) {
           setSession(existingResult.data.session);
+          setRequestedTier(existingResult.data.session.requestedTier);
+          setBrainstormingMode(existingResult.data.session.brainstormingMode);
           setExtractionConstraint(existingResult.data.session.extractionConstraint);
         }
       } catch (startError) {

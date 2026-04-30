@@ -8,6 +8,7 @@ import type {
   ExtractionConstraintValue,
   InterviewCoverageKeyValue,
   InterviewCoverageStatusValue,
+  ModelTierValue,
 } from "@/lib/domain/contracts";
 import type { CreatorProfileDraft } from "@/lib/profile-data";
 import { activateCreatorProfileDraft, assertDatabaseConfigured } from "@/lib/services/profile-service";
@@ -35,6 +36,7 @@ export type ConversationTranscriptMessage = {
   meta?: {
     brainstormingMode?: BrainstormingModeValue;
     extractionConstraint?: ExtractionConstraintValue;
+    requestedTier?: ModelTierValue;
     responseMode?: "BRAINSTORMING" | "EXTRACTION";
     usedModel?: boolean;
     userName?: string;
@@ -46,6 +48,7 @@ export type ConversationSessionState = {
   id: string;
   status: "ACTIVE" | "COMPLETED" | "ABANDONED";
   sourceMode: "CONVERSATIONAL";
+  requestedTier: ModelTierValue;
   brainstormingMode: BrainstormingModeValue;
   extractionConstraint: ExtractionConstraintValue;
   responseMode: "BRAINSTORMING" | "EXTRACTION";
@@ -161,6 +164,11 @@ function mergeDraft(current: CreatorProfileDraft, patch?: Partial<CreatorProfile
 function getLatestBrainstormingMode(transcript: ConversationTranscriptMessage[]) {
   const systemEntries = [...transcript].reverse().find((item) => item.role === "system" && item.meta?.brainstormingMode);
   return systemEntries?.meta?.brainstormingMode ?? "AUTO";
+}
+
+function getLatestRequestedTier(transcript: ConversationTranscriptMessage[]) {
+  const systemEntries = [...transcript].reverse().find((item) => item.role === "system" && item.meta?.requestedTier);
+  return systemEntries?.meta?.requestedTier ?? "BALANCED";
 }
 
 function getLatestExtractionConstraint(transcript: ConversationTranscriptMessage[]) {
@@ -387,6 +395,7 @@ function mapSessionState(session: {
   const transcript = Array.isArray(session.transcriptJson)
     ? (session.transcriptJson as ConversationTranscriptMessage[])
     : [];
+  const requestedTier = getLatestRequestedTier(transcript);
   const brainstormingMode = getLatestBrainstormingMode(transcript);
   const extractionConstraint = getLatestExtractionConstraint(transcript);
   const lastAssistant = [...transcript].reverse().find((item) => item.role === "assistant");
@@ -401,6 +410,7 @@ function mapSessionState(session: {
     id: session.id,
     status: session.status,
     sourceMode: "CONVERSATIONAL",
+    requestedTier,
     brainstormingMode,
     extractionConstraint,
     responseMode,
@@ -422,7 +432,7 @@ function mapSessionState(session: {
 async function generateConversationTurn(args: {
   transcript: ConversationTranscriptMessage[];
   draftProfile: CreatorProfileDraft;
-  requestedTier?: "FAST" | "BALANCED" | "DEEP";
+  requestedTier?: ModelTierValue;
   brainstormingMode: BrainstormingModeValue;
   extractionConstraint: ExtractionConstraintValue;
   phase: "OPENING" | "CONTINUE";
@@ -485,7 +495,7 @@ export async function getLatestActiveProfileExtractionConversationSession() {
 async function generateFinalDraft(args: {
   transcript: ConversationTranscriptMessage[];
   draftProfile: CreatorProfileDraft;
-  requestedTier?: "FAST" | "BALANCED" | "DEEP";
+  requestedTier?: ModelTierValue;
 }) {
   const result = await executeStructuredGeneration<Partial<CreatorProfileDraft>>({
     capabilityKey: "ip_extraction_interview",
@@ -510,7 +520,7 @@ async function generateFinalDraft(args: {
 }
 
 export async function createProfileExtractionConversationSession(
-  requestedTier?: "FAST" | "BALANCED" | "DEEP",
+  requestedTier: ModelTierValue = "BALANCED",
   brainstormingMode: BrainstormingModeValue = "AUTO",
   extractionConstraint: ExtractionConstraintValue = "STRONG",
   forceNew = false,
@@ -521,7 +531,7 @@ export async function createProfileExtractionConversationSession(
   if (existing && !forceNew) {
     return {
       session: existing,
-      requestedTier: requestedTier ?? "DEEP",
+      requestedTier: existing.requestedTier,
     };
   }
 
@@ -545,6 +555,7 @@ export async function createProfileExtractionConversationSession(
       meta: {
         brainstormingMode,
         extractionConstraint,
+        requestedTier,
         userName: "",
         agentName: "招财",
       },
@@ -557,6 +568,7 @@ export async function createProfileExtractionConversationSession(
       meta: {
         brainstormingMode,
         extractionConstraint,
+        requestedTier,
         responseMode: "BRAINSTORMING",
         usedModel: false,
         userName: "",
@@ -582,7 +594,7 @@ export async function createProfileExtractionConversationSession(
       ...mapSessionState(session),
       readyToFinalize: false,
     },
-    requestedTier: requestedTier ?? "DEEP",
+    requestedTier,
   };
 }
 
@@ -590,7 +602,7 @@ export async function replyToProfileExtractionConversationSession(input: {
   id: string;
   message?: string;
   skip?: boolean;
-  requestedTier?: "FAST" | "BALANCED" | "DEEP";
+  requestedTier?: ModelTierValue;
   brainstormingMode?: BrainstormingModeValue;
   extractionConstraint?: ExtractionConstraintValue;
 }) {
@@ -610,6 +622,7 @@ export async function replyToProfileExtractionConversationSession(input: {
   const transcript = Array.isArray(session.transcriptJson)
     ? ([...(session.transcriptJson as ConversationTranscriptMessage[])] as ConversationTranscriptMessage[])
     : [];
+  const activeRequestedTier = input.requestedTier ?? getLatestRequestedTier(transcript);
   const activeBrainstormingMode = input.brainstormingMode ?? getLatestBrainstormingMode(transcript);
   const activeExtractionConstraint = input.extractionConstraint ?? getLatestExtractionConstraint(transcript);
   const userMessage = input.message?.trim() ?? "";
@@ -625,6 +638,7 @@ export async function replyToProfileExtractionConversationSession(input: {
     content: "Session config update",
     createdAt: nowIso(),
     meta: {
+      requestedTier: activeRequestedTier,
       brainstormingMode: activeBrainstormingMode,
       extractionConstraint: activeExtractionConstraint,
     },
@@ -636,6 +650,7 @@ export async function replyToProfileExtractionConversationSession(input: {
     createdAt: nowIso(),
     skipped: Boolean(input.skip),
     meta: {
+      requestedTier: activeRequestedTier,
       brainstormingMode: activeBrainstormingMode,
     },
   });
@@ -643,7 +658,7 @@ export async function replyToProfileExtractionConversationSession(input: {
   const modelTurn = await generateConversationTurn({
     transcript,
     draftProfile,
-    requestedTier: input.requestedTier,
+    requestedTier: activeRequestedTier,
     brainstormingMode: activeBrainstormingMode,
     extractionConstraint: activeExtractionConstraint,
     phase: "CONTINUE",
@@ -694,6 +709,7 @@ export async function replyToProfileExtractionConversationSession(input: {
     createdAt: nowIso(),
     questionType: nextQuestionType,
     meta: {
+      requestedTier: activeRequestedTier,
       brainstormingMode: activeBrainstormingMode,
       extractionConstraint: activeExtractionConstraint,
       responseMode: modelTurn.responseMode,
@@ -742,6 +758,7 @@ export async function finalizeProfileExtractionConversationSession(id: string) {
     ? (session.transcriptJson as ConversationTranscriptMessage[])
     : [];
   const draftProfile = mergeDraft(EMPTY_DRAFT, session.draftProfileJson as Partial<CreatorProfileDraft> | null);
+  const requestedTier = getLatestRequestedTier(transcript);
 
   let finalizedDraft = draftProfile;
 
@@ -749,6 +766,7 @@ export async function finalizeProfileExtractionConversationSession(id: string) {
     finalizedDraft = await generateFinalDraft({
       transcript,
       draftProfile,
+      requestedTier,
     });
   } catch {
     finalizedDraft = ensureVisibleDraft(draftProfile);
