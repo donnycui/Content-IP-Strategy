@@ -233,6 +233,17 @@ function buildCoverage(input: {
     "避坑",
     "测评",
     "表达",
+    "说教",
+    "自述",
+    "转述",
+    "故事",
+    "案例",
+    "客户故事",
+    "反认知",
+    "观点",
+    "高端信任型",
+    "专业顾问型",
+    "犀利观点型",
   ]);
 
   const coverage = { ...EMPTY_COVERAGE };
@@ -344,7 +355,7 @@ function ensureVisibleDraft(draft: CreatorProfileDraft) {
 }
 
 function sanitizeConfirmationQuestion(nextQuestion: string, readyToFinalize?: boolean, questionType?: ConversationQuestionType) {
-  if (readyToFinalize || questionType === "CONFIRMATION" || nextQuestion.includes("如果你愿意")) {
+  if (readyToFinalize || questionType === "CONFIRMATION" || nextQuestion.includes("信息已经足够")) {
     return "信息已经足够。你可以点击下方“生成画像草案”；如果还想补一条关键内容，也可以继续回复。";
   }
 
@@ -661,7 +672,6 @@ export async function replyToProfileExtractionConversationSession(input: {
   const confirmationLike =
     Boolean(modelTurn.readyToFinalize) ||
     modelTurn.questionType === "CONFIRMATION" ||
-    Boolean(modelTurn.nextQuestion?.includes("如果你愿意")) ||
     Boolean(modelTurn.nextQuestion?.includes("信息已经足够"));
   const nextQuestion = canFinalize
     ? sanitizeConfirmationQuestion(
