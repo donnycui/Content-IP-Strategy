@@ -176,6 +176,15 @@ function parsePublishedAtFromText(text: string) {
   return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
 }
 
+function cleanExaSnippet(text: string) {
+  return text
+    .split(/\r?\n/)
+    .filter((line) => !/^(Title|URL|Published|Author):\s*/i.test(line.trim()))
+    .map((line) => line.replace(/^Highlights:\s*/i, ""))
+    .join("\n")
+    .trim();
+}
+
 function parseTitleFromText(text: string, url: string) {
   const labeledTitle = parseLabeledField(text, "Title");
 
@@ -226,7 +235,7 @@ export function parseExaSearchResponse(rawBody: string, query: string, fetchedAt
       return buildResult({
         title: parseTitleFromText(text, url),
         url,
-        snippet: text,
+        snippet: cleanExaSnippet(text),
         provider: "exa",
         query,
         fetchedAt,

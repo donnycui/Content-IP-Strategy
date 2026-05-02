@@ -17,6 +17,7 @@ assert.equal(exaResults[0].url, "https://example.com/news");
 assert.equal(exaResults[0].source, "example.com");
 assert.equal(exaResults[0].publishedAt, "2026-05-01T00:00:00.000Z");
 assert.match(exaResults[0].snippet ?? "", /useful search snippet/i);
+assert.doesNotMatch(exaResults[0].snippet ?? "", /^Title:/);
 
 const pureMd = `
 <SearchResults query="example query">
