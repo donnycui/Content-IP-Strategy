@@ -155,10 +155,34 @@ function extractTextFromExaPayload(payload: ExaPayload) {
 }
 
 function parseUrlFromText(text: string) {
-  return text.match(/https?:\/\/[^\s)\]]+/)?.[0]?.replace(/[.,，。]+$/, "") ?? null;
+  return text.match(/^URL:\s*(https?:\/\/\S+)/im)?.[1]?.replace(/[.,，。]+$/, "") ?? text.match(/https?:\/\/[^\s)\]]+/)?.[0]?.replace(/[.,，。]+$/, "") ?? null;
+}
+
+function parseLabeledField(text: string, label: string) {
+  const match = text.match(new RegExp(`^${label}:\\s*(.+)$`, "im"));
+
+  return match?.[1]?.trim() ?? null;
+}
+
+function parsePublishedAtFromText(text: string) {
+  const published = parseLabeledField(text, "Published");
+
+  if (!published) {
+    return null;
+  }
+
+  const parsed = new Date(published);
+
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
 }
 
 function parseTitleFromText(text: string, url: string) {
+  const labeledTitle = parseLabeledField(text, "Title");
+
+  if (labeledTitle) {
+    return labeledTitle;
+  }
+
   const lines = text
     .split(/\r?\n/)
     .map((line) => stripMarkdown(line))
@@ -206,6 +230,7 @@ export function parseExaSearchResponse(rawBody: string, query: string, fetchedAt
         provider: "exa",
         query,
         fetchedAt,
+        publishedAt: parsePublishedAtFromText(text),
       });
     })
     .filter((item): item is WebSearchResult => Boolean(item));

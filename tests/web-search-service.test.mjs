@@ -4,7 +4,7 @@ import { parseExaSearchResponse, parsePureMdSearchResults } from "../lib/service
 
 const exaSse = [
   "event: message",
-  'data: {"result":{"content":[{"type":"text","text":"Example News\\nhttps://example.com/news\\nA useful search snippet."}]}}',
+  'data: {"result":{"content":[{"type":"text","text":"Title: Example News\\nURL: https://example.com/news\\nPublished: 2026-05-01T00:00:00.000Z\\nA useful search snippet."}]}}',
   "",
 ].join("\n");
 
@@ -12,8 +12,10 @@ const exaResults = parseExaSearchResponse(exaSse, "example query", "2026-05-03T0
 
 assert.equal(exaResults.length, 1);
 assert.equal(exaResults[0].provider, "exa");
+assert.equal(exaResults[0].title, "Example News");
 assert.equal(exaResults[0].url, "https://example.com/news");
 assert.equal(exaResults[0].source, "example.com");
+assert.equal(exaResults[0].publishedAt, "2026-05-01T00:00:00.000Z");
 assert.match(exaResults[0].snippet ?? "", /useful search snippet/i);
 
 const pureMd = `
