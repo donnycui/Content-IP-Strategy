@@ -31,6 +31,8 @@ export async function POST() {
       ok: true,
       data: {
         createdCount: result.createdCount,
+        webResultCount: result.webResultCount,
+        ingestedSignalCount: result.ingestedSignalCount,
       },
     });
   } catch (error) {

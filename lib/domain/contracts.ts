@@ -524,6 +524,32 @@ export type LearningInsightsDashboardResponse = ApiResponse<{
 
 export type LearningInsightsGenerateResponse = ApiResponse<{
   createdCount: number;
+  webResultCount?: number;
+  ingestedSignalCount?: number;
+}>;
+
+export type SearchRunRequest = {
+  query?: string;
+  numResults?: number;
+  ingest?: boolean;
+};
+
+export type SearchRunResultPayload = {
+  title: string;
+  url: string;
+  source: string;
+  snippet: string | null;
+  publishedAt: string | null;
+  provider: "exa" | "google-pure-md";
+  query: string;
+  fetchedAt: string;
+};
+
+export type SearchRunResponse = ApiResponse<{
+  query: string;
+  results: SearchRunResultPayload[];
+  ingestedSignalCount: number;
+  skippedSignalCount: number;
 }>;
 
 export type PlatformStrategyMemoPayload = {

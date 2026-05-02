@@ -1,10 +1,13 @@
 import type { LearningInsightPayload, LearningInsightsDashboardPayload } from "@/lib/domain/contracts";
 import { getDirections } from "@/lib/direction-data";
+import { getActiveCreatorProfile } from "@/lib/profile-data";
 import { getActiveSharedMemoryRecords, upsertActiveSharedMemoryRecord } from "@/lib/services/shared-memory-service";
+import { ingestSearchResults } from "@/lib/services/search-signal-service";
 import { getStyleSkillDashboard } from "@/lib/services/style-skill-service";
 import { getReviewDashboard } from "@/lib/services/review-snapshot-service";
 import { ensureActiveCenterWorkspace, getCenterWorkspaceForRead } from "@/lib/services/center-workspace-service";
 import { getTopics } from "@/lib/topic-data";
+import { searchWeb, type WebSearchResult } from "@/lib/services/web-search-service";
 
 function buildFallbackInsights(input: {
   hottestTopicTitle?: string | null;
@@ -70,16 +73,96 @@ export async function deriveLearningInsights(): Promise<LearningInsightPayload[]
   });
 }
 
-export async function generateLearningInsights(): Promise<{ createdCount: number }> {
+function buildSearchQuery(input: {
+  positioning?: string | null;
+  audience?: string | null;
+  hottestTopicTitle?: string | null;
+  topDirectionTitle?: string | null;
+}) {
+  return [
+    input.positioning,
+    input.audience,
+    input.hottestTopicTitle,
+    input.topDirectionTitle,
+    "最新趋势 行业动态 事实",
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .slice(0, 240);
+}
+
+async function runLearningSearch(): Promise<{
+  query: string | null;
+  results: WebSearchResult[];
+  ingestedSignalCount: number;
+}> {
+  const [profile, topics, directions] = await Promise.all([getActiveCreatorProfile(), getTopics(), getDirections()]);
+  const query = buildSearchQuery({
+    positioning: profile?.positioning,
+    audience: profile?.audience,
+    hottestTopicTitle: topics[0]?.title,
+    topDirectionTitle: directions[0]?.title,
+  });
+
+  if (!query.trim()) {
+    return {
+      query: null,
+      results: [],
+      ingestedSignalCount: 0,
+    };
+  }
+
+  try {
+    const results = await searchWeb(query, {
+      numResults: 5,
+    });
+    const ingestion = await ingestSearchResults(results);
+
+    return {
+      query,
+      results,
+      ingestedSignalCount: ingestion.ingestedCount,
+    };
+  } catch {
+    return {
+      query,
+      results: [],
+      ingestedSignalCount: 0,
+    };
+  }
+}
+
+function formatSearchEvidence(results: WebSearchResult[]) {
+  if (!results.length) {
+    return "本次没有拿到新的联网搜索结果，主动学习仍基于系统内已有方向、主题线和复盘数据。";
+  }
+
+  return [
+    "本次联网搜索抓取到的参考来源：",
+    ...results.slice(0, 5).map((result, index) => `${index + 1}. ${result.title}（${result.source}）${result.url}`),
+  ].join("\n");
+}
+
+export async function generateLearningInsights(): Promise<{
+  createdCount: number;
+  webResultCount: number;
+  ingestedSignalCount: number;
+}> {
   const workspace = await ensureActiveCenterWorkspace();
-  const insights = await deriveLearningInsights();
+  const [insights, searchRun] = await Promise.all([deriveLearningInsights(), runLearningSearch()]);
 
   if (!insights.length) {
-    return { createdCount: 0 };
+    return { createdCount: 0, webResultCount: searchRun.results.length, ingestedSignalCount: searchRun.ingestedSignalCount };
   }
 
   const summary = insights.map((item) => `${item.title}：${item.summary}`).join("；");
-  const detail = insights.map((item) => `${item.title}\n${item.detail}`).join("\n\n");
+  const detail = [
+    insights.map((item) => `${item.title}\n${item.detail}`).join("\n\n"),
+    searchRun.query ? `\n联网搜索查询：${searchRun.query}` : "",
+    formatSearchEvidence(searchRun.results),
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 
   await upsertActiveSharedMemoryRecord({
     workspaceId: workspace.id,
@@ -93,6 +176,8 @@ export async function generateLearningInsights(): Promise<{ createdCount: number
 
   return {
     createdCount: insights.length,
+    webResultCount: searchRun.results.length,
+    ingestedSignalCount: searchRun.ingestedSignalCount,
   };
 }
 

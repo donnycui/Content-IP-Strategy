@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { LearningGenerateButton } from "@/components/learning/learning-generate-button";
+import { getApiPath } from "@/lib/client-backend";
 import type { LearningInsightsDashboardPayload, LearningInsightsDashboardResponse } from "@/lib/domain/contracts";
 
 export function LearningInsightsPanel() {
@@ -12,7 +13,7 @@ export function LearningInsightsPanel() {
 
     async function load() {
       try {
-        const response = await fetch("/api/learning-insights");
+        const response = await fetch(getApiPath("/learning-insights"));
         const result = (await response.json()) as LearningInsightsDashboardResponse;
 
         if (!response.ok || !result.ok || !result.data?.dashboard || cancelled) {

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import type { LearningInsightsGenerateResponse } from "@/lib/domain/contracts";
+import { getApiPath } from "@/lib/client-backend";
 
 export function LearningGenerateButton() {
   const router = useRouter();
@@ -16,7 +17,7 @@ export function LearningGenerateButton() {
         setFeedback("");
         setError("");
 
-        const response = await fetch("/api/learning-insights", {
+        const response = await fetch(getApiPath("/learning-insights"), {
           method: "POST",
         });
 
@@ -26,7 +27,11 @@ export function LearningGenerateButton() {
           throw new Error(result.ok ? "生成主动学习洞察失败。" : (result.error ?? "生成主动学习洞察失败。"));
         }
 
-        setFeedback(`已生成 ${result.data.createdCount} 条主动学习洞察。`);
+        setFeedback(
+          `已生成 ${result.data.createdCount} 条主动学习洞察；联网抓取 ${result.data.webResultCount ?? 0} 条，入库 ${
+            result.data.ingestedSignalCount ?? 0
+          } 条信号。`,
+        );
         router.refresh();
       } catch (submitError) {
         setError(submitError instanceof Error ? submitError.message : "生成主动学习洞察失败。");
