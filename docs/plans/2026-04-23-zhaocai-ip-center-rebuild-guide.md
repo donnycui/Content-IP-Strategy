@@ -4,6 +4,10 @@
 
 This document is the current rebuild guide for the project now running as `zhaocai-IP-center`.
 
+Current May 2026 handoff:
+
+- [docs/plans/2026-05-03-zhaocai-ip-center-current-handoff.md](/Users/cuijunpeng/Documents/New project/content-ip-research-workbench/docs/plans/2026-05-03-zhaocai-ip-center-current-handoff.md)
+
 Its purpose is:
 
 - explain what the project has become

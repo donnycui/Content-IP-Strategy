@@ -53,7 +53,9 @@ export function StyleSampleUploadForm() {
       <div className="space-y-3">
         <div className="space-y-1">
           <p className="text-sm font-semibold text-slate-800">录入风格样本</p>
-          <p className="muted text-sm leading-7">先录你最满意的原创内容，不要先喂 AI 改写稿。样本越贴近你自己，style skill 越快成形。</p>
+          <p className="muted text-sm leading-7">
+            适合已经有内容资产的路径。先录你最满意的原创内容，不要先喂 AI 改写稿；提交后系统会同步更新当前 style skill。
+          </p>
         </div>
 
         <div className="grid gap-3 xl:grid-cols-[0.9fr,0.9fr]">

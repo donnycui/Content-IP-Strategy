@@ -53,7 +53,9 @@ export function StyleRevisionForm() {
       <div className="space-y-3">
         <div className="space-y-1">
           <p className="text-sm font-semibold text-slate-800">记录手改修订</p>
-          <p className="muted text-sm leading-7">把 AI 初稿和你手改后的版本一起交给系统，风格层才能真正从差异中学习，而不是重复模板化提示词。</p>
+          <p className="muted text-sm leading-7">
+            适合没有历史资产、先从系统初稿开始的路径。把 AI 初稿和你手改后的版本一起提交，系统会从差异里更新 style skill。
+          </p>
         </div>
 
         <textarea

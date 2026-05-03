@@ -11,7 +11,7 @@ export function StyleSkillSummary({ dashboard }: { dashboard: StyleSkillDashboar
             <p className="section-kicker">Style Skill</p>
             <h2 className="section-title">把“去 AI 味”变成持续演化的个人风格资产</h2>
             <p className="section-desc">
-              这里不是一次性提示词，而是一个会随着样本和手改稿持续更新的 style skill。后续内容生产会围绕它来生成图文、短视频和直播脚本。
+              这里不是一次性提示词，而是一个会随着原创样本和手改稿持续更新的 style skill。后续内容生产会围绕它来生成图文、短视频和直播脚本。
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -19,6 +19,17 @@ export function StyleSkillSummary({ dashboard }: { dashboard: StyleSkillDashboar
             <span className="pill">样本 {skill.sampleCount}</span>
             <span className="pill">修订 {skill.revisionCount}</span>
             <span className="pill">版本 {skill.version}</span>
+          </div>
+        </div>
+
+        <div className="grid gap-3 xl:grid-cols-2">
+          <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3">
+            <p className="text-sm font-semibold text-slate-800">路径 A：没有历史内容资产</p>
+            <p className="muted mt-2 text-sm leading-7">先让系统生成初稿，你手动改到像自己，再点击“保存并沉淀风格信号”。系统会从改稿差异里学习。</p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3">
+            <p className="text-sm font-semibold text-slate-800">路径 B：已有内容资产</p>
+            <p className="muted mt-2 text-sm leading-7">先上传代表性原创内容，建立初始风格；之后再用每次手改继续加固 style skill。</p>
           </div>
         </div>
 

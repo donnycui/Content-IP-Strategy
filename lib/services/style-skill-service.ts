@@ -2,6 +2,7 @@ import type { StyleRevisionPayload, StyleSamplePayload, StyleSkillDashboardPaylo
 import { getActiveCreatorProfile } from "@/lib/profile-data";
 import { prisma } from "@/lib/prisma";
 import { ensureActiveCenterWorkspace, getCenterWorkspaceForRead } from "@/lib/services/center-workspace-service";
+import { buildLearnedStyleSkill } from "@/lib/style/style-skill-learning-logic";
 
 function buildFallbackRules(profile?: Awaited<ReturnType<typeof getActiveCreatorProfile>> | null) {
   const voice = profile?.voiceStyle || "先说人话，再说观点，最后给行动方向。";
@@ -177,7 +178,6 @@ export async function ensureActiveStyleSkill(): Promise<StyleSkillPayload> {
       },
       update: {
         creatorProfileId: workspace.creatorProfileId,
-        ...(fallback.summary ? { summary: fallback.summary } : {}),
       },
       create: {
         workspaceId: workspace.id,
@@ -260,16 +260,19 @@ export async function syncStyleSkillCounts(styleSkillId: string) {
     const prismaClient = prisma as typeof prisma & {
       styleSample?: {
         count: (args: unknown) => Promise<number>;
+        findMany: (args: unknown) => Promise<unknown[]>;
       };
       styleRevision?: {
         count: (args: unknown) => Promise<number>;
+        findMany: (args: unknown) => Promise<unknown[]>;
       };
       styleSkill?: {
         update: (args: unknown) => Promise<unknown>;
       };
     };
 
-    const [sampleCount, revisionCount] = await Promise.all([
+    const [profile, sampleCount, revisionCount, samples, revisions] = await Promise.all([
+      getActiveCreatorProfile(),
       prismaClient.styleSample?.count({
         where: {
           styleSkillId,
@@ -280,7 +283,34 @@ export async function syncStyleSkillCounts(styleSkillId: string) {
           styleSkillId,
         },
       }),
+      prismaClient.styleSample?.findMany({
+        where: {
+          styleSkillId,
+        },
+        orderBy: {
+          updatedAt: "desc",
+        },
+        take: 5,
+      }),
+      prismaClient.styleRevision?.findMany({
+        where: {
+          styleSkillId,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 5,
+      }),
     ]);
+    const typedSamples = (samples ?? []).map((sample) => mapStyleSample(sample as Parameters<typeof mapStyleSample>[0]));
+    const typedRevisions = (revisions ?? []).map((revision) => mapStyleRevision(revision as Parameters<typeof mapStyleRevision>[0]));
+    const learned = buildLearnedStyleSkill({
+      profile,
+      samples: typedSamples,
+      revisions: typedRevisions,
+      sampleCount: sampleCount ?? 0,
+      revisionCount: revisionCount ?? 0,
+    });
 
     await prismaClient.styleSkill?.update({
       where: {
@@ -289,10 +319,12 @@ export async function syncStyleSkillCounts(styleSkillId: string) {
       data: {
         sampleCount: sampleCount ?? 0,
         revisionCount: revisionCount ?? 0,
+        summary: learned.summary,
+        rulesMarkdown: learned.rulesMarkdown,
         version: {
           increment: 1,
         },
-        status: sampleCount ? "ACTIVE" : "DRAFT",
+        status: sampleCount || revisionCount ? "ACTIVE" : "DRAFT",
       },
     });
   } catch {

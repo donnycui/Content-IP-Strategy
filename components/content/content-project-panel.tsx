@@ -88,16 +88,21 @@ export function ContentProjectPanel({ dashboard }: { dashboard: StyleContentDash
                     </div>
 
                     {item.publishRecords.length ? (
-                      <div className="mt-4 space-y-3">
-                        {item.publishRecords.map((record) => (
-                          <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3" key={record.id}>
-                            <PublishRecordPackage record={record} />
-                            <div className="mt-3">
-                              <PublishRecordStatusActions record={record} />
+                      <details className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3">
+                        <summary className="cursor-pointer list-none text-sm font-semibold text-slate-800">
+                          发布准备（{item.publishRecords.length} 个，默认收起）
+                        </summary>
+                        <div className="mt-3 space-y-3">
+                          {item.publishRecords.map((record) => (
+                            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3" key={record.id}>
+                              <PublishRecordPackage record={record} />
+                              <div className="mt-3">
+                                <PublishRecordStatusActions record={record} />
+                              </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      </details>
                     ) : null}
                   </div>
                 ))}
