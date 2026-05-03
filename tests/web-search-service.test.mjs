@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 
-import { parseExaSearchResponse, parsePureMdSearchResults } from "../lib/services/web-search-service.ts";
+import {
+  parseBigModelMcpReaderResponse,
+  parseBigModelMcpSearchResponse,
+  parseExaSearchResponse,
+  parsePureMdSearchResults,
+} from "../lib/services/web-search-service.ts";
 
 const exaSse = [
   "event: message",
@@ -41,5 +46,72 @@ assert.equal(pureResults[0].provider, "google-pure-md");
 assert.equal(pureResults[0].title, "Example Report");
 assert.equal(pureResults[0].url, "https://example.org/report");
 assert.equal(pureResults[0].snippet, "A current report about the topic.");
+
+const bigModelJson = JSON.stringify({
+  result: {
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify([
+          {
+            title: "BigModel Search Result",
+            url: "https://example.net/search-result",
+            snippet: "A result returned by BigModel MCP.",
+            publishedAt: "2026-05-02T12:00:00.000Z",
+          },
+        ]),
+      },
+    ],
+  },
+});
+const bigModelResults = parseBigModelMcpSearchResponse(
+  bigModelJson,
+  "bigmodel query",
+  "2026-05-03T00:00:00.000Z",
+);
+
+assert.equal(bigModelResults.length, 1);
+assert.equal(bigModelResults[0].provider, "bigmodel-mcp");
+assert.equal(bigModelResults[0].title, "BigModel Search Result");
+assert.equal(bigModelResults[0].url, "https://example.net/search-result");
+assert.equal(bigModelResults[0].source, "example.net");
+assert.equal(bigModelResults[0].snippet, "A result returned by BigModel MCP.");
+assert.equal(bigModelResults[0].publishedAt, "2026-05-02T12:00:00.000Z");
+
+const bigModelSse = [
+  "event: message",
+  'data: {"result":{"content":[{"type":"text","text":"Title: MCP Text Result\\nURL: https://example.cn/report\\n摘要：一条文本格式的搜索结果。"}]}}',
+  "",
+].join("\n");
+const bigModelTextResults = parseBigModelMcpSearchResponse(
+  bigModelSse,
+  "bigmodel text query",
+  "2026-05-03T00:00:00.000Z",
+);
+
+assert.equal(bigModelTextResults.length, 1);
+assert.equal(bigModelTextResults[0].provider, "bigmodel-mcp");
+assert.equal(bigModelTextResults[0].title, "MCP Text Result");
+assert.equal(bigModelTextResults[0].url, "https://example.cn/report");
+assert.match(bigModelTextResults[0].snippet ?? "", /文本格式/);
+
+const readerResult = parseBigModelMcpReaderResponse(
+  JSON.stringify({
+    result: {
+      content: [
+        {
+          type: "text",
+          text: "Title: Reader Result\nhttps://example.com/page\n正文内容。",
+        },
+      ],
+    },
+  }),
+  "https://example.com/page",
+  "2026-05-03T00:00:00.000Z",
+);
+
+assert.equal(readerResult.provider, "bigmodel-mcp");
+assert.equal(readerResult.url, "https://example.com/page");
+assert.match(readerResult.content, /正文内容/);
 
 console.log("web search service smoke checks passed");

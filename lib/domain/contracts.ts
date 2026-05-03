@@ -532,6 +532,7 @@ export type SearchRunRequest = {
   query?: string;
   numResults?: number;
   ingest?: boolean;
+  provider?: "exa" | "google-pure-md" | "bigmodel-mcp" | "auto";
 };
 
 export type SearchRunResultPayload = {
@@ -540,7 +541,7 @@ export type SearchRunResultPayload = {
   source: string;
   snippet: string | null;
   publishedAt: string | null;
-  provider: "exa" | "google-pure-md";
+  provider: "exa" | "google-pure-md" | "bigmodel-mcp";
   query: string;
   fetchedAt: string;
 };

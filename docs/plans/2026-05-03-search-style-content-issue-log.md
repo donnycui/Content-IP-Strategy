@@ -91,3 +91,19 @@ Approved first slice:
 - Implement search as a backend service and API route.
 - Let the existing "刷新主动学习" action run one search query, ingest returned web results into `Source` / `Signal`, and write source references into active learning memory.
 - Do not implement scheduled background search yet.
+
+## 2026-05-03 BigModel MCP Decision
+
+Approved follow-up slice:
+
+- Add BigModel MCP search as an explicit provider named `bigmodel-mcp`.
+- Read the runtime secret from `BIGMODEL_API_KEY` or `ZHIPU_API_KEY`.
+- Keep `SEARCH_PROVIDER=auto` as Exa then Google/pure.md. Do not call BigModel MCP by default while the account is on a low quota plan.
+- Add BigModel web reader as a service function for later deep-research workflows, but do not call it from normal page loads or default search runs.
+- Keep `zhaocai-gateway` for model aliases such as `qwen3.6-plus-search`; MCP search remains in the backend search service layer.
+
+Validation note:
+
+- BigModel MCP `tools/list` succeeds and reports search tool `web_search_prime` with required argument `search_query`.
+- BigModel MCP reader `tools/list` succeeds and reports reader tool `webReader` with required argument `url`.
+- The provided runtime key returned `MCP error -401: Api key not found, please get your apikey` during `tools/call`, so full live search execution depends on fixing the BigModel key or MCP entitlement.

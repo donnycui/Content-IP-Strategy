@@ -30,6 +30,7 @@ export async function POST(request: Request) {
 
     const results = await searchWeb(query, {
       numResults: normalizeNumResults(payload.numResults),
+      provider: payload.provider,
     });
     const ingestion = payload.ingest === false ? { ingestedCount: 0, skippedCount: 0 } : await ingestSearchResults(results);
 
