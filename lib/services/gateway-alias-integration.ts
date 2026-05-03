@@ -49,6 +49,19 @@ function inferTierFromAliasKey(aliasKey: string): ModelTier {
   return "BALANCED";
 }
 
+function buildAliasCapabilityTags(
+  alias: GatewayAliasRecord,
+  aliasesEndpoint: string,
+): Prisma.InputJsonValue | Prisma.NullableJsonNullValueInput {
+  return {
+    source: "zhaocai-gateway-v2",
+    discoveredFrom: aliasesEndpoint,
+    aliasType: alias.alias_type ?? "capability",
+    visibility: alias.visibility ?? "project",
+    notes: alias.notes ?? "",
+  };
+}
+
 async function fetchJson<T>(url: string, headers: Record<string, string>) {
   const response = await fetch(url, {
     method: "GET",
@@ -136,89 +149,77 @@ export async function syncGatewayAliasCatalog(gatewayConnectionId: string) {
   try {
     const aliasesPayload = await fetchJson<GatewayAliasesResponse>(aliasesEndpoint, headers);
     const aliases = aliasesPayload.aliases ?? [];
-
     let upsertedCount = 0;
+    const discoveredAliases: string[] = [];
 
-    await prisma.$transaction(async (tx) => {
-      const discoveredAliases: string[] = [];
+    for (const alias of aliases) {
+      const aliasKey = alias.alias_key?.trim();
 
-      for (const alias of aliases) {
-        const aliasKey = alias.alias_key?.trim();
+      if (!aliasKey) {
+        continue;
+      }
 
-        if (!aliasKey) {
-          continue;
-        }
+      discoveredAliases.push(aliasKey);
 
-        discoveredAliases.push(aliasKey);
+      const displayName = alias.display_name?.trim() || aliasKey;
+      const capabilityTags = buildAliasCapabilityTags(alias, aliasesEndpoint);
 
-        const displayName = alias.display_name?.trim() || aliasKey;
-        const capabilityTags: Prisma.InputJsonValue | Prisma.NullableJsonNullValueInput = aliases.length
-          ? {
-              source: "zhaocai-gateway-v2",
-              discoveredFrom: aliasesEndpoint,
-              aliasType: alias.alias_type ?? "capability",
-              visibility: alias.visibility ?? "project",
-              notes: alias.notes ?? "",
-            }
-          : Prisma.JsonNull;
-
-        await tx.managedModel.upsert({
-          where: {
-            gatewayConnectionId_providerKey_modelKey: {
-              gatewayConnectionId: gateway.id,
-              providerKey: GATEWAY_ALIAS_PROVIDER_KEY,
-              modelKey: aliasKey,
-            },
-          },
-          update: {
-            displayName,
-            capabilityTags,
-            enabled: alias.enabled !== false,
-            visibleToUsers: (alias.visibility ?? "project") !== "internal",
-            tier: inferTierFromAliasKey(aliasKey),
-          },
-          create: {
+      await prisma.managedModel.upsert({
+        where: {
+          gatewayConnectionId_providerKey_modelKey: {
             gatewayConnectionId: gateway.id,
             providerKey: GATEWAY_ALIAS_PROVIDER_KEY,
             modelKey: aliasKey,
-            displayName,
-            capabilityTags,
-            enabled: alias.enabled !== false,
-            visibleToUsers: (alias.visibility ?? "project") !== "internal",
-            tier: inferTierFromAliasKey(aliasKey),
           },
-        });
-
-        upsertedCount += 1;
-      }
-
-      await tx.managedModel.updateMany({
-        where: {
+        },
+        update: {
+          displayName,
+          capabilityTags,
+          enabled: alias.enabled !== false,
+          visibleToUsers: (alias.visibility ?? "project") !== "internal",
+          tier: inferTierFromAliasKey(aliasKey),
+        },
+        create: {
           gatewayConnectionId: gateway.id,
           providerKey: GATEWAY_ALIAS_PROVIDER_KEY,
-          ...(discoveredAliases.length
-            ? {
-                modelKey: {
-                  notIn: discoveredAliases,
-                },
-              }
-            : {}),
-        },
-        data: {
-          enabled: false,
-          visibleToUsers: false,
+          modelKey: aliasKey,
+          displayName,
+          capabilityTags,
+          enabled: alias.enabled !== false,
+          visibleToUsers: (alias.visibility ?? "project") !== "internal",
+          tier: inferTierFromAliasKey(aliasKey),
         },
       });
 
-      await tx.gatewayConnection.update({
-        where: {
-          id: gateway.id,
-        },
-        data: {
-          lastSyncedAt: new Date(),
-          healthStatus: GatewayHealthStatus.HEALTHY,
-        },
-      });
+      upsertedCount += 1;
+    }
+
+    await prisma.managedModel.updateMany({
+      where: {
+        gatewayConnectionId: gateway.id,
+        providerKey: GATEWAY_ALIAS_PROVIDER_KEY,
+        ...(discoveredAliases.length
+          ? {
+              modelKey: {
+                notIn: discoveredAliases,
+              },
+            }
+          : {}),
+      },
+      data: {
+        enabled: false,
+        visibleToUsers: false,
+      },
+    });
+
+    await prisma.gatewayConnection.update({
+      where: {
+        id: gateway.id,
+      },
+      data: {
+        lastSyncedAt: new Date(),
+        healthStatus: GatewayHealthStatus.HEALTHY,
+      },
     });
 
     return {
