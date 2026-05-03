@@ -83,7 +83,7 @@ Read `BIGMODEL_API_KEY` first, then `ZHIPU_API_KEY`.
 
 - [ ] **Step 3: Add MCP caller**
 
-POST JSON-RPC `tools/call` with `Authorization: Bearer <key>`, accept both JSON and SSE responses, and reuse existing timeout helper.
+POST JSON-RPC using BigModel's streamable HTTP MCP flow: `initialize`, `notifications/initialized`, then `tools/call` with `Mcp-Session-Id`. Use `Authorization: Bearer <key>`, accept both JSON and SSE responses, and reuse existing timeout helper.
 
 - [ ] **Step 4: Add resilient parser**
 

@@ -52,14 +52,14 @@ const bigModelJson = JSON.stringify({
     content: [
       {
         type: "text",
-        text: JSON.stringify([
+        text: JSON.stringify(JSON.stringify([
           {
             title: "BigModel Search Result",
-            url: "https://example.net/search-result",
-            snippet: "A result returned by BigModel MCP.",
+            link: "https://example.net/search-result",
+            content: "A result returned by BigModel MCP.",
             publishedAt: "2026-05-02T12:00:00.000Z",
           },
-        ]),
+        ])),
       },
     ],
   },

@@ -106,4 +106,6 @@ Validation note:
 
 - BigModel MCP `tools/list` succeeds and reports search tool `web_search_prime` with required argument `search_query`.
 - BigModel MCP reader `tools/list` succeeds and reports reader tool `webReader` with required argument `url`.
-- The provided runtime key returned `MCP error -401: Api key not found, please get your apikey` during `tools/call`, so full live search execution depends on fixing the BigModel key or MCP entitlement.
+- Direct `tools/call` can return `MCP error -401: Api key not found, please get your apikey`.
+- The correct call mode is streamable HTTP: `initialize` first, then `notifications/initialized`, then `tools/call` with `Mcp-Session-Id`.
+- After switching to streamable HTTP session flow, the provided runtime key successfully returned BigModel search results.

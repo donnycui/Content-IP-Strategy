@@ -484,7 +484,11 @@ function extractSearchCandidatesFromJson(value: unknown, depth = 0): SearchCandi
   if (typeof value === "string") {
     const trimmed = value.trim();
 
-    if ((trimmed.startsWith("{") && trimmed.endsWith("}")) || (trimmed.startsWith("[") && trimmed.endsWith("]"))) {
+    if (
+      (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+      (trimmed.startsWith("[") && trimmed.endsWith("]")) ||
+      (trimmed.startsWith('"') && trimmed.endsWith('"'))
+    ) {
       try {
         return extractSearchCandidatesFromJson(JSON.parse(trimmed) as unknown, depth + 1);
       } catch {
@@ -557,7 +561,7 @@ function parseTitleNearUrl(lines: string[], url: string, lineIndex: number) {
 function parseBigModelTextCandidates(text: string) {
   const candidates: SearchCandidate[] = [];
   const lines = text.split(/\r?\n/);
-  const urlMatches = [...text.matchAll(/https?:\/\/[^\s)"'<>]+/g)];
+  const urlMatches = [...text.matchAll(/https?:\/\/[^\s)"'<>\\]+/g)];
 
   for (const match of urlMatches) {
     const rawUrl = match[0];
@@ -739,14 +743,6 @@ async function postMcpJson(
   };
 }
 
-function shouldRetryMcpWithInitialize(result: McpPostResult) {
-  if (result.ok) {
-    return false;
-  }
-
-  return /initialize|session|protocol|mcp/i.test(result.body) || result.status === 400 || result.status === 405;
-}
-
 async function callBigModelMcpTool(
   endpoint: string,
   toolName: "web_search_prime" | "webReader",
@@ -768,22 +764,6 @@ async function callBigModelMcpTool(
       arguments: args,
     },
   };
-  const direct = await postMcpJson(endpoint, apiKey, toolCallBody, timeoutMs);
-
-  if (direct.ok) {
-    const errorMessage = extractMcpErrorMessage(direct.body);
-
-    if (errorMessage) {
-      throw new Error(`BigModel MCP error: ${errorMessage}`);
-    }
-
-    return direct.body;
-  }
-
-  if (!shouldRetryMcpWithInitialize(direct)) {
-    throw new Error(`BigModel MCP request failed: ${direct.status} ${direct.statusText}`);
-  }
-
   const initialized = await postMcpJson(
     endpoint,
     apiKey,

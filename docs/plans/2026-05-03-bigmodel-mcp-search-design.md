@@ -10,7 +10,7 @@ The project already has a backend search service in `lib/services/web-search-ser
 
 BigModel provides two MCP tools that are relevant here:
 
-- `webSearchPrime`: searches the web and returns candidate result material.
+- `web_search_prime`: searches the web and returns candidate result material.
 - `webReader`: reads a known URL and returns page content.
 
 The current BigModel plan is Lite, so MCP usage is quota-sensitive. These tools should not be called on every page load or every automatic learning run by default.
@@ -66,4 +66,6 @@ If no URL can be extracted, return an empty result list instead of throwing afte
 - Search tool: `web_search_prime`, required argument `search_query`.
 - Reader tool: `webReader`, required argument `url`.
 
-The initially provided key returned `MCP error -401: Api key not found, please get your apikey` on `tools/call`. The code now surfaces that error explicitly instead of returning an empty result set.
+Direct `tools/call` returned `MCP error -401: Api key not found, please get your apikey`. The correct BigModel mode is standard streamable HTTP: initialize a session first, send `notifications/initialized`, then call the tool with `Mcp-Session-Id`.
+
+After switching to this session flow, the provided key successfully returned normalized search results.
